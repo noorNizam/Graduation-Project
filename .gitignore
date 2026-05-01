@@ -19,3 +19,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+ 
+# Local graph of class relations (kept out of repository)
+/graph/

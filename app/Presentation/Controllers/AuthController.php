@@ -3,7 +3,7 @@
 namespace App\Presentation\Controllers;
 
 use App\Presentation\Requests\SendOtpRequest;
-use App\Presentation\Requests\RegisterCustomerRequest;
+use App\Presentation\Requests\RegisterUserRequest;
 use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Presentation\Requests\LoginRequest;
@@ -26,14 +26,16 @@ class AuthController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
-    public function registerCustomer(RegisterCustomerRequest $request)
+    public function registerCustomer(RegisterUserRequest $request)
     {
         $validated = $request->validated();
 
         $result = $this->userRegistrationService->registerCustomer(
             [
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
+                'full_name' => $validated['full_name'],
+                'current_job' => $validated['current_job'] ?? null,
+                'address' => $validated['address'] ?? null,
+                'gender' => $validated['gender'] ?? 'not specified',
                 'email' => $validated['email'],
                 'password' => $validated['password'],
                 'phone' => $validated['phone'] ?? null,
@@ -71,10 +73,9 @@ class AuthController
             'token' => $token,
             'user' => [
                 'id' => $user->id,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
+                'full_name' => $user->full_name,
                 'email' => $user->email,
-                'phone' => $user->phone,
+                'phone' => $user->phone_number,
                 'role' => $user->role
             ],
         ]);

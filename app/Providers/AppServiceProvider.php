@@ -9,6 +9,10 @@ use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Application\Services\EmailVerificationService;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Application\Services\UserRegistrationService;
+use App\Domain\Services\ServingServiceInterface;
+use App\Application\Services\ServingService;
+use App\Domain\Repositories\ServingRepositoryInterface;
+use App\Infrastructure\Repositories\ServingRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +33,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             UserRegistrationServiceInterface::class,
             UserRegistrationService::class
+        );
+
+        // Serving bindings
+        $this->app->bind(
+            ServingRepositoryInterface::class,
+            ServingRepository::class
+        );
+
+        $this->app->bind(
+            ServingServiceInterface::class,
+            ServingService::class
         );
     }
 

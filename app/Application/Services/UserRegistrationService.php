@@ -5,6 +5,8 @@ namespace App\Application\Services;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Infrastructure\Models\User;
+use App\Infrastructure\Models\WalletModel;
+use App\Infrastructure\Models\PaymentUnit;
 use App\Traits\HandlesDatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 
@@ -26,15 +28,29 @@ class UserRegistrationService implements UserRegistrationServiceInterface
 
         $transactionResult = $this->executeWithTransaction(
             function () use ($userData) {
-                return User::create([
-                    'first_name' => $userData['first_name'],
-                    'last_name' => $userData['last_name'],
+                $user = User::create([
+                    'full_name' => $userData['full_name'],
+                    'current_job' => $userData['current_job'] ?? null,
+                    'address' => $userData['address'] ?? null,
+                    'gender' => $userData['gender'] ?? null,
                     'email' => $userData['email'],
                     'password' => Hash::make($userData['password']),
-                    'phone' => $userData['phone'] ?? null,
+                    'phone_number' => $userData['phone'] ?? null,
                     'birth_date' => $userData['birth_date'] ?? null,
                     'role' => User::ROLE_USER
                 ]);
+
+                // create default wallet for the user, ensure payment unit exists
+                $unit = PaymentUnit::firstOrCreate(['name' => 'hour']);
+
+                WalletModel::create([
+                    'user_id' => $user->id,
+                    'title' => 'رصيد الساعات',
+                    'balance' => 2,
+                    'unit_id' => $unit->id,
+                ]);
+
+                return $user;
             }
         );
 
@@ -48,9 +64,12 @@ class UserRegistrationService implements UserRegistrationServiceInterface
             'message' => 'User registered successfully',
             'user' => [
                 'id' => $user->id,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
+                'full_name' => $user->full_name,
+                'current_job' => $user->current_job,
+                'address' => $user->address,
+                'gender' => $user->gender,
                 'email' => $user->email,
+                'phone' => $user->phone_number,
                 'role' => $user->role,
             ],
         ];

@@ -14,3 +14,8 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {});
+
+// Serving endpoints
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/servings', [\App\Presentation\Controllers\ServingController::class, 'store']);
+});
