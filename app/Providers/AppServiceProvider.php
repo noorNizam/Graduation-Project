@@ -2,17 +2,21 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
-use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
-use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Application\Services\EmailVerificationService;
-use App\Domain\Services\UserRegistrationServiceInterface;
-use App\Application\Services\UserRegistrationService;
-use App\Domain\Services\ServingServiceInterface;
+use App\Application\Services\ServingRequestService;
 use App\Application\Services\ServingService;
+use App\Application\Services\UserRegistrationService;
+use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
 use App\Domain\Repositories\ServingRepositoryInterface;
+use App\Domain\Repositories\ServingRequestRepositoryInterface;
+use App\Domain\Services\EmailVerificationServiceInterface;
+use App\Domain\Services\ServingRequestServiceInterface;
+use App\Domain\Services\ServingServiceInterface;
+use App\Domain\Services\UserRegistrationServiceInterface;
+use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
 use App\Infrastructure\Repositories\ServingRepository;
+use App\Infrastructure\Repositories\ServingRequestRepository;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -44,6 +48,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             ServingServiceInterface::class,
             ServingService::class
+        );
+
+        $this->app->bind(
+            ServingRequestRepositoryInterface::class,
+            ServingRequestRepository::class
+        );
+
+        $this->app->bind(
+            ServingRequestServiceInterface::class,
+            ServingRequestService::class
         );
     }
 

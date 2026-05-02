@@ -4,6 +4,8 @@ namespace App\Presentation\Controllers;
 
 use App\Domain\Services\ServingServiceInterface;
 use App\Presentation\Requests\AddPaidServingRequest;
+use App\Presentation\Requests\CreateCommentRequest;
+use App\Presentation\Requests\ReactCommentRequest;
 use App\Presentation\Requests\UpdatePaidServingRequest;
 
 class ServingController
@@ -44,5 +46,44 @@ class ServingController
         }
 
         return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function addComment(int $servingId, CreateCommentRequest $request)
+    {
+        $data = $request->validated();
+
+        $result = $this->servingService->createComment(
+            auth()->id(),
+            $servingId,
+            $data['content'],
+            $data['parent_id'] ?? null,
+        );
+
+        return response()->json($result, $result['success'] ? 201 : 422);
+    }
+
+    public function getComments(int $servingId)
+    {
+        $result = $this->servingService->getComments($servingId);
+
+        return response()->json($result, $result['success'] ? 200 : 404);
+    }
+
+    public function getReplies(int $commentId)
+    {
+        $result = $this->servingService->getReplies($commentId);
+
+        return response()->json($result, $result['success'] ? 200 : 404);
+    }
+
+    public function reactToComment(int $commentId, ReactCommentRequest $request)
+    {
+        $result = $this->servingService->reactToComment(
+            auth()->id(),
+            $commentId,
+            $request->validated()['type'],
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 404);
     }
 }

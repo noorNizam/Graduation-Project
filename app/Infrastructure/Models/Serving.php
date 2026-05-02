@@ -2,10 +2,10 @@
 
 namespace App\Infrastructure\Models;
 
+use App\Models\ServingCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\ServingCategory;
-use App\Infrastructure\Models\ServingType;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Serving extends Model
 {
@@ -63,5 +63,15 @@ class Serving extends Model
     public function servingType(): BelongsTo
     {
         return $this->belongsTo(ServingType::class, 'serving_type_id');
+    }
+
+    public function requests(): HasMany
+    {
+        return $this->hasMany(ServingRequest::class, 'serving_id');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class, 'serving_id');
     }
 }
