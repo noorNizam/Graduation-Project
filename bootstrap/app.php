@@ -28,6 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+            'ensure.admin' => \App\Presentation\Middleware\EnsureAdminRole::class,
+            'ensure.user' => \App\Presentation\Middleware\EnsureUserRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -10,5 +10,6 @@ interface ServingServiceInterface
      * @param array $data
      * @return array  ['success' => bool, 'data' => mixed, 'message' => string|null]
      */
-    public function createServing(array $data, $image = null): array;
+    public function createPaidServing(array $data, $image = null): array;
+    public function updatePaidServing(int $id, array $data, $image = null): array;
 }

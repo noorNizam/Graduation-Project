@@ -1,59 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Services Marketplace API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 12 API-based services marketplace platform. Users can list paid services ("servings"), manage availability schedules, and transact using a wallet-based payment system where time (hours) is the currency unit. Built following Domain-Driven Design (DDD) principles.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Layer | Technology |
+|-------|------------|
+| Backend | Laravel 12, PHP 8.2+ |
+| Auth | Laravel Sanctum 4.2 (token-based API) |
+| Database | SQLite (dev), configurable for MySQL/PostgreSQL |
+| Queue | Database driver (async image cleanup) |
+| Testing | PHPUnit 11, Faker, Mockery |
+| Linting | Laravel Pint |
+| Build | Vite |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Architecture
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Clean layered architecture following DDD patterns:
 
-## Learning Laravel
+```
+Presentation/     --> HTTP layer: Controllers, Middleware, Form Requests
+      |
+Application/      --> Application Services: Business orchestration, transaction management
+      |
+Domain/           --> Interfaces: Repository contracts, Service contracts
+      ^
+Infrastructure/   --> Implementations: Eloquent Models, Repositories, Event Listeners
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+**Dependency flow**: Controllers depend on Domain interfaces -> Application services depend on Repository interfaces -> Infrastructure provides concrete implementations -> IoC container wires everything in `AppServiceProvider`.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Database Schema
 
-## Laravel Sponsors
+16 tables organized around these core entities:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```
+Users --1:*-- Wallets --*:1-- PaymentUnits
+  |
+  +--1:*-- Servings --*:1-- ServingCategories (hierarchical)
+              |
+              +-- *:1-- ServingTypes
+              +-- *:1-- PaymentUnits
+              +-- 1:*-- ServingAvailabilitySlots
+```
 
-### Premium Partners
+Key tables:
+- **users** - Authentication, profile info, role-based access (`user`/`admin`)
+- **wallets** - User wallets with balance in payment units (default: 2 hours on registration)
+- **servings** - Service listings with title, description, cost, location, image
+- **serving_categories** - Hierarchical categories (parent/children)
+- **serving_availability_slots** - Recurring (day-of-week) or specific-date scheduling
+- **email_verification_attempts** - OTP tracking with expiry
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Setup
 
-## Contributing
+### Prerequisites
+- PHP 8.2+
+- Composer
+- Node.js & npm
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Installation
 
-## Code of Conduct
+```bash
+# Full setup: install deps, create .env, generate key, migrate, build assets
+composer run setup
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Or manually:
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+npm install
+npm run build
+```
 
-## Security Vulnerabilities
+## Development
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+# Start dev server (with queue, logs, and Vite hot reload)
+composer run dev
 
-## License
+# Run tests
+composer run test
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Format code with Pint
+./vendor/bin/pint
+
+# Format code (dry run)
+./vendor/bin/pint --test
+```
+
+## API Endpoints
+
+### Authentication (no auth required)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/send-otp` | Send OTP verification email |
+| POST | `/api/auth/register-customer` | Register with OTP verification |
+| POST | `/api/auth/login` | Login (returns Sanctum token) |
+
+### Servings (requires `auth:sanctum` + `user` role)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/servings/add-paid` | Create a paid serving listing |
+| PUT | `/api/servings/add-paid/{id}` | Update a paid serving listing |
+
+### Debug (development only)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/test-monitor` | Test AOP request monitoring |
+| GET | `/api/test-error` | Test error logging |
+
+All responses follow the JSON envelope: `{ "success": bool, "data"?: mixed, "message"?: string }`
+
+## Key Patterns
+
+| Pattern | Implementation |
+|---------|----------------|
+| Repository | `Domain/Repositories/*Interface` -> `Infrastructure/Repositories/*` |
+| Service Layer | `Domain/Services/*Interface` -> `Application/Services/*` |
+| Form Requests | All input validated via dedicated `Presentation/Requests/*` classes |
+| Transactions | `Traits/HandlesDatabaseTransactions` wraps writes atomically |
+| AOP Logging | `Traits/Loggable` + `Events/MethodExecuted` + `Infrastructure/Listeners/LogMethodExecutionHandler` |
+| Queued Jobs | `Jobs/DeleteServingImageJob` for async image cleanup |
+| Role Middleware | `EnsureUserRole` / `EnsureAdminRole` for access control |
+| OTP Flow | Send email -> Store attempt (10-min expiry) -> Verify on registration -> Mark used |
+
+## Project Notes
+
+- **Localization**: Syrian phone number validation (`+963` format), Arabic wallet title ("Raseed al-Sa'at")
+- **Image uploads**: Max 5MB, stored in `storage/app/public/servings`
+- **Security**: Old images safely deleted via queued job (checks no serving still references URL before deleting)
+- **Health check**: Available at `/up`

@@ -12,4 +12,17 @@ class ServingRepository implements ServingRepositoryInterface
         // Create and return the Eloquent model
         return Serving::create($data);
     }
+
+    public function findById(int $id): ?Serving
+    {
+        return Serving::find($id);
+    }
+
+    public function update(int $id, array $data): Serving
+    {
+        $serving = Serving::findOrFail($id);
+        $serving->fill($data);
+        $serving->save();
+        return $serving;
+    }
 }

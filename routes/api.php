@@ -16,6 +16,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {});
 
 // Serving endpoints
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/servings', [\App\Presentation\Controllers\ServingController::class, 'store']);
+Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
+    Route::post('/servings/add-paid', [\App\Presentation\Controllers\ServingController::class, 'addPaidServing']);
+    Route::put('/servings/add-paid/{id}', [\App\Presentation\Controllers\ServingController::class, 'updatePaid']);
 });

@@ -5,6 +5,7 @@ namespace App\Infrastructure\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\ServingCategory;
+use App\Infrastructure\Models\ServingType;
 
 class Serving extends Model
 {
@@ -14,6 +15,7 @@ class Serving extends Model
         'title',
         'description',
         'user_id',
+        'serving_type_id',
         'category_id',
         'cost_amount',
         'unit_id',
@@ -53,5 +55,13 @@ class Serving extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Serving type relation
+     */
+    public function servingType(): BelongsTo
+    {
+        return $this->belongsTo(ServingType::class, 'serving_type_id');
     }
 }

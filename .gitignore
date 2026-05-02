@@ -1,3 +1,4 @@
+*.md
 *.log
 .DS_Store
 .phpactor.json
@@ -22,3 +23,4 @@ Thumbs.db
  
 # Local graph of class relations (kept out of repository)
 /graph/
+README.md

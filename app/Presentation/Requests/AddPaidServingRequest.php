@@ -4,7 +4,7 @@ namespace App\Presentation\Requests;
 
 use Illuminate\Validation\Rule;
 
-class AddServingRequest extends BaseRequest
+class AddPaidServingRequest extends BaseRequest
 {
     public function rules(): array
     {

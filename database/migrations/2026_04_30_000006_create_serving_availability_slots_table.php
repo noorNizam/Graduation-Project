@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('notes')->nullable();
             $table->timestamps();
 
-            $table->index(['serving_id', 'day_of_week', 'start_time']);
-            $table->index(['serving_id', 'date', 'start_time']);
+            $table->index(['serving_id', 'day_of_week', 'start_time'], 'serving_day_time_index');
+            $table->index(['serving_id', 'date', 'start_time'], 'serving_date_time_index');
         });
     }
 
