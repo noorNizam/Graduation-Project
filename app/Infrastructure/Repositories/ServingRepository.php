@@ -23,6 +23,7 @@ class ServingRepository implements ServingRepositoryInterface
         $serving = Serving::findOrFail($id);
         $serving->fill($data);
         $serving->save();
+
         return $serving;
     }
 }

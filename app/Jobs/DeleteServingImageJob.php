@@ -4,19 +4,17 @@ namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class DeleteServingImageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(private string $imageUrl)
-    {
-    }
+    public function __construct(private string $imageUrl) {}
 
     public function handle(): void
     {
@@ -31,7 +29,8 @@ class DeleteServingImageJob implements ShouldQueue
             $path = $this->urlToStoragePath($imageUrl);
 
             if (! $path) {
-                Log::warning('DeleteServingImageJob: could not determine storage path for URL: ' . $imageUrl);
+                Log::warning('DeleteServingImageJob: could not determine storage path for URL: '.$imageUrl);
+
                 return;
             }
 
@@ -39,19 +38,20 @@ class DeleteServingImageJob implements ShouldQueue
             $exists = \App\Infrastructure\Models\Serving::where('image_url', $imageUrl)->exists();
             if ($exists) {
                 // Someone still references it; skip deletion
-                Log::info('DeleteServingImageJob: image still referenced, skipping delete: ' . $imageUrl);
+                Log::info('DeleteServingImageJob: image still referenced, skipping delete: '.$imageUrl);
+
                 return;
             }
 
             // Delete from the public disk
             if (Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
-                Log::info('DeleteServingImageJob: deleted ' . $path);
+                Log::info('DeleteServingImageJob: deleted '.$path);
             } else {
-                Log::info('DeleteServingImageJob: file not found, skipping ' . $path);
+                Log::info('DeleteServingImageJob: file not found, skipping '.$path);
             }
         } catch (\Throwable $e) {
-            Log::error('DeleteServingImageJob failed: ' . $e->getMessage());
+            Log::error('DeleteServingImageJob failed: '.$e->getMessage());
             // Let the job be retried according to the queue configuration
             throw $e;
         }

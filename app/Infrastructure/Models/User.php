@@ -2,10 +2,11 @@
 
 namespace App\Infrastructure\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -14,6 +15,7 @@ class User extends Authenticatable
 
     // Role Constants
     public const ROLE_USER = 'user';
+
     public const ROLE_ADMIN = 'admin';
 
     /**
@@ -112,6 +114,21 @@ class User extends Authenticatable
     public function servings(): HasMany
     {
         return $this->hasMany(Serving::class, 'user_id');
+    }
+
+    public function servingRequests(): HasMany
+    {
+        return $this->hasMany(\App\Infrastructure\Models\ServingRequest::class, 'requester_id');
+    }
+
+    public function receivedServingRequests(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            \App\Infrastructure\Models\ServingRequest::class,
+            Serving::class,
+            'user_id',
+            'serving_id'
+        );
     }
 
     // /**

@@ -2,12 +2,12 @@
 
 namespace App\Application\Services;
 
-use App\Domain\Services\ServingServiceInterface;
 use App\Domain\Repositories\ServingRepositoryInterface;
-use App\Traits\HandlesDatabaseTransactions;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
+use App\Domain\Services\ServingServiceInterface;
 use App\Jobs\DeleteServingImageJob;
+use App\Traits\HandlesDatabaseTransactions;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ServingService implements ServingServiceInterface
 {
@@ -40,11 +40,12 @@ class ServingService implements ServingServiceInterface
             return $this->repository->create($data);
         });
 
-        if (!$transactionResult['success']) {
+        if (! $transactionResult['success']) {
             return $transactionResult;
         }
 
         $serving = $transactionResult['data'];
+
         return [
             'success' => true,
             'data' => $serving,
@@ -105,7 +106,7 @@ class ServingService implements ServingServiceInterface
                 DeleteServingImageJob::dispatch($oldImageUrl);
             } catch (\Throwable $e) {
                 // Log and continue; do not fail the user request because of deletion enqueue problems
-                \Illuminate\Support\Facades\Log::error('Failed to dispatch DeleteServingImageJob job: ' . $e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Failed to dispatch DeleteServingImageJob job: '.$e->getMessage());
             }
         }
 

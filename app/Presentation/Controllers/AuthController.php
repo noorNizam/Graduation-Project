@@ -2,13 +2,11 @@
 
 namespace App\Presentation\Controllers;
 
-use App\Presentation\Requests\SendOtpRequest;
-use App\Presentation\Requests\RegisterUserRequest;
 use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Presentation\Requests\LoginRequest;
-
-
+use App\Presentation\Requests\RegisterUserRequest;
+use App\Presentation\Requests\SendOtpRequest;
 
 class AuthController
 {
@@ -47,7 +45,6 @@ class AuthController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
-
     /**
      * Login user
      */
@@ -56,7 +53,7 @@ class AuthController
         $credentials = $request->validated();
 
         // Attempt authentication
-        if (!auth()->attempt($credentials)) {
+        if (! auth()->attempt($credentials)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid email or password',
@@ -76,7 +73,7 @@ class AuthController
                 'full_name' => $user->full_name,
                 'email' => $user->email,
                 'phone' => $user->phone_number,
-                'role' => $user->role
+                'role' => $user->role,
             ],
         ]);
     }

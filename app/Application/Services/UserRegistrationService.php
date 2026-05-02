@@ -2,11 +2,11 @@
 
 namespace App\Application\Services;
 
-use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
+use App\Domain\Services\UserRegistrationServiceInterface;
+use App\Infrastructure\Models\PaymentUnit;
 use App\Infrastructure\Models\User;
 use App\Infrastructure\Models\WalletModel;
-use App\Infrastructure\Models\PaymentUnit;
 use App\Traits\HandlesDatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 
@@ -22,7 +22,7 @@ class UserRegistrationService implements UserRegistrationServiceInterface
     {
         $otpVerification = $this->emailVerificationService->verifyOtp($userData['email'], $otp);
 
-        if (!$otpVerification['success']) {
+        if (! $otpVerification['success']) {
             return $otpVerification;
         }
 
@@ -37,7 +37,7 @@ class UserRegistrationService implements UserRegistrationServiceInterface
                     'password' => Hash::make($userData['password']),
                     'phone_number' => $userData['phone'] ?? null,
                     'birth_date' => $userData['birth_date'] ?? null,
-                    'role' => User::ROLE_USER
+                    'role' => User::ROLE_USER,
                 ]);
 
                 // create default wallet for the user, ensure payment unit exists
@@ -54,11 +54,12 @@ class UserRegistrationService implements UserRegistrationServiceInterface
             }
         );
 
-        if (!$transactionResult['success']) {
+        if (! $transactionResult['success']) {
             return $transactionResult;
         }
 
         $user = $transactionResult['data'];
+
         return [
             'success' => true,
             'message' => 'User registered successfully',

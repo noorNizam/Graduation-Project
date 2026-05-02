@@ -2,7 +2,6 @@
 
 namespace App\Presentation\Requests;
 
-use App\Infrastructure\Models\User;
 use Illuminate\Validation\Rule;
 
 class RegisterUserRequest extends BaseRequest

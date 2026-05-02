@@ -4,7 +4,6 @@ namespace App\Infrastructure\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Infrastructure\Models\PaymentUnit;
 
 class WalletModel extends Model
 {

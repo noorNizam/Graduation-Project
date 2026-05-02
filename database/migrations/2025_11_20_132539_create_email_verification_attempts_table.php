@@ -15,7 +15,7 @@ return new class extends Migration
             $table->enum('status', ['active', 'used'])->default('active');
             $table->timestamp('expires_at');
             $table->timestamps();
-            
+
             $table->index(['email', 'status']);
             $table->index(['email', 'expires_at']);
         });

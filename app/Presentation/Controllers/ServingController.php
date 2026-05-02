@@ -2,9 +2,9 @@
 
 namespace App\Presentation\Controllers;
 
+use App\Domain\Services\ServingServiceInterface;
 use App\Presentation\Requests\AddPaidServingRequest;
 use App\Presentation\Requests\UpdatePaidServingRequest;
-use App\Domain\Services\ServingServiceInterface;
 
 class ServingController
 {

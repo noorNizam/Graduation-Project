@@ -4,7 +4,6 @@ namespace App\Infrastructure\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 class ServingAvailabilitySlot extends Model
 {
@@ -36,13 +35,10 @@ class ServingAvailabilitySlot extends Model
      * Overlap condition: existing.start_time < new_end AND existing.end_time > new_start
      * This method checks slots that match either the given date or day_of_week.
      *
-     * @param int $servingId
-     * @param string $startTime (HH:MM:SS)
-     * @param string $endTime (HH:MM:SS)
-     * @param string|null $date (Y-m-d)
-     * @param int|null $dayOfWeek (0-6)
-     * @param int|null $excludeId
-     * @return bool
+     * @param  string  $startTime  (HH:MM:SS)
+     * @param  string  $endTime  (HH:MM:SS)
+     * @param  string|null  $date  (Y-m-d)
+     * @param  int|null  $dayOfWeek  (0-6)
      */
     public static function overlapsExist(int $servingId, string $startTime, string $endTime, ?string $date = null, ?int $dayOfWeek = null, ?int $excludeId = null): bool
     {
@@ -61,7 +57,7 @@ class ServingAvailabilitySlot extends Model
             $query->where('id', '!=', $excludeId);
         }
 
-        $query->whereRaw("start_time < ? AND end_time > ?", [$endTime, $startTime]);
+        $query->whereRaw('start_time < ? AND end_time > ?', [$endTime, $startTime]);
 
         return $query->exists();
     }

@@ -2,8 +2,6 @@
 
 namespace App\Presentation\Requests;
 
-use Illuminate\Validation\Rule;
-
 class AddPaidServingRequest extends BaseRequest
 {
     public function rules(): array

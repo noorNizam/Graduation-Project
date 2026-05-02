@@ -2,11 +2,11 @@
 
 namespace App\Application\Services;
 
-use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
+use App\Domain\Services\EmailVerificationServiceInterface;
+use App\Mail\OTPVerificationEmail;
 use App\Traits\HandlesDatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\OTPVerificationEmail;
 
 class EmailVerificationService implements EmailVerificationServiceInterface
 {
@@ -21,9 +21,9 @@ class EmailVerificationService implements EmailVerificationServiceInterface
         $transactionResult = $this->executeWithTransaction(
             function () use ($email) {
                 $this->repository->invalidateActiveAttempts($email);
-                
+
                 $otp = $this->generateOtp();
-                
+
                 $attempt = $this->repository->createAttempt([
                     'email' => $email,
                     'otp' => $otp,
@@ -31,11 +31,12 @@ class EmailVerificationService implements EmailVerificationServiceInterface
                 ]);
 
                 Mail::to($email)->send(new OTPVerificationEmail($otp));
+
                 return $attempt;
             }
         );
 
-        if (!$transactionResult['success']) {
+        if (! $transactionResult['success']) {
             return $transactionResult;
         }
 
@@ -50,7 +51,7 @@ class EmailVerificationService implements EmailVerificationServiceInterface
     {
         $attempt = $this->repository->findValidAttempt($email, $otp);
 
-        if (!$attempt) {
+        if (! $attempt) {
             return [
                 'success' => false,
                 'message' => 'Invalid or expired OTP',
@@ -60,11 +61,12 @@ class EmailVerificationService implements EmailVerificationServiceInterface
         $transactionResult = $this->executeWithTransaction(
             function () use ($attempt) {
                 $attempt->markAsUsed();
+
                 return $attempt;
             }
         );
 
-        if (!$transactionResult['success']) {
+        if (! $transactionResult['success']) {
             return $transactionResult;
         }
 
