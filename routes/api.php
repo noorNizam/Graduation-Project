@@ -17,6 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {});
 
 // Serving endpoints
 Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
+    Route::post('/servings/search', [\App\Presentation\Controllers\ServingController::class, 'getServings']);
     Route::post('/servings/add-paid', [\App\Presentation\Controllers\ServingController::class, 'addPaidServing']);
     Route::put('/servings/add-paid/{id}', [\App\Presentation\Controllers\ServingController::class, 'updatePaid']);
 
@@ -31,3 +32,5 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::get('/comments/{commentId}/replies', [\App\Presentation\Controllers\ServingController::class, 'getReplies']);
     Route::post('/comments/{commentId}/react', [\App\Presentation\Controllers\ServingController::class, 'reactToComment']);
 });
+
+//test

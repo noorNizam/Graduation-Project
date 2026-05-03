@@ -199,6 +199,12 @@
 									"type": "text"
 								},
 								{
+									"key": "meeting_type",
+									"value": "online",
+									"type": "text",
+									"description": "Meeting type: 'online' or 'direct'"
+								},
+								{
 									"key": "image",
 									"type": "file",
 									"description": "Upload serving image (max 5MB)"
@@ -212,37 +218,111 @@
 						}
 					}
 				},
-				{
-					"name": "Update Paid Serving",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"title\": \"Updated Web Development Service\",\n    \"description\": \"Updated description\",\n    \"cost_amount\": 3\n}"
+			{
+				"name": "Update Paid Serving",
+				"request": {
+					"method": "PUT",
+					"header": [
+						{
+							"key": "Authorization",
+							"value": "Bearer {{token}}"
 						},
-						"url": {
-							"raw": "{{base_url}}/servings/add-paid/:id",
-							"host": ["{{base_url}}"],
-							"path": ["servings", "add-paid", ":id"],
-							"variable": [
-								{
-									"key": "id",
-									"value": "1"
-								}
-							]
+						{
+							"key": "Content-Type",
+							"value": "application/json"
 						}
+					],
+					"body": {
+						"mode": "raw",
+						"raw": "{\n    \"title\": \"Updated Web Development Service\",\n    \"description\": \"Updated description\",\n    \"cost_amount\": 3,\n    \"meeting_type\": \"direct\"\n}"
+					},
+					"url": {
+						"raw": "{{base_url}}/servings/add-paid/:id",
+						"host": ["{{base_url}}"],
+						"path": ["servings", "add-paid", ":id"],
+						"variable": [
+							{
+								"key": "id",
+								"value": "1"
+							}
+						]
 					}
 				}
+			},
+			{
+				"name": "Search Servings",
+				"event": [
+					{
+						"listen": "test",
+						"script": {
+							"exec": [
+								"var jsonData = pm.response.json();",
+								"if (jsonData.success && jsonData.data && jsonData.data.length > 0) {",
+								"    pm.collectionVariables.set('serving_id', jsonData.data[0].id);",
+								"}"
+							],
+							"type": "text/javascript"
+						}
+					}
+				],
+				"request": {
+					"method": "POST",
+					"header": [
+						{
+							"key": "Authorization",
+							"value": "Bearer {{token}}"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": {
+						"mode": "raw",
+						"raw": "{\n    \"serving_type_id\": \"\",\n    \"payment_unit_id\": \"\",\n    \"serving_category_id\": \"\",\n    \"skip\": \"\",\n    \"take\": \"\",\n    \"name\": \"\"\n}",
+						"options": {
+							"raw": {
+								"language": "json"
+							}
+						}
+					},
+					"url": {
+						"raw": "{{base_url}}/servings/search",
+						"host": ["{{base_url}}"],
+						"path": ["servings", "search"]
+					}
+				},
+				"response": [
+					{
+						"name": "Success - Returns DTO with resolved properties",
+						"originalRequest": {
+							"method": "POST",
+							"header": [
+								{
+									"key": "Authorization",
+									"value": "Bearer {{token}}"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"mode": "raw",
+								"raw": "{\n    \"name\": \"Second\"\n}"
+							},
+							"url": {
+								"raw": "{{base_url}}/servings/search",
+								"host": ["{{base_url}}"],
+								"path": ["servings", "search"]
+							}
+						},
+						"status": "OK",
+						"code": 200,
+						"body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 3,\n            \"title\": \"Second User Service\",\n            \"description\": \"Service by user2\",\n            \"cost_amount\": 15,\n            \"image_url\": null,\n            \"location_lat\": null,\n            \"location_lng\": null,\n            \"location_address\": null,\n            \"created_at\": \"2026-05-02T15:19:27.000000Z\",\n            \"updated_at\": \"2026-05-02T15:19:27.000000Z\",\n            \"user_full_name\": \"\",\n            \"user_email\": \"user2@system.com\",\n            \"category_name\": \"Home Services\",\n            \"unit_name\": \"hour\",\n            \"serving_type_name\": \"paid\"\n        }\n    ]\n}"
+					}
+				]
+			}
 			]
 		},
 		{
