@@ -1,8 +1,8 @@
 {
 	"info": {
-		"_postman_id": "services-marketplace-api",
-		"name": "Services Marketplace API",
-		"description": "API endpoints for the Services Marketplace platform",
+		"_postman_id": "in-time-api",
+		"name": "In Time API",
+		"description": "API endpoints for the In Time platform",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
