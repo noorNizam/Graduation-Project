@@ -31,3 +31,5 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::get('/comments/{commentId}/replies', [\App\Presentation\Controllers\ServingController::class, 'getReplies']);
     Route::post('/comments/{commentId}/react', [\App\Presentation\Controllers\ServingController::class, 'reactToComment']);
 });
+
+//test
