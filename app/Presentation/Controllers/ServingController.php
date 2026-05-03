@@ -5,6 +5,7 @@ namespace App\Presentation\Controllers;
 use App\Domain\Services\ServingServiceInterface;
 use App\Presentation\Requests\AddPaidServingRequest;
 use App\Presentation\Requests\CreateCommentRequest;
+use App\Presentation\Requests\GetServingsRequest;
 use App\Presentation\Requests\ReactCommentRequest;
 use App\Presentation\Requests\UpdatePaidServingRequest;
 
@@ -44,6 +45,24 @@ class ServingController
         if (isset($result['success']) && $result['success'] === false && isset($result['message']) && $result['message'] === 'Forbidden') {
             return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
         }
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function getServings(GetServingsRequest $request)
+    {
+        $excludeUserId = auth()->id();
+        $validated = $request->validated();
+
+        $result = $this->servingService->getServings(
+            $excludeUserId,
+            $validated['serving_type_id'] ?? null,
+            $validated['payment_unit_id'] ?? null,
+            $validated['serving_category_id'] ?? null,
+            $validated['skip'] ?? null,
+            $validated['take'] ?? null,
+            $validated['name'] ?? null
+        );
 
         return response()->json($result, $result['success'] ? 200 : 500);
     }

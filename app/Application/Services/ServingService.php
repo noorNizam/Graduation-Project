@@ -191,14 +191,16 @@ class ServingService implements ServingServiceInterface
             ->get();
 
         $comments->each(function ($comment) {
-            $comment->reaction_counts = $comment->reactions()
+            $reactionCounts = $comment->reactions()
                 ->selectRaw('type, count(*) as count')
                 ->groupBy('type')
                 ->pluck('count', 'type')
-                ->only(['like', 'dislike'])
                 ->toArray();
-            $comment->reaction_counts['like'] = $comment->reaction_counts['like'] ?? 0;
-            $comment->reaction_counts['dislike'] = $comment->reaction_counts['dislike'] ?? 0;
+
+            $comment->reaction_counts = [
+                'like' => $reactionCounts['like'] ?? 0,
+                'dislike' => $reactionCounts['dislike'] ?? 0,
+            ];
         });
 
         return [
@@ -224,19 +226,86 @@ class ServingService implements ServingServiceInterface
             ->get();
 
         $replies->each(function ($reply) {
-            $reply->reaction_counts = $reply->reactions()
+            $reactionCounts = $reply->reactions()
                 ->selectRaw('type, count(*) as count')
                 ->groupBy('type')
                 ->pluck('count', 'type')
-                ->only(['like', 'dislike'])
                 ->toArray();
-            $reply->reaction_counts['like'] = $reply->reaction_counts['like'] ?? 0;
-            $reply->reaction_counts['dislike'] = $reply->reaction_counts['dislike'] ?? 0;
+
+            $reply->reaction_counts = [
+                'like' => $reactionCounts['like'] ?? 0,
+                'dislike' => $reactionCounts['dislike'] ?? 0,
+            ];
         });
 
         return [
             'success' => true,
             'data' => $replies->map(fn ($r) => $this->formatComment($r)),
+        ];
+    }
+
+    public function getServings(?int $excludeUserId, ?int $servingTypeId, ?int $paymentUnitId, ?int $categoryId, ?int $skip, ?int $take, ?string $name): array
+    {
+        $query = \App\Infrastructure\Models\Serving::with(['user', 'category', 'unit', 'servingType'])
+            ->latest();
+
+        // Exclude authenticated user's own servings
+        if ($excludeUserId !== null) {
+            $query->where('user_id', '!=', $excludeUserId);
+        }
+
+        // Apply filters only if parameters are not null
+        if ($servingTypeId !== null) {
+            $query->where('serving_type_id', $servingTypeId);
+        }
+
+        if ($paymentUnitId !== null) {
+            $query->where('unit_id', $paymentUnitId);
+        }
+
+        if ($categoryId !== null) {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($name !== null) {
+            $query->where('title', 'LIKE', "%{$name}%");
+        }
+
+        // Apply pagination
+        if ($skip !== null) {
+            $query->skip($skip);
+        }
+
+        if ($take !== null) {
+            $query->take($take);
+        }
+
+        $servings = $query->get();
+
+        $dto = $servings->map(function ($serving) {
+            return [
+                'id' => $serving->id,
+                'title' => $serving->title,
+                'description' => $serving->description,
+                'cost_amount' => $serving->cost_amount,
+                'image_url' => $serving->image_url,
+                'location_lat' => $serving->location_lat,
+                'location_lng' => $serving->location_lng,
+                'location_address' => $serving->location_address,
+                'meeting_type' => $serving->meeting_type,
+                'created_at' => $serving->created_at,
+                'updated_at' => $serving->updated_at,
+                'user_full_name' => $serving->user->full_name ?? null,
+                'user_email' => $serving->user->email ?? null,
+                'category_name' => $serving->category->name ?? null,
+                'unit_name' => $serving->unit->name ?? null,
+                'serving_type_name' => $serving->servingType->name ?? null,
+            ];
+        });
+
+        return [
+            'success' => true,
+            'data' => $dto,
         ];
     }
 

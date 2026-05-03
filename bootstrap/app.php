@@ -27,11 +27,29 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
             'ensure.admin' => \App\Presentation\Middleware\EnsureAdminRole::class,
             'ensure.user' => \App\Presentation\Middleware\EnsureUserRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Handle missing token or invalid token for API routes
+        $exceptions->render(function (\Exception $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*')) {
+                // Handle AuthenticationException (thrown when token is invalid/missing)
+                if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthenticated'
+                    ], 401);
+                }
+
+                // Handle RouteNotFoundException (thrown when redirect to login route fails)
+                if ($e instanceof \Symfony\Component\Routing\Exception\RouteNotFoundException) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthenticated'
+                    ], 401);
+                }
+            }
+        });
     })->create();

@@ -64,7 +64,7 @@
     </div>
 
     <div class="footer">
-        <p>&copy; {{ date('Y') }} Banking System. All rights reserved.</p>
+        <p>&copy; {{ date('Y') }} In Time Co.. All rights reserved.</p>
     </div>
 </body>
 

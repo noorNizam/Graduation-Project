@@ -20,4 +20,6 @@ interface ServingServiceInterface
     public function getReplies(int $commentId): array;
 
     public function reactToComment(int $userId, int $commentId, string $type): array;
+
+    public function getServings(?int $excludeUserId, ?int $servingTypeId, ?int $paymentUnitId, ?int $categoryId, ?int $skip, ?int $take, ?string $name): array;
 }

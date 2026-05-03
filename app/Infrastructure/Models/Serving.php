@@ -23,6 +23,7 @@ class Serving extends Model
         'location_lng',
         'location_address',
         'image_url',
+        'meeting_type',
     ];
 
     /**

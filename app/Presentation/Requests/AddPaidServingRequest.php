@@ -15,6 +15,7 @@ class AddPaidServingRequest extends BaseRequest
             'location_lat' => ['nullable', 'numeric'],
             'location_lng' => ['nullable', 'numeric'],
             'location_address' => ['nullable', 'string', 'max:500'],
+            'meeting_type' => ['required', 'string', 'in:online,direct'],
             'image' => ['nullable', 'file', 'image', 'max:5120'], // max in KB (5 MB)
         ];
     }
