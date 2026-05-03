@@ -11,8 +11,9 @@ class WalletModel extends Model
 
     protected $fillable = [
         'user_id',
+        'title',
         'balance',
-        'unit',
+        'unit_id',
     ];
 
     protected $casts = [
@@ -25,5 +26,13 @@ class WalletModel extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * The payment unit for the wallet.
+     */
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(PaymentUnit::class, 'unit_id');
     }
 }

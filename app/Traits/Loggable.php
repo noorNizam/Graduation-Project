@@ -9,22 +9,22 @@ trait Loggable
     protected function executeWithLogging(string $methodName, callable $operation, array $parameters = [])
     {
         $startTime = microtime(true);
-        
+
         try {
             $result = $operation(...$parameters);
             $executionTime = microtime(true) - $startTime;
-            
+
             event(new MethodExecuted(
                 className: static::class,
                 methodName: $methodName,
                 parameters: $parameters,
                 executionTime: $executionTime
             ));
-            
+
             return $result;
         } catch (\Throwable $exception) {
             $executionTime = microtime(true) - $startTime;
-            
+
             event(new MethodExecuted(
                 className: static::class,
                 methodName: $methodName,
@@ -32,7 +32,7 @@ trait Loggable
                 executionTime: $executionTime,
                 exception: $exception
             ));
-            
+
             throw $exception;
         }
     }

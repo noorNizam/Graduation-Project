@@ -2,8 +2,6 @@
 
 namespace App\Presentation\Requests;
 
-use Illuminate\Validation\Rule;
-
 class SendOtpRequest extends BaseRequest
 {
     public function rules(): array

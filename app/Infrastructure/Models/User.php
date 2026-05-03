@@ -2,11 +2,11 @@
 
 namespace App\Infrastructure\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -15,6 +15,7 @@ class User extends Authenticatable
 
     // Role Constants
     public const ROLE_USER = 'user';
+
     public const ROLE_ADMIN = 'admin';
 
     /**
@@ -29,11 +30,13 @@ class User extends Authenticatable
     }
 
     protected $fillable = [
-        'first_name',
-        'last_name',
+        'full_name',
+        'current_job',
+        'address',
+        'gender',
         'email',
         'password',
-        'phone',
+        'phone_number',
         'birth_date',
         'profile_picture',
         'role',
@@ -57,7 +60,7 @@ class User extends Authenticatable
      */
     public function getFullNameAttribute(): string
     {
-        return "{$this->first_name} {$this->last_name}";
+        return $this->full_name ?? '';
     }
 
     public function hasRole(string $role): bool
@@ -98,11 +101,34 @@ class User extends Authenticatable
     // ==================== Relationships ====================
 
     /**
-     * Get the wallet associated with the user.
+     * Get all wallets belonging to the user.
      */
-    public function wallet(): HasOne
+    public function wallets(): HasMany
     {
-        return $this->hasOne(WalletModel::class, 'user_id');
+        return $this->hasMany(WalletModel::class, 'user_id');
+    }
+
+    /**
+     * Get all servings created by the user.
+     */
+    public function servings(): HasMany
+    {
+        return $this->hasMany(Serving::class, 'user_id');
+    }
+
+    public function servingRequests(): HasMany
+    {
+        return $this->hasMany(\App\Infrastructure\Models\ServingRequest::class, 'requester_id');
+    }
+
+    public function receivedServingRequests(): HasManyThrough
+    {
+        return $this->hasManyThrough(
+            \App\Infrastructure\Models\ServingRequest::class,
+            Serving::class,
+            'user_id',
+            'serving_id'
+        );
     }
 
     // /**

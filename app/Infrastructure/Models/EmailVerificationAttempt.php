@@ -27,7 +27,7 @@ class EmailVerificationAttempt extends Model
 
     public function isValid(): bool
     {
-        return $this->status === 'active' && !$this->isExpired();
+        return $this->status === 'active' && ! $this->isExpired();
     }
 
     public function markAsUsed(): bool
@@ -38,7 +38,7 @@ class EmailVerificationAttempt extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active')
-                    ->where('expires_at', '>', now());
+            ->where('expires_at', '>', now());
     }
 
     public function scopeForEmail($query, string $email)

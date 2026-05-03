@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Domain\Services;
+
+interface ServingServiceInterface
+{
+    /**
+     * Create a new serving.
+     *
+     * @return array ['success' => bool, 'data' => mixed, 'message' => string|null]
+     */
+    public function createPaidServing(array $data, $image = null): array;
+
+    public function updatePaidServing(int $id, array $data, $image = null): array;
+
+    public function createComment(int $userId, int $servingId, string $content, ?int $parentId = null): array;
+
+    public function getComments(int $servingId): array;
+
+    public function getReplies(int $commentId): array;
+
+    public function reactToComment(int $userId, int $commentId, string $type): array;
+}

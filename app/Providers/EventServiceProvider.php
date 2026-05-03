@@ -13,4 +13,4 @@ class EventServiceProvider extends ServiceProvider
             LogMethodExecutionHandler::class,
         ],
     ];
-}   
+}
