@@ -59,4 +59,11 @@ class ServingRequestController
 
         return response()->json($result, $result['success'] ? 200 : 500);
     }
+
+    public function listByOwner()
+    {
+        $result = $this->servingRequestService->getReceivedRequests(auth()->id());
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
 }

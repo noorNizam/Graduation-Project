@@ -56,4 +56,18 @@ class ServingRequestRepository implements ServingRequestRepositoryInterface
             ->where('status', $status)
             ->exists();
     }
+
+    public function findByServingOwnerId(int $ownerId, ?string $status = null): Collection
+    {
+        $query = ServingRequest::query()
+            ->join('servings', 'servings.id', '=', 'serving_requests.serving_id')
+            ->where('servings.user_id', $ownerId)
+            ->select('serving_requests.*');
+
+        if ($status !== null) {
+            $query->where('serving_requests.status', $status);
+        }
+
+        return $query->get();
+    }
 }
