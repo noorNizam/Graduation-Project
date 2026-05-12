@@ -26,6 +26,7 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::put('/servings/requests/{id}/reject', [\App\Presentation\Controllers\ServingRequestController::class, 'reject']);
     Route::get('/servings/requests/serving/{servingId}', [\App\Presentation\Controllers\ServingRequestController::class, 'listByServing']);
     Route::get('/servings/requests/my', [\App\Presentation\Controllers\ServingRequestController::class, 'listByRequester']);
+    Route::get('/servings/requests/received', [\App\Presentation\Controllers\ServingRequestController::class, 'listByOwner']);
 
     Route::post('/servings/{servingId}/comments', [\App\Presentation\Controllers\ServingController::class, 'addComment']);
     Route::get('/servings/{servingId}/comments', [\App\Presentation\Controllers\ServingController::class, 'getComments']);

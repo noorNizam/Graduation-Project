@@ -13,4 +13,6 @@ interface ServingRequestServiceInterface
     public function getServingRequests(int $servingId, ?string $status = null): array;
 
     public function getRequesterRequests(int $requesterId, ?string $status = null): array;
+
+    public function getReceivedRequests(int $ownerId, ?string $status = null): array;
 }
