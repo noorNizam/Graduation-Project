@@ -60,7 +60,7 @@ class User extends Authenticatable
      */
     public function getFullNameAttribute(): string
     {
-        return $this->full_name ?? '';
+        return $this->attributes['full_name'] ?? '';
     }
 
     public function hasRole(string $role): bool

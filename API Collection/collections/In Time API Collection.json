@@ -20,6 +20,11 @@
 			"key": "serving_id",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -636,6 +641,144 @@
 							"raw": "{{base_url}}/payment-units",
 							"host": ["{{base_url}}"],
 							"path": ["payment-units"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "full_name",
+									"value": "Updated Name",
+									"type": "text"
+								},
+								{
+									"key": "current_job",
+									"value": "Senior Developer",
+									"type": "text"
+								},
+								{
+									"key": "address",
+									"value": "Damascus, Syria",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "phone_number",
+									"value": "+963912345678",
+									"type": "text"
+								},
+								{
+									"key": "birth_date",
+									"value": "1990-01-15",
+									"type": "text"
+								},
+								{
+									"key": "profile_picture",
+									"type": "file",
+									"description": "Upload profile image (max 5MB, jpeg/png/jpg/gif/webp)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						}
+					}
+				},
+				{
+					"name": "Get User Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["users", "{{user_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Search Users (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": null,\n    \"email\": null,\n    \"gender\": null,\n    \"skip\": 0,\n    \"take\": 10,\n    \"current_job\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users/search",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", "search"]
+						}
+					}
+				},
+				{
+					"name": "Block User (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/users/{{user_id}}/block",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", "{{user_id}}", "block"]
+						}
+					}
+				},
+				{
+					"name": "Unblock User (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/users/{{user_id}}/unblock",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", "{{user_id}}", "unblock"]
 						}
 					}
 				}
