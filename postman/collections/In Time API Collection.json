@@ -593,6 +593,53 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "Payment Units",
+			"item": [
+				{
+					"name": "Get All Payment Units",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/payment-units",
+							"host": ["{{base_url}}"],
+							"path": ["payment-units"]
+						}
+					}
+				},
+				{
+					"name": "Create Payment Unit",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"hour\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payment-units",
+							"host": ["{{base_url}}"],
+							"path": ["payment-units"]
+						}
+					}
+				}
+			]
 		}
 	]
 }

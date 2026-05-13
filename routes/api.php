@@ -13,7 +13,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {});
 
 // Serving endpoints
 Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
@@ -32,6 +31,9 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::get('/servings/{servingId}/comments', [\App\Presentation\Controllers\ServingController::class, 'getComments']);
     Route::get('/comments/{commentId}/replies', [\App\Presentation\Controllers\ServingController::class, 'getReplies']);
     Route::post('/comments/{commentId}/react', [\App\Presentation\Controllers\ServingController::class, 'reactToComment']);
+    Route::get('/payment-units', [\App\Presentation\Controllers\PaymentUnitController::class, 'getAll']);
 });
 
-//test
+Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {
+    Route::post('/payment-units', [\App\Presentation\Controllers\PaymentUnitController::class, 'create']);
+});
