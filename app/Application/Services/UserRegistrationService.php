@@ -41,7 +41,7 @@ class UserRegistrationService implements UserRegistrationServiceInterface
                 ]);
 
                 // create default wallet for the user, ensure payment unit exists
-                $unit = PaymentUnit::firstOrCreate(['name' => 'hour']);
+                $unit = PaymentUnit::firstOrCreate(['name' => 'Hour']);
 
                 WalletModel::create([
                     'user_id' => $user->id,
