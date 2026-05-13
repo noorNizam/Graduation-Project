@@ -14,11 +14,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Create Payment Units (skip if exists)
-        $paymentUnits = ['usd', 'hour', 'syp'];
+        $paymentUnits = ['USD', 'Hour', 'SYP'];
         foreach ($paymentUnits as $unitName) {
             PaymentUnit::firstOrCreate(['name' => $unitName]);
         }
-        $hourUnit = PaymentUnit::where('name', 'hour')->first();
+        $hourUnit = PaymentUnit::where('name', 'Hour')->first();
 
         // 2. Create Serving Types (skip if exists)
         $servingTypes = ['paid', 'unpaid'];
