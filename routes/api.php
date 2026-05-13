@@ -31,6 +31,10 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::get('/servings/{servingId}/comments', [\App\Presentation\Controllers\ServingController::class, 'getComments']);
     Route::get('/comments/{commentId}/replies', [\App\Presentation\Controllers\ServingController::class, 'getReplies']);
     Route::post('/comments/{commentId}/react', [\App\Presentation\Controllers\ServingController::class, 'reactToComment']);
+});
+
+// Payment units - GET is accessible to all authenticated users, POST only for admins
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payment-units', [\App\Presentation\Controllers\PaymentUnitController::class, 'getAll']);
 });
 
