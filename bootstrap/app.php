@@ -39,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 if ($e instanceof \Illuminate\Auth\AuthenticationException) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Unauthenticated'
+                        'message' => 'Unauthenticated',
                     ], 401);
                 }
 
@@ -47,7 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 if ($e instanceof \Symfony\Component\Routing\Exception\RouteNotFoundException) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Unauthenticated'
+                        'message' => 'Unauthenticated',
                     ], 401);
                 }
             }

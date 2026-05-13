@@ -62,6 +62,16 @@ class AuthController
 
         $user = auth()->user();
 
+        // Prevent blocked users from logging in
+        if (! $user->is_active) {
+            auth()->logout();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account has been deactivated. Contact support.',
+            ], 403);
+        }
+
         // Create token
         $token = $user->createToken('auth-token')->plainTextToken;
 

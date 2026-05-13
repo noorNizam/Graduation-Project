@@ -13,7 +13,6 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-
 // Serving endpoints
 Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/servings/search', [\App\Presentation\Controllers\ServingController::class, 'getServings']);
@@ -40,4 +39,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {
     Route::post('/payment-units', [\App\Presentation\Controllers\PaymentUnitController::class, 'create']);
+});
+
+// User profile (own update) — user role only
+// Uses POST (not PUT) because PHP doesn't populate $_POST for multipart PUT requests
+Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
+    Route::post('/profile', [\App\Presentation\Controllers\UserManagementController::class, 'updateProfile']);
+});
+
+// User details — all authenticated users
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/users/{id}', [\App\Presentation\Controllers\UserManagementController::class, 'getUserById']);
+});
+
+// Admin user management
+Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {
+    Route::post('/admin/users/search', [\App\Presentation\Controllers\UserManagementController::class, 'searchUsers']);
+    Route::put('/admin/users/{id}/block', [\App\Presentation\Controllers\UserManagementController::class, 'blockUser']);
+    Route::put('/admin/users/{id}/unblock', [\App\Presentation\Controllers\UserManagementController::class, 'unblockUser']);
 });

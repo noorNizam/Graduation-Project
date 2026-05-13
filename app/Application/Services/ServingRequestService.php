@@ -197,7 +197,7 @@ class ServingRequestService implements ServingRequestServiceInterface
                             'requester_full_name' => $request->requester->full_name,
                             'message' => $request->message,
                             'status' => $request->status,
-                            'created_at' => $request->created_at
+                            'created_at' => $request->created_at,
                         ];
                     })->values(),
                 ];

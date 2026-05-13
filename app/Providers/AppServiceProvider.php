@@ -6,6 +6,7 @@ use App\Application\Services\EmailVerificationService;
 use App\Application\Services\PaymentUnitService;
 use App\Application\Services\ServingRequestService;
 use App\Application\Services\ServingService;
+use App\Application\Services\UserManagementService;
 use App\Application\Services\UserRegistrationService;
 use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
 use App\Domain\Repositories\PaymentUnitRepositoryInterface;
@@ -15,6 +16,7 @@ use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Domain\Services\PaymentUnitServiceInterface;
 use App\Domain\Services\ServingRequestServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
+use App\Domain\Services\UserManagementServiceInterface;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
 use App\Infrastructure\Repositories\PaymentUnitRepository;
@@ -73,6 +75,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             PaymentUnitServiceInterface::class,
             PaymentUnitService::class
+        );
+
+        // User Management bindings
+        $this->app->bind(
+            UserManagementServiceInterface::class,
+            UserManagementService::class
         );
     }
 

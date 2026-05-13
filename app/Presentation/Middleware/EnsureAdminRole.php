@@ -20,6 +20,10 @@ class EnsureAdminRole
             return response()->json(['success' => false, 'message' => 'unauthorized'], 403);
         }
 
+        if (! $user->is_active) {
+            return response()->json(['success' => false, 'message' => 'Account deactivated'], 403);
+        }
+
         return $next($request);
     }
 }

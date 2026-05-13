@@ -29,6 +29,11 @@ class EnsureUserRole
             return response()->json(['success' => false, 'message' => 'unauthorized'], 403);
         }
 
+        // Prevent deactivated users from accessing protected routes
+        if (! $user->is_active) {
+            return response()->json(['success' => false, 'message' => 'Account deactivated'], 403);
+        }
+
         return $next($request);
     }
 }

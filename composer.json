@@ -37,6 +37,11 @@
         }
     },
     "scripts": {
+        "prepare": [
+            "@php artisan migrate --force",
+            "@php artisan db:seed --force",
+            "@php artisan storage:link"
+        ],
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
