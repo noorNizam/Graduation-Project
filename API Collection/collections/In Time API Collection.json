@@ -25,6 +25,11 @@
 			"key": "user_id",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "category_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -641,6 +646,86 @@
 							"raw": "{{base_url}}/payment-units",
 							"host": ["{{base_url}}"],
 							"path": ["payment-units"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "Search Categories",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": null,\n    \"parent_id\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/search",
+							"host": ["{{base_url}}"],
+							"path": ["categories", "search"]
+						}
+					}
+				},
+				{
+					"name": "Create Category (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New Category\",\n    \"parent_id\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories",
+							"host": ["{{base_url}}"],
+							"path": ["categories"]
+						}
+					}
+				},
+				{
+					"name": "Update Category (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Category Name\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/{{category_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["categories", "{{category_id}}"]
 						}
 					}
 				}

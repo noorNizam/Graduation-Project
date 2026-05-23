@@ -22,10 +22,6 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Presentation\Middleware\RequestMonitor::class,
         ]);
 
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
-
         $middleware->alias([
             'ensure.admin' => \App\Presentation\Middleware\EnsureAdminRole::class,
             'ensure.user' => \App\Presentation\Middleware\EnsureUserRole::class,

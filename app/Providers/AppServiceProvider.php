@@ -4,22 +4,26 @@ namespace App\Providers;
 
 use App\Application\Services\EmailVerificationService;
 use App\Application\Services\PaymentUnitService;
+use App\Application\Services\ServingCategoryService;
 use App\Application\Services\ServingRequestService;
 use App\Application\Services\ServingService;
 use App\Application\Services\UserManagementService;
 use App\Application\Services\UserRegistrationService;
 use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
 use App\Domain\Repositories\PaymentUnitRepositoryInterface;
+use App\Domain\Repositories\ServingCategoryRepositoryInterface;
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Domain\Services\PaymentUnitServiceInterface;
+use App\Domain\Services\ServingCategoryServiceInterface;
 use App\Domain\Services\ServingRequestServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Domain\Services\UserManagementServiceInterface;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
 use App\Infrastructure\Repositories\PaymentUnitRepository;
+use App\Infrastructure\Repositories\ServingCategoryRepository;
 use App\Infrastructure\Repositories\ServingRepository;
 use App\Infrastructure\Repositories\ServingRequestRepository;
 use Illuminate\Support\ServiceProvider;
@@ -81,6 +85,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             UserManagementServiceInterface::class,
             UserManagementService::class
+        );
+
+        // Serving Category bindings
+        $this->app->bind(
+            ServingCategoryRepositoryInterface::class,
+            ServingCategoryRepository::class
+        );
+
+        $this->app->bind(
+            ServingCategoryServiceInterface::class,
+            ServingCategoryService::class
         );
     }
 
