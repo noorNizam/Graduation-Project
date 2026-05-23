@@ -24,3 +24,5 @@ Thumbs.db
 # Local graph of class relations (kept out of repository)
 /graph/
 README.md
+/opencode.json
+/.opencode/

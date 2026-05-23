@@ -1,60 +1,90 @@
 <?php
 
 use App\Presentation\Controllers\AuthController;
+use App\Presentation\Controllers\PaymentUnitController;
+use App\Presentation\Controllers\ServingCategoryController;
+use App\Presentation\Controllers\ServingController;
+use App\Presentation\Controllers\ServingRequestController;
 use App\Presentation\Controllers\TroubleshootingController;
+use App\Presentation\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
+// TroubleshootingController
 Route::get('/test-monitor', [TroubleshootingController::class, 'testMonitor']);
 Route::get('/test-error', [TroubleshootingController::class, 'testError']);
 
+// AuthController
 Route::prefix('auth')->group(function () {
     Route::post('/send-otp', [AuthController::class, 'sendVerificationOtp']);
     Route::post('/register-customer', [AuthController::class, 'registerCustomer']);
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-// Serving endpoints
+// ServingController
 Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
-    Route::post('/servings/search', [\App\Presentation\Controllers\ServingController::class, 'getServings']);
-    Route::post('/servings/add-paid', [\App\Presentation\Controllers\ServingController::class, 'addPaidServing']);
-    Route::put('/servings/add-paid/{id}', [\App\Presentation\Controllers\ServingController::class, 'updatePaid']);
-
-    Route::post('/servings/requests', [\App\Presentation\Controllers\ServingRequestController::class, 'create']);
-    Route::put('/servings/requests/{id}/accept', [\App\Presentation\Controllers\ServingRequestController::class, 'accept']);
-    Route::put('/servings/requests/{id}/reject', [\App\Presentation\Controllers\ServingRequestController::class, 'reject']);
-    Route::get('/servings/requests/serving/{servingId}', [\App\Presentation\Controllers\ServingRequestController::class, 'listByServing']);
-    Route::get('/servings/requests/my', [\App\Presentation\Controllers\ServingRequestController::class, 'listByRequester']);
-    Route::get('/servings/requests/received', [\App\Presentation\Controllers\ServingRequestController::class, 'listByOwner']);
-
-    Route::post('/servings/{servingId}/comments', [\App\Presentation\Controllers\ServingController::class, 'addComment']);
-    Route::get('/servings/{servingId}/comments', [\App\Presentation\Controllers\ServingController::class, 'getComments']);
-    Route::get('/comments/{commentId}/replies', [\App\Presentation\Controllers\ServingController::class, 'getReplies']);
-    Route::post('/comments/{commentId}/react', [\App\Presentation\Controllers\ServingController::class, 'reactToComment']);
+    Route::post('/servings/add-paid', [ServingController::class, 'addPaidServing']);
+    Route::put('/servings/add-paid/{id}', [ServingController::class, 'updatePaid']);
+    Route::post('/servings/{servingId}/comments', [ServingController::class, 'addComment']);
+    Route::post('/comments/{commentId}/react', [ServingController::class, 'reactToComment']);
 });
 
-// Payment units - GET is accessible to all authenticated users, POST only for admins
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/servings/{servingId}/comments', [ServingController::class, 'getComments']);
+    Route::get('/comments/{commentId}/replies', [ServingController::class, 'getReplies']);
+});
+
+// ServingController
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/servings/search', [ServingController::class, 'getServings']);
+});
+
+// ServingRequestController
+Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
+    Route::post('/servings/requests', [ServingRequestController::class, 'create']);
+    Route::put('/servings/requests/{id}/accept', [ServingRequestController::class, 'accept']);
+    Route::put('/servings/requests/{id}/reject', [ServingRequestController::class, 'reject']);
+});
+
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/servings/requests/my', [ServingRequestController::class, 'listByRequester']);
+    Route::get('/servings/requests/received', [ServingRequestController::class, 'listByOwner']);
+    Route::get('/servings/requests/serving/{servingId}', [ServingRequestController::class, 'listByServing']);
+});
+
+
+
+
+// PaymentUnitController
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/payment-units', [\App\Presentation\Controllers\PaymentUnitController::class, 'getAll']);
+    Route::get('/payment-units', [PaymentUnitController::class, 'getAll']);
 });
 
 Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {
-    Route::post('/payment-units', [\App\Presentation\Controllers\PaymentUnitController::class, 'create']);
+    Route::post('/payment-units', [PaymentUnitController::class, 'create']);
 });
 
-// User profile (own update) — user role only
-// Uses POST (not PUT) because PHP doesn't populate $_POST for multipart PUT requests
-Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
-    Route::post('/profile', [\App\Presentation\Controllers\UserManagementController::class, 'updateProfile']);
-});
-
-// User details — all authenticated users
+// ServingCategoryController
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/users/{id}', [\App\Presentation\Controllers\UserManagementController::class, 'getUserById']);
+    Route::post('/categories/search', [ServingCategoryController::class, 'getCategories']);
 });
 
-// Admin user management
 Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {
-    Route::post('/admin/users/search', [\App\Presentation\Controllers\UserManagementController::class, 'searchUsers']);
-    Route::put('/admin/users/{id}/block', [\App\Presentation\Controllers\UserManagementController::class, 'blockUser']);
-    Route::put('/admin/users/{id}/unblock', [\App\Presentation\Controllers\UserManagementController::class, 'unblockUser']);
+    Route::post('/categories', [ServingCategoryController::class, 'create']);
+    Route::put('/categories/{id}', [ServingCategoryController::class, 'update']);
+});
+
+// UserManagementController
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/users/{id}', [UserManagementController::class, 'getUserById']);
+});
+
+Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
+    Route::post('/profile', [UserManagementController::class, 'updateProfile']);
+});
+
+Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {
+    Route::post('/admin/users/search', [UserManagementController::class, 'searchUsers']);
+    Route::put('/admin/users/{id}/block', [UserManagementController::class, 'blockUser']);
+    Route::put('/admin/users/{id}/unblock', [UserManagementController::class, 'unblockUser']);
 });
