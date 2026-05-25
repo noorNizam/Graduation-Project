@@ -102,15 +102,61 @@
 					"name": "Register Customer",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"full_name\": \"John Doe\",\n    \"email\": \"user@example.com\",\n    \"password\": \"StrongP@ssw0rd123\",\n    \"phone\": \"+963912345678\",\n    \"otp\": \"123456\",\n    \"gender\": \"male\",\n    \"current_job\": \"Developer\",\n    \"address\": \"Damascus, Syria\",\n    \"birth_date\": \"1990-01-15\"\n}"
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "full_name",
+									"value": "John Doe",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "user@example.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "StrongP@ssw0rd123",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "+963912345678",
+									"type": "text"
+								},
+								{
+									"key": "otp",
+									"value": "123456",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "current_job",
+									"value": "Developer",
+									"type": "text"
+								},
+								{
+									"key": "address",
+									"value": "Damascus, Syria",
+									"type": "text"
+								},
+								{
+									"key": "birth_date",
+									"value": "1990-01-15",
+									"type": "text"
+								},
+								{
+									"key": "profile_picture",
+									"type": "file",
+									"description": "Upload profile picture (max 5MB, jpeg/png/jpg/gif/webp)"
+								}
+							]
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/register-customer",

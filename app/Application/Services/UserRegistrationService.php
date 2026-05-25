@@ -9,6 +9,8 @@ use App\Infrastructure\Models\User;
 use App\Infrastructure\Models\WalletModel;
 use App\Traits\HandlesDatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class UserRegistrationService implements UserRegistrationServiceInterface
 {
@@ -18,7 +20,7 @@ class UserRegistrationService implements UserRegistrationServiceInterface
         private EmailVerificationServiceInterface $emailVerificationService
     ) {}
 
-    public function registerCustomer(array $userData, string $otp): array
+    public function registerCustomer(array $userData, string $otp, $profilePicture = null): array
     {
         $otpVerification = $this->emailVerificationService->verifyOtp($userData['email'], $otp);
 
@@ -27,7 +29,7 @@ class UserRegistrationService implements UserRegistrationServiceInterface
         }
 
         $transactionResult = $this->executeWithTransaction(
-            function () use ($userData) {
+            function () use ($userData, $profilePicture) {
                 $user = User::create([
                     'full_name' => $userData['full_name'],
                     'current_job' => $userData['current_job'] ?? null,
@@ -39,6 +41,13 @@ class UserRegistrationService implements UserRegistrationServiceInterface
                     'birth_date' => $userData['birth_date'] ?? null,
                     'role' => User::ROLE_USER,
                 ]);
+
+                if ($profilePicture) {
+                    $path = sprintf('profiles/%s/%s', $user->id, date('Y/m/d'));
+                    $filename = sprintf('%s_%s.%s', time(), Str::random(8), $profilePicture->getClientOriginalExtension());
+                    $stored = $profilePicture->storeAs($path, $filename, 'public');
+                    $user->update(['profile_picture' => Storage::url($stored)]);
+                }
 
                 // create default wallet for the user, ensure payment unit exists
                 $unit = PaymentUnit::firstOrCreate(['name' => 'Hour']);
@@ -71,6 +80,8 @@ class UserRegistrationService implements UserRegistrationServiceInterface
                 'gender' => $user->gender,
                 'email' => $user->email,
                 'phone' => $user->phone_number,
+                'birth_date' => $user->birth_date?->format('Y-m-d'),
+                'profile_picture' => $user->profile_picture ? asset($user->profile_picture) : null,
                 'role' => $user->role,
             ],
         ];
