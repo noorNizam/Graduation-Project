@@ -27,6 +27,7 @@ class AuthController
     public function registerCustomer(RegisterUserRequest $request)
     {
         $validated = $request->validated();
+        $profilePicture = $request->file('profile_picture');
 
         $result = $this->userRegistrationService->registerCustomer(
             [
@@ -39,7 +40,8 @@ class AuthController
                 'phone' => $validated['phone'] ?? null,
                 'birth_date' => $validated['birth_date'] ?? null,
             ],
-            $validated['otp']
+            $validated['otp'],
+            $profilePicture
         );
 
         return response()->json($result, $result['success'] ? 200 : 500);
