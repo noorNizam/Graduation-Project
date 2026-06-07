@@ -36,6 +36,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // ServingController
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/servings/search', [ServingController::class, 'getServings']);
+    Route::post('/servings/nearby', [ServingController::class, 'getNearbyServings']);
 });
 
 // ServingRequestController

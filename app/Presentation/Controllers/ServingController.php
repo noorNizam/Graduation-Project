@@ -6,6 +6,7 @@ use App\Domain\Services\ServingServiceInterface;
 use App\Presentation\Requests\AddPaidServingRequest;
 use App\Presentation\Requests\CreateCommentRequest;
 use App\Presentation\Requests\GetServingsRequest;
+use App\Presentation\Requests\NearbyServingsRequest;
 use App\Presentation\Requests\ReactCommentRequest;
 use App\Presentation\Requests\UpdatePaidServingRequest;
 
@@ -46,6 +47,19 @@ class ServingController
             return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
         }
 
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function getNearbyServings(NearbyServingsRequest $request)
+    {
+        $validated = $request->validated();
+        $result = $this->servingService->getNearbyServings(
+            auth()->id(),
+            $validated['lat'],
+            $validated['lng'],
+            $validated['skip'] ?? null,
+            $validated['take'] ?? null,
+        );
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
