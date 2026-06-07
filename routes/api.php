@@ -35,6 +35,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // ServingController
 Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/servings/{id}', [ServingController::class, 'getById']);
     Route::post('/servings/search', [ServingController::class, 'getServings']);
     Route::post('/servings/nearby', [ServingController::class, 'getNearbyServings']);
 });
@@ -46,15 +47,11 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::put('/servings/requests/{id}/reject', [ServingRequestController::class, 'reject']);
 });
 
-
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/servings/requests/my', [ServingRequestController::class, 'listByRequester']);
     Route::get('/servings/requests/received', [ServingRequestController::class, 'listByOwner']);
     Route::get('/servings/requests/serving/{servingId}', [ServingRequestController::class, 'listByServing']);
 });
-
-
-
 
 // PaymentUnitController
 Route::middleware('auth:sanctum')->group(function () {

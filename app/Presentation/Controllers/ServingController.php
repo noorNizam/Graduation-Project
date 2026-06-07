@@ -50,6 +50,13 @@ class ServingController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
+    public function getById(int $id)
+    {
+        $result = $this->servingService->getServingById($id);
+
+        return response()->json($result, $result['success'] ? 200 : 404);
+    }
+
     public function getNearbyServings(NearbyServingsRequest $request)
     {
         $validated = $request->validated();
@@ -60,6 +67,7 @@ class ServingController
             $validated['skip'] ?? null,
             $validated['take'] ?? null,
         );
+
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 

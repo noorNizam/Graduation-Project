@@ -24,4 +24,6 @@ interface ServingServiceInterface
     public function getServings(?int $excludeUserId, ?int $servingTypeId, ?int $paymentUnitId, ?int $categoryId, ?int $skip, ?int $take, ?string $name): array;
 
     public function getNearbyServings(int $userId, float $lat, float $lng, ?int $skip, ?int $take): array;
+
+    public function getServingById(int $id): array;
 }
