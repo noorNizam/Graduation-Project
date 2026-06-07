@@ -244,6 +244,42 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
+    public function getServingById(int $id): array
+    {
+        $serving = $this->repository->findById($id);
+
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        $serving->load(['user', 'category', 'unit', 'servingType']);
+
+        return [
+            'success' => true,
+            'data' => [
+                'id' => $serving->id,
+                'title' => $serving->title,
+                'description' => $serving->description,
+                'cost_amount' => $serving->cost_amount,
+                'image_url' => $serving->image_url,
+                'location_lat' => $serving->location_lat,
+                'location_lng' => $serving->location_lng,
+                'location_address' => $serving->location_address,
+                'meeting_type' => $serving->meeting_type,
+                'created_at' => $serving->created_at,
+                'updated_at' => $serving->updated_at,
+                'user_full_name' => $serving->user->full_name ?? null,
+                'user_email' => $serving->user->email ?? null,
+                'category_name' => $serving->category->name ?? null,
+                'unit_name' => $serving->unit->name ?? null,
+                'serving_type_name' => $serving->servingType->name ?? null,
+            ],
+        ];
+    }
+
     public function getNearbyServings(int $userId, float $lat, float $lng, ?int $skip, ?int $take): array
     {
         $radius = 1;
