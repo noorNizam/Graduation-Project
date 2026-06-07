@@ -244,6 +244,57 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
+    public function getNearbyServings(int $userId, float $lat, float $lng, ?int $skip, ?int $take): array
+    {
+        $radius = 1;
+        $latDelta = $radius / 111;
+        $lngDelta = $radius / (111 * cos(deg2rad($lat)));
+
+        $minLat = $lat - $latDelta;
+        $maxLat = $lat + $latDelta;
+        $minLng = $lng - $lngDelta;
+        $maxLng = $lng + $lngDelta;
+
+        $servings = $this->repository->findNearby(
+            $lat,
+            $lng,
+            $minLat,
+            $maxLat,
+            $minLng,
+            $maxLng,
+            $userId,
+        );
+
+        $page = $servings->slice($skip ?? 0, $take ?? 20);
+
+        $dto = $page->map(function ($serving) {
+            return [
+                'id' => $serving->id,
+                'title' => $serving->title,
+                'description' => $serving->description,
+                'cost_amount' => $serving->cost_amount,
+                'image_url' => $serving->image_url,
+                'location_lat' => $serving->location_lat,
+                'location_lng' => $serving->location_lng,
+                'location_address' => $serving->location_address,
+                'meeting_type' => $serving->meeting_type,
+                'distance' => round($serving->distance, 3),
+                'created_at' => $serving->created_at,
+                'updated_at' => $serving->updated_at,
+                'user_full_name' => $serving->user->full_name ?? null,
+                'user_email' => $serving->user->email ?? null,
+                'category_name' => $serving->category->name ?? null,
+                'unit_name' => $serving->unit->name ?? null,
+                'serving_type_name' => $serving->servingType->name ?? null,
+            ];
+        })->values();
+
+        return [
+            'success' => true,
+            'data' => $dto,
+        ];
+    }
+
     public function getServings(?int $excludeUserId, ?int $servingTypeId, ?int $paymentUnitId, ?int $categoryId, ?int $skip, ?int $take, ?string $name): array
     {
         $query = \App\Infrastructure\Models\Serving::with(['user', 'category', 'unit', 'servingType'])
