@@ -18,6 +18,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/send-otp', [AuthController::class, 'sendVerificationOtp']);
     Route::post('/register-customer', [AuthController::class, 'registerCustomer']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
 // ServingController

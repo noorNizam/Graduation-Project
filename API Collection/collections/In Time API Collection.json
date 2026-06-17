@@ -30,6 +30,11 @@
 			"key": "category_id",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -175,6 +180,7 @@
 									"var jsonData = pm.response.json();",
 									"if (jsonData.success && jsonData.token) {",
 									"    pm.collectionVariables.set('token', jsonData.token);",
+									"    pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
 									"}"
 								],
 								"type": "text/javascript"
@@ -197,6 +203,42 @@
 							"raw": "{{base_url}}/auth/login",
 							"host": ["{{base_url}}"],
 							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.token) {",
+									"    pm.collectionVariables.set('token', jsonData.token);",
+									"    pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "refresh"]
 						}
 					}
 				}
