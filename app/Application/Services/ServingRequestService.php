@@ -165,7 +165,7 @@ class ServingRequestService implements ServingRequestServiceInterface
 
         return [
             'success' => true,
-            'data' => $requests->load(['serving']),
+            'data' => $requests->load(['serving.user' => fn ($q) => $q->select(['id', 'full_name'])]),
         ];
     }
 
