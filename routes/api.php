@@ -7,6 +7,7 @@ use App\Presentation\Controllers\ServingController;
 use App\Presentation\Controllers\ServingRequestController;
 use App\Presentation\Controllers\TroubleshootingController;
 use App\Presentation\Controllers\UserManagementController;
+use App\Presentation\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
 
 // TroubleshootingController
@@ -60,6 +61,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // PaymentUnitController
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payment-units', [PaymentUnitController::class, 'getAll']);
+});
+
+// WalletController
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/wallets', [WalletController::class, 'getMyWallets']);
 });
 
 Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {

@@ -9,11 +9,13 @@ use App\Application\Services\ServingRequestService;
 use App\Application\Services\ServingService;
 use App\Application\Services\UserManagementService;
 use App\Application\Services\UserRegistrationService;
+use App\Application\Services\WalletService;
 use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
 use App\Domain\Repositories\PaymentUnitRepositoryInterface;
 use App\Domain\Repositories\ServingCategoryRepositoryInterface;
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
+use App\Domain\Repositories\WalletRepositoryInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Domain\Services\PaymentUnitServiceInterface;
 use App\Domain\Services\ServingCategoryServiceInterface;
@@ -21,11 +23,13 @@ use App\Domain\Services\ServingRequestServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Domain\Services\UserManagementServiceInterface;
 use App\Domain\Services\UserRegistrationServiceInterface;
+use App\Domain\Services\WalletServiceInterface;
 use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
 use App\Infrastructure\Repositories\PaymentUnitRepository;
 use App\Infrastructure\Repositories\ServingCategoryRepository;
 use App\Infrastructure\Repositories\ServingRepository;
 use App\Infrastructure\Repositories\ServingRequestRepository;
+use App\Infrastructure\Repositories\WalletRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -96,6 +100,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             ServingCategoryServiceInterface::class,
             ServingCategoryService::class
+        );
+
+        // Wallet bindings
+        $this->app->bind(
+            WalletRepositoryInterface::class,
+            WalletRepository::class
+        );
+
+        $this->app->bind(
+            WalletServiceInterface::class,
+            WalletService::class
         );
     }
 
