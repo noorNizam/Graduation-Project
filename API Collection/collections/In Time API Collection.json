@@ -452,6 +452,31 @@
 							"path": ["servings", "nearby"]
 						}
 					}
+				},
+				{
+					"name": "Update Availability Slots",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"slots\": [\n        {\n            \"day_of_week\": 1,\n            \"start_time\": \"09:00:00\",\n            \"end_time\": \"17:00:00\",\n            \"notes\": \"Monday availability\"\n        },\n        {\n            \"date\": \"2026-06-20\",\n            \"start_time\": \"10:00:00\",\n            \"end_time\": \"14:00:00\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/availability-slots",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "availability-slots"]
+						}
+					}
 				}
 			]
 		},

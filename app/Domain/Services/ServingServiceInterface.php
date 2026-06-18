@@ -26,4 +26,6 @@ interface ServingServiceInterface
     public function getNearbyServings(int $userId, float $lat, float $lng, ?int $skip, ?int $take): array;
 
     public function getServingById(int $id): array;
+
+    public function updateAvailabilitySlots(int $servingId, int $userId, array $slots): array;
 }

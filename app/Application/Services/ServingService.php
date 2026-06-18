@@ -441,6 +441,52 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
+    public function updateAvailabilitySlots(int $servingId, int $userId, array $slots): array
+    {
+        $serving = $this->repository->findById($servingId);
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        if ($serving->user_id !== $userId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+            ];
+        }
+
+        $transactionResult = $this->executeWithTransaction(function () use ($serving, $slots) {
+            $serving->availabilitySlots()->delete();
+
+            $created = [];
+            foreach ($slots as $slot) {
+                $created[] = \App\Infrastructure\Models\ServingAvailabilitySlot::create([
+                    'serving_id' => $serving->id,
+                    'day_of_week' => $slot['day_of_week'] ?? null,
+                    'date' => $slot['date'] ?? null,
+                    'start_time' => $slot['start_time'],
+                    'end_time' => $slot['end_time'],
+                    'notes' => $slot['notes'] ?? null,
+                ]);
+            }
+
+            return $created;
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
+
+        return [
+            'success' => true,
+            'data' => $transactionResult['data'],
+            'message' => 'Availability slots updated successfully',
+        ];
+    }
+
     private function formatComment($comment): array
     {
         return [

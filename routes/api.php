@@ -27,6 +27,7 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::put('/servings/add-paid/{id}', [ServingController::class, 'updatePaid']);
     Route::post('/servings/{servingId}/comments', [ServingController::class, 'addComment']);
     Route::post('/comments/{commentId}/react', [ServingController::class, 'reactToComment']);
+    Route::put('/servings/{servingId}/availability-slots', [ServingController::class, 'updateAvailabilitySlots']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {

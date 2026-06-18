@@ -8,6 +8,7 @@ use App\Presentation\Requests\CreateCommentRequest;
 use App\Presentation\Requests\GetServingsRequest;
 use App\Presentation\Requests\NearbyServingsRequest;
 use App\Presentation\Requests\ReactCommentRequest;
+use App\Presentation\Requests\UpdateAvailabilitySlotsRequest;
 use App\Presentation\Requests\UpdatePaidServingRequest;
 
 class ServingController
@@ -126,5 +127,20 @@ class ServingController
         );
 
         return response()->json($result, $result['success'] ? 200 : 404);
+    }
+
+    public function updateAvailabilitySlots(int $servingId, UpdateAvailabilitySlotsRequest $request)
+    {
+        $result = $this->servingService->updateAvailabilitySlots(
+            $servingId,
+            auth()->id(),
+            $request->validated()['slots'],
+        );
+
+        if (isset($result['success']) && $result['success'] === false && isset($result['message']) && $result['message'] === 'Forbidden') {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : 500);
     }
 }
