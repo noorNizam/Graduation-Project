@@ -7,6 +7,7 @@ use App\Presentation\Controllers\ServingController;
 use App\Presentation\Controllers\ServingRequestController;
 use App\Presentation\Controllers\TroubleshootingController;
 use App\Presentation\Controllers\UserManagementController;
+use App\Presentation\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
 
 // TroubleshootingController
@@ -27,6 +28,7 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::put('/servings/add-paid/{id}', [ServingController::class, 'updatePaid']);
     Route::post('/servings/{servingId}/comments', [ServingController::class, 'addComment']);
     Route::post('/comments/{commentId}/react', [ServingController::class, 'reactToComment']);
+    Route::put('/servings/{servingId}/availability-slots', [ServingController::class, 'updateAvailabilitySlots']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -36,6 +38,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // ServingController
 Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/servings/{servingId}/availability-slots', [ServingController::class, 'getAvailabilitySlots']);
     Route::get('/servings/{id}', [ServingController::class, 'getById']);
     Route::post('/servings/search', [ServingController::class, 'getServings']);
     Route::post('/servings/nearby', [ServingController::class, 'getNearbyServings']);
@@ -46,6 +49,7 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/servings/requests', [ServingRequestController::class, 'create']);
     Route::put('/servings/requests/{id}/accept', [ServingRequestController::class, 'accept']);
     Route::put('/servings/requests/{id}/reject', [ServingRequestController::class, 'reject']);
+    Route::delete('/servings/requests/{id}', [ServingRequestController::class, 'remove']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -57,6 +61,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // PaymentUnitController
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/payment-units', [PaymentUnitController::class, 'getAll']);
+});
+
+// WalletController
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/wallets', [WalletController::class, 'getMyWallets']);
 });
 
 Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {

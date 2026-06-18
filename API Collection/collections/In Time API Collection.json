@@ -35,6 +35,11 @@
 			"key": "refresh_token",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "request_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -447,6 +452,48 @@
 							"path": ["servings", "nearby"]
 						}
 					}
+				},
+				{
+					"name": "Update Availability Slots",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"slots\": [\n        {\n            \"day_of_week\": 1,\n            \"start_time\": \"09:00:00\",\n            \"end_time\": \"17:00:00\",\n            \"notes\": \"Monday availability\"\n        },\n        {\n            \"date\": \"2026-06-20\",\n            \"start_time\": \"10:00:00\",\n            \"end_time\": \"14:00:00\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/availability-slots",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "availability-slots"]
+						}
+					}
+				},
+				{
+					"name": "Get Availability Slots",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/availability-slots",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "availability-slots"]
+						}
+					}
 				}
 			]
 		},
@@ -572,6 +619,23 @@
 							"raw": "{{base_url}}/servings/requests/received",
 							"host": ["{{base_url}}"],
 							"path": ["servings", "requests", "received"]
+						}
+					}
+				},
+				{
+					"name": "Delete Serving Request",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/{{request_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "{{request_id}}"]
 						}
 					}
 				}
@@ -856,6 +920,28 @@
 							"raw": "{{base_url}}/categories/{{category_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["categories", "{{category_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Wallets",
+			"item": [
+				{
+					"name": "Get My Wallets",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/wallets",
+							"host": ["{{base_url}}"],
+							"path": ["wallets"]
 						}
 					}
 				}

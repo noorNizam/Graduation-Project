@@ -244,7 +244,7 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
-    public function getServingById(int $id): array
+    public function getServingById(int $id, ?int $userId = null): array
     {
         $serving = $this->repository->findById($id);
 
@@ -256,6 +256,14 @@ class ServingService implements ServingServiceInterface
         }
 
         $serving->load(['user', 'category', 'unit', 'servingType']);
+
+        $requested = false;
+        if ($userId !== null) {
+            $requested = \App\Infrastructure\Models\ServingRequest::where('serving_id', $id)
+                ->where('requester_id', $userId)
+                ->where('status', '!=', \App\Infrastructure\Models\ServingRequest::STATUS_COMPLETED)
+                ->exists();
+        }
 
         return [
             'success' => true,
@@ -276,6 +284,7 @@ class ServingService implements ServingServiceInterface
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
                 'serving_type_name' => $serving->servingType->name ?? null,
+                'requested' => $requested,
             ],
         ];
     }
@@ -303,7 +312,18 @@ class ServingService implements ServingServiceInterface
 
         $page = $servings->slice($skip ?? 0, $take ?? 20);
 
-        $dto = $page->map(function ($serving) {
+        $servingIds = $servings->pluck('id')->toArray();
+        $requestedServingIds = [];
+        if ($userId !== null && ! empty($servingIds)) {
+            $requestedServingIds = \App\Infrastructure\Models\ServingRequest::whereIn('serving_id', $servingIds)
+                ->where('requester_id', $userId)
+                ->where('status', '!=', \App\Infrastructure\Models\ServingRequest::STATUS_COMPLETED)
+                ->pluck('serving_id')
+                ->unique()
+                ->toArray();
+        }
+
+        $dto = $page->map(function ($serving) use ($requestedServingIds) {
             return [
                 'id' => $serving->id,
                 'title' => $serving->title,
@@ -322,6 +342,7 @@ class ServingService implements ServingServiceInterface
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
                 'serving_type_name' => $serving->servingType->name ?? null,
+                'requested' => in_array($serving->id, $requestedServingIds),
             ];
         })->values();
 
@@ -369,7 +390,18 @@ class ServingService implements ServingServiceInterface
 
         $servings = $query->get();
 
-        $dto = $servings->map(function ($serving) {
+        $servingIds = $servings->pluck('id')->toArray();
+        $requestedServingIds = [];
+        if ($excludeUserId !== null && ! empty($servingIds)) {
+            $requestedServingIds = \App\Infrastructure\Models\ServingRequest::whereIn('serving_id', $servingIds)
+                ->where('requester_id', $excludeUserId)
+                ->where('status', '!=', \App\Infrastructure\Models\ServingRequest::STATUS_COMPLETED)
+                ->pluck('serving_id')
+                ->unique()
+                ->toArray();
+        }
+
+        $dto = $servings->map(function ($serving) use ($requestedServingIds) {
             return [
                 'id' => $serving->id,
                 'title' => $serving->title,
@@ -387,6 +419,7 @@ class ServingService implements ServingServiceInterface
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
                 'serving_type_name' => $serving->servingType->name ?? null,
+                'requested' => in_array($serving->id, $requestedServingIds),
             ];
         });
 
@@ -438,6 +471,70 @@ class ServingService implements ServingServiceInterface
             'success' => true,
             'data' => $reactionCounts,
             'message' => 'Reaction updated',
+        ];
+    }
+
+    public function updateAvailabilitySlots(int $servingId, int $userId, array $slots): array
+    {
+        $serving = $this->repository->findById($servingId);
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        if ($serving->user_id !== $userId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+            ];
+        }
+
+        $transactionResult = $this->executeWithTransaction(function () use ($serving, $slots) {
+            $serving->availabilitySlots()->delete();
+
+            $created = [];
+            foreach ($slots as $slot) {
+                $created[] = \App\Infrastructure\Models\ServingAvailabilitySlot::create([
+                    'serving_id' => $serving->id,
+                    'day_of_week' => $slot['day_of_week'] ?? null,
+                    'date' => $slot['date'] ?? null,
+                    'start_time' => $slot['start_time'],
+                    'end_time' => $slot['end_time'],
+                    'notes' => $slot['notes'] ?? null,
+                ]);
+            }
+
+            return $created;
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
+
+        return [
+            'success' => true,
+            'data' => $transactionResult['data'],
+            'message' => 'Availability slots updated successfully',
+        ];
+    }
+
+    public function getAvailabilitySlots(int $servingId): array
+    {
+        $serving = $this->repository->findById($servingId);
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        $slots = $serving->availabilitySlots()->get();
+
+        return [
+            'success' => true,
+            'data' => $slots,
         ];
     }
 
