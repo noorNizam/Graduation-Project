@@ -35,6 +35,11 @@
 			"key": "refresh_token",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "request_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -572,6 +577,23 @@
 							"raw": "{{base_url}}/servings/requests/received",
 							"host": ["{{base_url}}"],
 							"path": ["servings", "requests", "received"]
+						}
+					}
+				},
+				{
+					"name": "Delete Serving Request",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/{{request_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "{{request_id}}"]
 						}
 					}
 				}

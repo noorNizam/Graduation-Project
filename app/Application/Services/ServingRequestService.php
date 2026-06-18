@@ -163,9 +163,12 @@ class ServingRequestService implements ServingRequestServiceInterface
     {
         $requests = $this->requestRepository->findByRequesterId($requesterId, $status);
 
+        $requests->load(['serving.user' => fn ($q) => $q->select(['id', 'full_name'])]);
+        $requests->each(fn ($r) => $r->removable = $r->isPending());
+
         return [
             'success' => true,
-            'data' => $requests->load(['serving.user' => fn ($q) => $q->select(['id', 'full_name'])]),
+            'data' => $requests,
         ];
     }
 
@@ -206,6 +209,41 @@ class ServingRequestService implements ServingRequestServiceInterface
         return [
             'success' => true,
             'data' => $grouped,
+        ];
+    }
+
+    public function deleteRequest(int $requestId, int $userId): array
+    {
+        $servingRequest = $this->requestRepository->findById($requestId);
+        if (! $servingRequest) {
+            return [
+                'success' => false,
+                'message' => 'Request not found',
+                'status' => 404,
+            ];
+        }
+
+        if ($servingRequest->requester_id !== $userId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+                'status' => 403,
+            ];
+        }
+
+        if (! $servingRequest->isPending()) {
+            return [
+                'success' => false,
+                'message' => 'Only pending requests can be deleted',
+                'status' => 422,
+            ];
+        }
+
+        $this->requestRepository->delete($requestId);
+
+        return [
+            'success' => true,
+            'message' => 'Request deleted successfully',
         ];
     }
 }

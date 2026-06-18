@@ -46,6 +46,7 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/servings/requests', [ServingRequestController::class, 'create']);
     Route::put('/servings/requests/{id}/accept', [ServingRequestController::class, 'accept']);
     Route::put('/servings/requests/{id}/reject', [ServingRequestController::class, 'reject']);
+    Route::delete('/servings/requests/{id}', [ServingRequestController::class, 'remove']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {

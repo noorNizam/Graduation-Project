@@ -70,4 +70,9 @@ class ServingRequestRepository implements ServingRequestRepositoryInterface
 
         return $query->get();
     }
+
+    public function delete(int $id): bool
+    {
+        return ServingRequest::destroy($id) > 0;
+    }
 }
