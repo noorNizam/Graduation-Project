@@ -51,6 +51,13 @@ class ServingController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
+    public function getAvailabilitySlots(int $servingId)
+    {
+        $result = $this->servingService->getAvailabilitySlots($servingId);
+
+        return response()->json($result, $result['success'] ? 200 : 404);
+    }
+
     public function getById(int $id)
     {
         $result = $this->servingService->getServingById($id);

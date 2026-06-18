@@ -477,6 +477,23 @@
 							"path": ["servings", "{{serving_id}}", "availability-slots"]
 						}
 					}
+				},
+				{
+					"name": "Get Availability Slots",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/availability-slots",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "availability-slots"]
+						}
+					}
 				}
 			]
 		},

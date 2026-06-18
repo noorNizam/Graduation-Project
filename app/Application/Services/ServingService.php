@@ -487,6 +487,24 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
+    public function getAvailabilitySlots(int $servingId): array
+    {
+        $serving = $this->repository->findById($servingId);
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        $slots = $serving->availabilitySlots()->get();
+
+        return [
+            'success' => true,
+            'data' => $slots,
+        ];
+    }
+
     private function formatComment($comment): array
     {
         return [

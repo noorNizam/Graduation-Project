@@ -37,6 +37,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // ServingController
 Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/servings/{servingId}/availability-slots', [ServingController::class, 'getAvailabilitySlots']);
     Route::get('/servings/{id}', [ServingController::class, 'getById']);
     Route::post('/servings/search', [ServingController::class, 'getServings']);
     Route::post('/servings/nearby', [ServingController::class, 'getNearbyServings']);

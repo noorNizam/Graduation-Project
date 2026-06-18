@@ -28,4 +28,6 @@ interface ServingServiceInterface
     public function getServingById(int $id): array;
 
     public function updateAvailabilitySlots(int $servingId, int $userId, array $slots): array;
+
+    public function getAvailabilitySlots(int $servingId): array;
 }
