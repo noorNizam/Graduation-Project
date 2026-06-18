@@ -60,7 +60,7 @@ class ServingController
 
     public function getById(int $id)
     {
-        $result = $this->servingService->getServingById($id);
+        $result = $this->servingService->getServingById($id, auth()->id());
 
         return response()->json($result, $result['success'] ? 200 : 404);
     }
