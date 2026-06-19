@@ -18,7 +18,7 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {});
 
-// Serving endpoints
+// Serving endpoints (شغل رفقاتك)
 Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/servings/add-paid', [\App\Presentation\Controllers\ServingController::class, 'addPaidServing']);
     Route::put('/servings/add-paid/{id}', [\App\Presentation\Controllers\ServingController::class, 'updatePaid']);
@@ -35,7 +35,7 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/comments/{commentId}/react', [\App\Presentation\Controllers\ServingController::class, 'reactToComment']);
 });
 
-// ==================== Routes للمستخدم العادي ====================
+// ==================== Routes للمستخدم العادي (شغلك) ====================
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/complaints', [UserComplaintController::class, 'store']);
     Route::get('/my-complaints', [UserComplaintController::class, 'index']);
@@ -44,16 +44,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-penalties', [UserComplaintController::class, 'myPenalties']);
 });
 
-// ==================== Routes للمدير فقط (شكاوي + عقوبات) ====================
+// ==================== Routes للمدير فقط (شغلك + شغل رفقاتك) ====================
 Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(function () {
-    // الشكاوي
+    // الشكاوي (شغلك)
     Route::get('/complaints', [AdminComplaintController::class, 'index']);
     Route::get('/complaints/{id}', [AdminComplaintController::class, 'show']);
     Route::put('/complaints/{id}/status', [AdminComplaintController::class, 'updateStatus']);
     Route::delete('/complaints/{id}', [AdminComplaintController::class, 'destroy']);
     Route::get('/complaints/statistics', [AdminComplaintController::class, 'statistics']);
     
-    // العقوبات
+    // العقوبات (شغلك)
     Route::get('/penalties', [PenaltyController::class, 'index']);
     Route::get('/penalties/{id}', [PenaltyController::class, 'show']);
     Route::get('/users/{userId}/penalties', [PenaltyController::class, 'getUserPenalties']);
