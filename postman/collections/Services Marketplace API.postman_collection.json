@@ -1,0 +1,540 @@
+{
+	"info": {
+		"_postman_id": "services-marketplace-api",
+		"name": "Services Marketplace API",
+		"description": "API endpoints for the Services Marketplace platform",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health & Debug",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/../up",
+							"host": ["{{base_url}}"],
+							"path": ["..", "up"]
+						}
+					}
+				},
+				{
+					"name": "Test Monitor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-monitor",
+							"host": ["{{base_url}}"],
+							"path": ["test-monitor"]
+						}
+					}
+				},
+				{
+					"name": "Test Error",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-error",
+							"host": ["{{base_url}}"],
+							"path": ["test-error"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Send OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/send-otp",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "send-otp"]
+						}
+					}
+				},
+				{
+					"name": "Register Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"full_name\": \"John Doe\",\n    \"email\": \"user@example.com\",\n    \"password\": \"StrongP@ssw0rd123\",\n    \"phone_number\": \"+963912345678\",\n    \"otp\": \"123456\",\n    \"gender\": \"male\",\n    \"current_job\": \"Developer\",\n    \"address\": \"Damascus, Syria\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register-customer",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register-customer"]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data.token) {",
+									"    pm.collectionVariables.set('token', jsonData.data.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"StrongP@ssw0rd123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Servings",
+			"item": [
+				{
+					"name": "Add Paid Serving",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Professional Web Development",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "I will build you a modern responsive website",
+									"type": "text"
+								},
+								{
+									"key": "category_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "cost_amount",
+									"value": "2",
+									"type": "text",
+									"description": "Cost in hours"
+								},
+								{
+									"key": "unit_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "location_address",
+									"value": "Damascus, Syria",
+									"type": "text"
+								},
+								{
+									"key": "location_lat",
+									"value": "33.5138",
+									"type": "text"
+								},
+								{
+									"key": "location_lng",
+									"value": "36.2765",
+									"type": "text"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"description": "Upload serving image (max 5MB)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/add-paid",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "add-paid"]
+						}
+					}
+				},
+				{
+					"name": "Update Paid Serving",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Updated Web Development Service\",\n    \"description\": \"Updated description\",\n    \"cost_amount\": 3\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/add-paid/:id",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "add-paid", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Serving Requests",
+			"item": [
+				{
+					"name": "Create Serving Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"serving_id\": 1,\n    \"message\": \"I am interested in this service, can we schedule it for next week?\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/requests",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests"]
+						}
+					}
+				},
+				{
+					"name": "Accept Serving Request",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/:id/accept",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", ":id", "accept"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Reject Serving Request",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/:id/reject",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", ":id", "reject"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "List Requests by Serving",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/serving/:servingId",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "serving", ":servingId"],
+							"variable": [
+								{
+									"key": "servingId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "List My Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/my",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "my"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Comments & Reactions",
+			"item": [
+				{
+					"name": "Add Comment on Serving",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"This service looks great! Looking forward to it.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/:servingId/comments",
+							"host": ["{{base_url}}"],
+							"path": ["servings", ":servingId", "comments"],
+							"variable": [
+								{
+									"key": "servingId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Reply to Comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Thank you for your kind words!\",\n    \"parent_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/:servingId/comments",
+							"host": ["{{base_url}}"],
+							"path": ["servings", ":servingId", "comments"],
+							"variable": [
+								{
+									"key": "servingId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Comments for Serving",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/:servingId/comments",
+							"host": ["{{base_url}}"],
+							"path": ["servings", ":servingId", "comments"],
+							"variable": [
+								{
+									"key": "servingId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Replies for Comment",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/comments/:commentId/replies",
+							"host": ["{{base_url}}"],
+							"path": ["comments", ":commentId", "replies"],
+							"variable": [
+								{
+									"key": "commentId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "React to Comment (Like)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"like\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/comments/:commentId/react",
+							"host": ["{{base_url}}"],
+							"path": ["comments", ":commentId", "react"],
+							"variable": [
+								{
+									"key": "commentId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "React to Comment (Dislike)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"dislike\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/comments/:commentId/react",
+							"host": ["{{base_url}}"],
+							"path": ["comments", ":commentId", "react"],
+							"variable": [
+								{
+									"key": "commentId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}
