@@ -191,14 +191,16 @@ class ServingService implements ServingServiceInterface
             ->get();
 
         $comments->each(function ($comment) {
-            $comment->reaction_counts = $comment->reactions()
+            $reactionCounts = $comment->reactions()
                 ->selectRaw('type, count(*) as count')
                 ->groupBy('type')
                 ->pluck('count', 'type')
-                ->only(['like', 'dislike'])
                 ->toArray();
-            $comment->reaction_counts['like'] = $comment->reaction_counts['like'] ?? 0;
-            $comment->reaction_counts['dislike'] = $comment->reaction_counts['dislike'] ?? 0;
+
+            $comment->reaction_counts = [
+                'like' => $reactionCounts['like'] ?? 0,
+                'dislike' => $reactionCounts['dislike'] ?? 0,
+            ];
         });
 
         return [
@@ -224,19 +226,206 @@ class ServingService implements ServingServiceInterface
             ->get();
 
         $replies->each(function ($reply) {
-            $reply->reaction_counts = $reply->reactions()
+            $reactionCounts = $reply->reactions()
                 ->selectRaw('type, count(*) as count')
                 ->groupBy('type')
                 ->pluck('count', 'type')
-                ->only(['like', 'dislike'])
                 ->toArray();
-            $reply->reaction_counts['like'] = $reply->reaction_counts['like'] ?? 0;
-            $reply->reaction_counts['dislike'] = $reply->reaction_counts['dislike'] ?? 0;
+
+            $reply->reaction_counts = [
+                'like' => $reactionCounts['like'] ?? 0,
+                'dislike' => $reactionCounts['dislike'] ?? 0,
+            ];
         });
 
         return [
             'success' => true,
             'data' => $replies->map(fn ($r) => $this->formatComment($r)),
+        ];
+    }
+
+    public function getServingById(int $id, ?int $userId = null): array
+    {
+        $serving = $this->repository->findById($id);
+
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        $serving->load(['user', 'category', 'unit', 'servingType']);
+
+        $requested = false;
+        if ($userId !== null) {
+            $requested = \App\Infrastructure\Models\ServingRequest::where('serving_id', $id)
+                ->where('requester_id', $userId)
+                ->where('status', '!=', \App\Infrastructure\Models\ServingRequest::STATUS_COMPLETED)
+                ->exists();
+        }
+
+        return [
+            'success' => true,
+            'data' => [
+                'id' => $serving->id,
+                'title' => $serving->title,
+                'description' => $serving->description,
+                'cost_amount' => $serving->cost_amount,
+                'image_url' => $serving->image_url,
+                'location_lat' => $serving->location_lat,
+                'location_lng' => $serving->location_lng,
+                'location_address' => $serving->location_address,
+                'meeting_type' => $serving->meeting_type,
+                'created_at' => $serving->created_at,
+                'updated_at' => $serving->updated_at,
+                'user_full_name' => $serving->user->full_name ?? null,
+                'user_email' => $serving->user->email ?? null,
+                'category_name' => $serving->category->name ?? null,
+                'unit_name' => $serving->unit->name ?? null,
+                'serving_type_name' => $serving->servingType->name ?? null,
+                'requested' => $requested,
+            ],
+        ];
+    }
+
+    public function getNearbyServings(int $userId, float $lat, float $lng, ?int $skip, ?int $take): array
+    {
+        $radius = 1;
+        $latDelta = $radius / 111;
+        $lngDelta = $radius / (111 * cos(deg2rad($lat)));
+
+        $minLat = $lat - $latDelta;
+        $maxLat = $lat + $latDelta;
+        $minLng = $lng - $lngDelta;
+        $maxLng = $lng + $lngDelta;
+
+        $servings = $this->repository->findNearby(
+            $lat,
+            $lng,
+            $minLat,
+            $maxLat,
+            $minLng,
+            $maxLng,
+            $userId,
+        );
+
+        $page = $servings->slice($skip ?? 0, $take ?? 20);
+
+        $servingIds = $servings->pluck('id')->toArray();
+        $requestedServingIds = [];
+        if ($userId !== null && ! empty($servingIds)) {
+            $requestedServingIds = \App\Infrastructure\Models\ServingRequest::whereIn('serving_id', $servingIds)
+                ->where('requester_id', $userId)
+                ->where('status', '!=', \App\Infrastructure\Models\ServingRequest::STATUS_COMPLETED)
+                ->pluck('serving_id')
+                ->unique()
+                ->toArray();
+        }
+
+        $dto = $page->map(function ($serving) use ($requestedServingIds) {
+            return [
+                'id' => $serving->id,
+                'title' => $serving->title,
+                'description' => $serving->description,
+                'cost_amount' => $serving->cost_amount,
+                'image_url' => $serving->image_url,
+                'location_lat' => $serving->location_lat,
+                'location_lng' => $serving->location_lng,
+                'location_address' => $serving->location_address,
+                'meeting_type' => $serving->meeting_type,
+                'distance' => round($serving->distance, 3),
+                'created_at' => $serving->created_at,
+                'updated_at' => $serving->updated_at,
+                'user_full_name' => $serving->user->full_name ?? null,
+                'user_email' => $serving->user->email ?? null,
+                'category_name' => $serving->category->name ?? null,
+                'unit_name' => $serving->unit->name ?? null,
+                'serving_type_name' => $serving->servingType->name ?? null,
+                'requested' => in_array($serving->id, $requestedServingIds),
+            ];
+        })->values();
+
+        return [
+            'success' => true,
+            'data' => $dto,
+        ];
+    }
+
+    public function getServings(?int $excludeUserId, ?int $servingTypeId, ?int $paymentUnitId, ?int $categoryId, ?int $skip, ?int $take, ?string $name): array
+    {
+        $query = \App\Infrastructure\Models\Serving::with(['user', 'category', 'unit', 'servingType'])
+            ->latest();
+
+        // Exclude authenticated user's own servings
+        if ($excludeUserId !== null) {
+            $query->where('user_id', '!=', $excludeUserId);
+        }
+
+        // Apply filters only if parameters are not null
+        if ($servingTypeId !== null) {
+            $query->where('serving_type_id', $servingTypeId);
+        }
+
+        if ($paymentUnitId !== null) {
+            $query->where('unit_id', $paymentUnitId);
+        }
+
+        if ($categoryId !== null) {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($name !== null) {
+            $query->where('title', 'LIKE', "%{$name}%");
+        }
+
+        // Apply pagination
+        if ($skip !== null) {
+            $query->skip($skip);
+        }
+
+        if ($take !== null) {
+            $query->take($take);
+        }
+
+        $servings = $query->get();
+
+        $servingIds = $servings->pluck('id')->toArray();
+        $requestedServingIds = [];
+        if ($excludeUserId !== null && ! empty($servingIds)) {
+            $requestedServingIds = \App\Infrastructure\Models\ServingRequest::whereIn('serving_id', $servingIds)
+                ->where('requester_id', $excludeUserId)
+                ->where('status', '!=', \App\Infrastructure\Models\ServingRequest::STATUS_COMPLETED)
+                ->pluck('serving_id')
+                ->unique()
+                ->toArray();
+        }
+
+        $dto = $servings->map(function ($serving) use ($requestedServingIds) {
+            return [
+                'id' => $serving->id,
+                'title' => $serving->title,
+                'description' => $serving->description,
+                'cost_amount' => $serving->cost_amount,
+                'image_url' => $serving->image_url,
+                'location_lat' => $serving->location_lat,
+                'location_lng' => $serving->location_lng,
+                'location_address' => $serving->location_address,
+                'meeting_type' => $serving->meeting_type,
+                'created_at' => $serving->created_at,
+                'updated_at' => $serving->updated_at,
+                'user_full_name' => $serving->user->full_name ?? null,
+                'user_email' => $serving->user->email ?? null,
+                'category_name' => $serving->category->name ?? null,
+                'unit_name' => $serving->unit->name ?? null,
+                'serving_type_name' => $serving->servingType->name ?? null,
+                'requested' => in_array($serving->id, $requestedServingIds),
+            ];
+        });
+
+        return [
+            'success' => true,
+            'data' => $dto,
         ];
     }
 
@@ -282,6 +471,70 @@ class ServingService implements ServingServiceInterface
             'success' => true,
             'data' => $reactionCounts,
             'message' => 'Reaction updated',
+        ];
+    }
+
+    public function updateAvailabilitySlots(int $servingId, int $userId, array $slots): array
+    {
+        $serving = $this->repository->findById($servingId);
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        if ($serving->user_id !== $userId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+            ];
+        }
+
+        $transactionResult = $this->executeWithTransaction(function () use ($serving, $slots) {
+            $serving->availabilitySlots()->delete();
+
+            $created = [];
+            foreach ($slots as $slot) {
+                $created[] = \App\Infrastructure\Models\ServingAvailabilitySlot::create([
+                    'serving_id' => $serving->id,
+                    'day_of_week' => $slot['day_of_week'] ?? null,
+                    'date' => $slot['date'] ?? null,
+                    'start_time' => $slot['start_time'],
+                    'end_time' => $slot['end_time'],
+                    'notes' => $slot['notes'] ?? null,
+                ]);
+            }
+
+            return $created;
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
+
+        return [
+            'success' => true,
+            'data' => $transactionResult['data'],
+            'message' => 'Availability slots updated successfully',
+        ];
+    }
+
+    public function getAvailabilitySlots(int $servingId): array
+    {
+        $serving = $this->repository->findById($servingId);
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        $slots = $serving->availabilitySlots()->get();
+
+        return [
+            'success' => true,
+            'data' => $slots,
         ];
     }
 

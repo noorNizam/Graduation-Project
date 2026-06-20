@@ -17,6 +17,7 @@ class RegisterUserRequest extends BaseRequest
             'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/'],
             'phone' => ['nullable', 'regex:/^(\+963|0)?9\d{8}$/'],
             'birth_date' => ['nullable', 'date', 'before:today'],
+            'profile_picture' => ['nullable', 'file', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
             'otp' => ['required', 'string', 'size:6'],
         ];
     }

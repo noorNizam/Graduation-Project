@@ -14,11 +14,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Create Payment Units (skip if exists)
-        $paymentUnits = ['usd', 'hour', 'syp'];
+        $paymentUnits = ['USD', 'Hour', 'SYP'];
         foreach ($paymentUnits as $unitName) {
             PaymentUnit::firstOrCreate(['name' => $unitName]);
         }
-        $hourUnit = PaymentUnit::where('name', 'hour')->first();
+        $hourUnit = PaymentUnit::where('name', 'Hour')->first();
 
         // 2. Create Serving Types (skip if exists)
         $servingTypes = ['paid', 'unpaid'];
@@ -46,7 +46,7 @@ class DatabaseSeeder extends Seeder
                 'role' => 'admin',
                 'is_active' => true,
                 'phone_number' => null,
-                'password' => bcrypt('P@ssword'),
+                'password' => bcrypt('P@ssw0rd'),
             ]
         );
 
@@ -85,7 +85,7 @@ class DatabaseSeeder extends Seeder
             // Create or retrieve Wallet for each user
             WalletModel::firstOrCreate(
                 ['user_id' => $user->id],
-                ['title' => $userData['full_name'] . "'s Wallet", 'balance' => 0.00, 'unit_id' => $hourUnit->id]
+                ['title' => $userData['full_name']."'s Wallet", 'balance' => 0.00, 'unit_id' => $hourUnit->id]
             );
         }
     }

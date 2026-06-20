@@ -1,0 +1,1089 @@
+{
+	"info": {
+		"_postman_id": "in-time-api",
+		"name": "In Time API",
+		"description": "API endpoints for the In Time platform",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "serving_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "category_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "request_id",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health & Debug",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/../up",
+							"host": ["{{base_url}}"],
+							"path": ["..", "up"]
+						}
+					}
+				},
+				{
+					"name": "Test Monitor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-monitor",
+							"host": ["{{base_url}}"],
+							"path": ["test-monitor"]
+						}
+					}
+				},
+				{
+					"name": "Test Error",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-error",
+							"host": ["{{base_url}}"],
+							"path": ["test-error"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Send OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/send-otp",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "send-otp"]
+						}
+					}
+				},
+				{
+					"name": "Register Customer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "full_name",
+									"value": "John Doe",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "user@example.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "StrongP@ssw0rd123",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "+963912345678",
+									"type": "text"
+								},
+								{
+									"key": "otp",
+									"value": "123456",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "current_job",
+									"value": "Developer",
+									"type": "text"
+								},
+								{
+									"key": "address",
+									"value": "Damascus, Syria",
+									"type": "text"
+								},
+								{
+									"key": "birth_date",
+									"value": "1990-01-15",
+									"type": "text"
+								},
+								{
+									"key": "profile_picture",
+									"type": "file",
+									"description": "Upload profile picture (max 5MB, jpeg/png/jpg/gif/webp)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register-customer",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register-customer"]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.token) {",
+									"    pm.collectionVariables.set('token', jsonData.token);",
+									"    pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"StrongP@ssw0rd123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.token) {",
+									"    pm.collectionVariables.set('token', jsonData.token);",
+									"    pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "refresh"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Servings",
+			"item": [
+				{
+					"name": "Get Serving Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Search Servings",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"serving_type_id\": null,\n    \"payment_unit_id\": null,\n    \"serving_category_id\": null,\n    \"skip\": null,\n    \"take\": null,\n    \"name\": null\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/search",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "search"]
+						}
+					},
+					"response": [
+						{
+							"name": "Success - Returns DTO with resolved properties",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Second\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/servings/search",
+									"host": ["{{base_url}}"],
+									"path": ["servings", "search"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 3,\n            \"title\": \"Second User Service\",\n            \"description\": \"Service by user2\",\n            \"cost_amount\": 15,\n            \"image_url\": null,\n            \"location_lat\": null,\n            \"location_lng\": null,\n            \"location_address\": null,\n            \"created_at\": \"2026-05-02T15:19:27.000000Z\",\n            \"updated_at\": \"2026-05-02T15:19:27.000000Z\",\n            \"user_full_name\": \"\",\n            \"user_email\": \"user2@system.com\",\n            \"category_name\": \"Home Services\",\n            \"unit_name\": \"hour\",\n            \"serving_type_name\": \"paid\"\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Add Paid Serving",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Professional Web Development",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "I will build you a modern responsive website",
+									"type": "text"
+								},
+								{
+									"key": "category_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "cost_amount",
+									"value": "2",
+									"type": "text",
+									"description": "Cost in hours"
+								},
+								{
+									"key": "unit_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "location_address",
+									"value": "Damascus, Syria",
+									"type": "text"
+								},
+								{
+									"key": "location_lat",
+									"value": "33.5138",
+									"type": "text"
+								},
+								{
+									"key": "location_lng",
+									"value": "36.2765",
+									"type": "text"
+								},
+								{
+									"key": "meeting_type",
+									"value": "online",
+									"type": "text",
+									"description": "Meeting type: 'online' or 'direct'"
+								},
+								{
+									"key": "image",
+									"type": "file",
+									"description": "Upload serving image (max 5MB)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/add-paid",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "add-paid"]
+						}
+					}
+				},
+				{
+					"name": "Update Paid Serving",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Updated Web Development Service\",\n    \"description\": \"Updated description\",\n    \"cost_amount\": 3,\n    \"meeting_type\": \"direct\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/add-paid/{{serving_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "add-paid", "{{serving_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Nearby Servings",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lat\": 33.5138,\n    \"lng\": 36.2765,\n    \"skip\": 0,\n    \"take\": 20\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/nearby",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "nearby"]
+						}
+					}
+				},
+				{
+					"name": "Update Availability Slots",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"slots\": [\n        {\n            \"day_of_week\": 1,\n            \"start_time\": \"09:00:00\",\n            \"end_time\": \"17:00:00\",\n            \"notes\": \"Monday availability\"\n        },\n        {\n            \"date\": \"2026-06-20\",\n            \"start_time\": \"10:00:00\",\n            \"end_time\": \"14:00:00\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/availability-slots",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "availability-slots"]
+						}
+					}
+				},
+				{
+					"name": "Get Availability Slots",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/availability-slots",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "availability-slots"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Serving Requests",
+			"item": [
+				{
+					"name": "Create Serving Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"serving_id\": 1,\n    \"message\": \"I am interested in this service, can we schedule it for next week?\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/requests",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests"]
+						}
+					}
+				},
+				{
+					"name": "Accept Serving Request",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/:id/accept",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", ":id", "accept"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Reject Serving Request",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/:id/reject",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", ":id", "reject"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "List Requests by Serving",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/serving/{{serving_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "serving", "{{serving_id}}"]
+						}
+					}
+				},
+				{
+					"name": "List My Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/my",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "my"]
+						}
+					}
+				},
+				{
+					"name": "List Received Requests",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/received",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "received"]
+						}
+					}
+				},
+				{
+					"name": "Delete Serving Request",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/{{request_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "{{request_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Comments & Reactions",
+			"item": [
+				{
+					"name": "Add Comment on Serving",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"This service looks great! Looking forward to it.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/comments",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "comments"]
+						}
+					}
+				},
+				{
+					"name": "Get Comments for Serving",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/comments",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "comments"]
+						}
+					}
+				},
+				{
+					"name": "Reply to Comment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Thank you for your kind words!\",\n    \"parent_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/comments",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "comments"]
+						}
+					}
+				},
+				{
+					"name": "Get Replies for Comment",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/comments/:commentId/replies",
+							"host": ["{{base_url}}"],
+							"path": ["comments", ":commentId", "replies"],
+							"variable": [
+								{
+									"key": "commentId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "React to Comment (Like)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"like\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/comments/:commentId/react",
+							"host": ["{{base_url}}"],
+							"path": ["comments", ":commentId", "react"],
+							"variable": [
+								{
+									"key": "commentId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "React to Comment (Dislike)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"dislike\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/comments/:commentId/react",
+							"host": ["{{base_url}}"],
+							"path": ["comments", ":commentId", "react"],
+							"variable": [
+								{
+									"key": "commentId",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Payment Units",
+			"item": [
+				{
+					"name": "Get All Payment Units",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/payment-units",
+							"host": ["{{base_url}}"],
+							"path": ["payment-units"]
+						}
+					}
+				},
+				{
+					"name": "Create Payment Unit",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"hour\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/payment-units",
+							"host": ["{{base_url}}"],
+							"path": ["payment-units"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "Search Categories",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": null,\n    \"parent_id\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/search",
+							"host": ["{{base_url}}"],
+							"path": ["categories", "search"]
+						}
+					}
+				},
+				{
+					"name": "Create Category (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New Category\",\n    \"parent_id\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories",
+							"host": ["{{base_url}}"],
+							"path": ["categories"]
+						}
+					}
+				},
+				{
+					"name": "Update Category (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Category Name\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/categories/{{category_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["categories", "{{category_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Wallets",
+			"item": [
+				{
+					"name": "Get My Wallets",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/wallets",
+							"host": ["{{base_url}}"],
+							"path": ["wallets"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "full_name",
+									"value": "Updated Name",
+									"type": "text"
+								},
+								{
+									"key": "current_job",
+									"value": "Senior Developer",
+									"type": "text"
+								},
+								{
+									"key": "address",
+									"value": "Damascus, Syria",
+									"type": "text"
+								},
+								{
+									"key": "gender",
+									"value": "male",
+									"type": "text"
+								},
+								{
+									"key": "phone_number",
+									"value": "+963912345678",
+									"type": "text"
+								},
+								{
+									"key": "birth_date",
+									"value": "1990-01-15",
+									"type": "text"
+								},
+								{
+									"key": "profile_picture",
+									"type": "file",
+									"description": "Upload profile image (max 5MB, jpeg/png/jpg/gif/webp)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						}
+					}
+				},
+				{
+					"name": "Get User Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["users", "{{user_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Search Users (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": null,\n    \"email\": null,\n    \"gender\": null,\n    \"skip\": 0,\n    \"take\": 10,\n    \"current_job\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users/search",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", "search"]
+						}
+					}
+				},
+				{
+					"name": "Block User (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/users/{{user_id}}/block",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", "{{user_id}}", "block"]
+						}
+					}
+				},
+				{
+					"name": "Unblock User (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/users/{{user_id}}/unblock",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "users", "{{user_id}}", "unblock"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

@@ -163,9 +163,87 @@ class ServingRequestService implements ServingRequestServiceInterface
     {
         $requests = $this->requestRepository->findByRequesterId($requesterId, $status);
 
+        $requests->load(['serving.user' => fn ($q) => $q->select(['id', 'full_name'])]);
+        $requests->each(fn ($r) => $r->removable = $r->isPending());
+
         return [
             'success' => true,
-            'data' => $requests->load(['serving']),
+            'data' => $requests,
+        ];
+    }
+
+    public function getReceivedRequests(int $ownerId, ?string $status = null): array
+    {
+        $requests = $this->requestRepository->findByServingOwnerId($ownerId, $status);
+
+        if ($requests->isEmpty()) {
+            return [
+                'success' => true,
+                'data' => [],
+            ];
+        }
+
+        $requests->load(['serving', 'requester']);
+
+        $grouped = $requests->filter(fn ($request) => $request->serving !== null && $request->requester !== null)
+            ->groupBy('serving_id')
+            ->map(function ($groupedRequests) {
+                $serving = $groupedRequests->first()->serving;
+
+                return [
+                    'serving_id' => $serving->id,
+                    'serving_title' => $serving->title,
+                    'requests' => $groupedRequests->map(function ($request) {
+                        return [
+                            'id' => $request->id,
+                            'requester_id' => $request->requester_id,
+                            'requester_full_name' => $request->requester->full_name,
+                            'message' => $request->message,
+                            'status' => $request->status,
+                            'created_at' => $request->created_at,
+                        ];
+                    })->values(),
+                ];
+            })->values();
+
+        return [
+            'success' => true,
+            'data' => $grouped,
+        ];
+    }
+
+    public function deleteRequest(int $requestId, int $userId): array
+    {
+        $servingRequest = $this->requestRepository->findById($requestId);
+        if (! $servingRequest) {
+            return [
+                'success' => false,
+                'message' => 'Request not found',
+                'status' => 404,
+            ];
+        }
+
+        if ($servingRequest->requester_id !== $userId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+                'status' => 403,
+            ];
+        }
+
+        if (! $servingRequest->isPending()) {
+            return [
+                'success' => false,
+                'message' => 'Only pending requests can be deleted',
+                'status' => 422,
+            ];
+        }
+
+        $this->requestRepository->delete($requestId);
+
+        return [
+            'success' => true,
+            'message' => 'Request deleted successfully',
         ];
     }
 }

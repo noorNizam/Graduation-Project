@@ -18,4 +18,8 @@ interface ServingRequestRepositoryInterface
     public function updateStatus(int $id, string $status): ServingRequest;
 
     public function existsForServingAndRequester(int $servingId, int $requesterId, string $status): bool;
+
+    public function findByServingOwnerId(int $ownerId, ?string $status = null): Collection;
+
+    public function delete(int $id): bool;
 }

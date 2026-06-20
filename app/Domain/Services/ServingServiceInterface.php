@@ -20,4 +20,14 @@ interface ServingServiceInterface
     public function getReplies(int $commentId): array;
 
     public function reactToComment(int $userId, int $commentId, string $type): array;
+
+    public function getServings(?int $excludeUserId, ?int $servingTypeId, ?int $paymentUnitId, ?int $categoryId, ?int $skip, ?int $take, ?string $name): array;
+
+    public function getNearbyServings(int $userId, float $lat, float $lng, ?int $skip, ?int $take): array;
+
+    public function getServingById(int $id, ?int $userId = null): array;
+
+    public function updateAvailabilitySlots(int $servingId, int $userId, array $slots): array;
+
+    public function getAvailabilitySlots(int $servingId): array;
 }

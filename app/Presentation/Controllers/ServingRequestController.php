@@ -59,4 +59,22 @@ class ServingRequestController
 
         return response()->json($result, $result['success'] ? 200 : 500);
     }
+
+    public function listByOwner()
+    {
+        $result = $this->servingRequestService->getReceivedRequests(auth()->id());
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function remove(int $id)
+    {
+        $result = $this->servingRequestService->deleteRequest($id, auth()->id());
+
+        if (isset($result['success']) && $result['success'] === false && isset($result['message']) && $result['message'] === 'Forbidden') {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : $result['status'] ?? 500);
+    }
 }

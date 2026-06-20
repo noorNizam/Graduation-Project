@@ -15,6 +15,8 @@ class ServingRequest extends Model
 
     public const STATUS_REJECTED = 'rejected';
 
+    public const STATUS_COMPLETED = 'completed';
+
     protected $fillable = [
         'serving_id',
         'requester_id',
@@ -51,6 +53,11 @@ class ServingRequest extends Model
         return $query->where('status', self::STATUS_REJECTED);
     }
 
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', self::STATUS_COMPLETED);
+    }
+
     public function scopeForServing($query, int $servingId)
     {
         return $query->where('serving_id', $servingId);
@@ -70,6 +77,12 @@ class ServingRequest extends Model
     public function reject(): void
     {
         $this->status = self::STATUS_REJECTED;
+        $this->save();
+    }
+
+    public function complete(): void
+    {
+        $this->status = self::STATUS_COMPLETED;
         $this->save();
     }
 
