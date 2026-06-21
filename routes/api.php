@@ -1,11 +1,14 @@
 <?php
 
+use App\Presentation\Controllers\AdminComplaintController;
 use App\Presentation\Controllers\AuthController;
 use App\Presentation\Controllers\PaymentUnitController;
+use App\Presentation\Controllers\PenaltyController;
 use App\Presentation\Controllers\ServingCategoryController;
 use App\Presentation\Controllers\ServingController;
 use App\Presentation\Controllers\ServingRequestController;
 use App\Presentation\Controllers\TroubleshootingController;
+use App\Presentation\Controllers\UserComplaintController;
 use App\Presentation\Controllers\UserManagementController;
 use App\Presentation\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
@@ -95,4 +98,27 @@ Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {
     Route::post('/admin/users/search', [UserManagementController::class, 'searchUsers']);
     Route::put('/admin/users/{id}/block', [UserManagementController::class, 'blockUser']);
     Route::put('/admin/users/{id}/unblock', [UserManagementController::class, 'unblockUser']);
+});
+
+// UserComplaintController (authenticated users)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/complaints', [UserComplaintController::class, 'store']);
+    Route::get('/my-complaints', [UserComplaintController::class, 'index']);
+    Route::get('/complaints/{id}', [UserComplaintController::class, 'show']);
+    Route::get('/my-wallet', [UserComplaintController::class, 'getWalletBalance']);
+    Route::get('/my-penalties', [UserComplaintController::class, 'myPenalties']);
+});
+
+// Admin complaint & penalty routes
+Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(function () {
+    Route::get('/complaints', [AdminComplaintController::class, 'index']);
+    Route::get('/complaints/{id}', [AdminComplaintController::class, 'show']);
+    Route::put('/complaints/{id}/status', [AdminComplaintController::class, 'updateStatus']);
+    Route::delete('/complaints/{id}', [AdminComplaintController::class, 'destroy']);
+    Route::get('/complaints/statistics', [AdminComplaintController::class, 'statistics']);
+
+    Route::get('/penalties', [PenaltyController::class, 'index']);
+    Route::get('/penalties/{id}', [PenaltyController::class, 'show']);
+    Route::get('/users/{userId}/penalties', [PenaltyController::class, 'getUserPenalties']);
+    Route::delete('/penalties/{id}', [PenaltyController::class, 'destroy']);
 });

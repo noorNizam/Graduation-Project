@@ -2,30 +2,38 @@
 
 namespace App\Providers;
 
+use App\Application\Services\ComplaintService;
 use App\Application\Services\EmailVerificationService;
 use App\Application\Services\PaymentUnitService;
+use App\Application\Services\PenaltyService;
 use App\Application\Services\ServingCategoryService;
 use App\Application\Services\ServingRequestService;
 use App\Application\Services\ServingService;
 use App\Application\Services\UserManagementService;
 use App\Application\Services\UserRegistrationService;
 use App\Application\Services\WalletService;
+use App\Domain\Repositories\ComplaintRepositoryInterface;
 use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
 use App\Domain\Repositories\PaymentUnitRepositoryInterface;
+use App\Domain\Repositories\PenaltyRepositoryInterface;
 use App\Domain\Repositories\ServingCategoryRepositoryInterface;
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
+use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Domain\Services\PaymentUnitServiceInterface;
+use App\Domain\Services\PenaltyServiceInterface;
 use App\Domain\Services\ServingCategoryServiceInterface;
 use App\Domain\Services\ServingRequestServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Domain\Services\UserManagementServiceInterface;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Domain\Services\WalletServiceInterface;
+use App\Infrastructure\Repositories\ComplaintRepository;
 use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
 use App\Infrastructure\Repositories\PaymentUnitRepository;
+use App\Infrastructure\Repositories\PenaltyRepository;
 use App\Infrastructure\Repositories\ServingCategoryRepository;
 use App\Infrastructure\Repositories\ServingRepository;
 use App\Infrastructure\Repositories\ServingRequestRepository;
@@ -111,6 +119,28 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             WalletServiceInterface::class,
             WalletService::class
+        );
+
+        // Complaint & Penalty bindings
+        $this->app->bind(
+            ComplaintRepositoryInterface::class,
+            ComplaintRepository::class
+        );
+
+        $this->app->singleton(ComplaintServiceInterface::class, function ($app) {
+            return new ComplaintService(
+                $app->make(ComplaintRepositoryInterface::class)
+            );
+        });
+
+        $this->app->bind(
+            PenaltyRepositoryInterface::class,
+            PenaltyRepository::class
+        );
+
+        $this->app->bind(
+            PenaltyServiceInterface::class,
+            PenaltyService::class
         );
     }
 

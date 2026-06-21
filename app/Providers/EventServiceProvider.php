@@ -12,5 +12,8 @@ class EventServiceProvider extends ServiceProvider
         MethodExecuted::class => [
             LogMethodExecutionHandler::class,
         ],
+        \App\Events\ComplaintResolved::class => [
+            \App\Infrastructure\Listeners\ApplyPenaltyOnComplaintResolved::class,
+        ],
     ];
 }
