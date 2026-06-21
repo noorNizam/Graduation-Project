@@ -2,7 +2,7 @@
 
 namespace App\Presentation\Controllers;
 
-use App\Application\Services\ComplaintService;
+use App\Domain\Services\ComplaintServiceInterface;
 use App\Events\ComplaintResolved;
 use App\Presentation\Requests\ComplaintFilterRequest;
 use App\Presentation\Requests\UpdateComplaintStatusRequest;
@@ -10,7 +10,7 @@ use App\Presentation\Requests\UpdateComplaintStatusRequest;
 class AdminComplaintController
 {
     public function __construct(
-        private ComplaintService $complaintService
+        private ComplaintServiceInterface $complaintService
     ) {}
 
     public function index(ComplaintFilterRequest $request)

@@ -2,14 +2,14 @@
 
 namespace App\Presentation\Controllers;
 
-use App\Application\Services\ComplaintService;
+use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\PenaltyServiceInterface;
 use App\Presentation\Requests\StoreComplaintRequest;
 
 class UserComplaintController
 {
     public function __construct(
-        private ComplaintService $complaintService
+        private ComplaintServiceInterface $complaintService
     ) {}
 
     public function store(StoreComplaintRequest $request)

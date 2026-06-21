@@ -3,12 +3,13 @@
 namespace App\Application\Services;
 
 use App\Domain\Repositories\ComplaintRepositoryInterface;
+use App\Domain\Services\ComplaintServiceInterface;
 use App\Infrastructure\Models\ComplaintModel;
 use App\Traits\HandlesDatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-class ComplaintService
+class ComplaintService implements ComplaintServiceInterface
 {
     use HandlesDatabaseTransactions;
 

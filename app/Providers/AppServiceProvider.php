@@ -20,6 +20,7 @@ use App\Domain\Repositories\ServingCategoryRepositoryInterface;
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
+use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Domain\Services\PaymentUnitServiceInterface;
 use App\Domain\Services\PenaltyServiceInterface;
@@ -126,7 +127,7 @@ class AppServiceProvider extends ServiceProvider
             ComplaintRepository::class
         );
 
-        $this->app->singleton(ComplaintService::class, function ($app) {
+        $this->app->singleton(ComplaintServiceInterface::class, function ($app) {
             return new ComplaintService(
                 $app->make(ComplaintRepositoryInterface::class)
             );
