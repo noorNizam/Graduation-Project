@@ -40,6 +40,11 @@
 			"key": "request_id",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "chat_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -1427,6 +1432,221 @@
 							}
 						}
 					]
+				}
+			]
+		},
+		{
+			"name": "Chats",
+			"item": [
+				{
+					"name": "Create Chat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"receiver_id\": 1,\n    \"content\": \"Hello, are you available?\",\n    \"type\": null,\n    \"name\": null,\n    \"member_ids\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/chats",
+							"host": ["{{base_url}}"],
+							"path": ["chats"]
+						}
+					}
+				},
+				{
+					"name": "Get Chats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats",
+							"host": ["{{base_url}}"],
+							"path": ["chats"]
+						}
+					}
+				},
+				{
+					"name": "Update Group",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Group Name\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Send Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Hello everyone!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}/messages",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}", "messages"]
+						}
+					}
+				},
+				{
+					"name": "Get Messages",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}/messages",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}", "messages"]
+						}
+					}
+				},
+				{
+					"name": "Mark as Read",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}/read",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}", "read"]
+						}
+					}
+				},
+				{
+					"name": "Get Members",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}/members",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}", "members"]
+						}
+					}
+				},
+				{
+					"name": "Add Members",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_ids\": [2, 3]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}/members",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}", "members"]
+						}
+					}
+				},
+				{
+					"name": "Remove Member",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}/members/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}", "members", "{{user_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Leave Group",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}/leave",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}", "leave"]
+						}
+					}
 				}
 			]
 		}

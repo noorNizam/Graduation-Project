@@ -3,6 +3,7 @@
 namespace App\Infrastructure\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -203,19 +204,15 @@ class User extends Authenticatable
     //     return $this->hasMany(NotificationModel::class, 'user_id');
     // }
 
-    // /**
-    //  * Get all chats the user participates in.
-    //  */
-    // public function chats(): HasMany
-    // {
-    //     return $this->hasMany(ChatModel::class, 'user_id');
-    // }
+    public function chats(): BelongsToMany
+    {
+        return $this->belongsToMany(Chat::class, 'chat_user')
+            ->withPivot('joined_at')
+            ->withTimestamps();
+    }
 
-    // /**
-    //  * Get all messages sent by the user.
-    //  */
-    // public function messages(): HasMany
-    // {
-    //     return $this->hasMany(MessageModel::class, 'sender_id');
-    // }
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
 }
