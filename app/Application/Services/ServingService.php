@@ -429,6 +429,50 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
+    public function getMyServings(int $userId, ?int $skip, ?int $take): array
+    {
+        $query = \App\Infrastructure\Models\Serving::with(['user', 'category', 'unit', 'servingType'])
+            ->where('user_id', $userId)
+            ->latest();
+
+        if ($skip !== null) {
+            $query->skip($skip);
+        }
+
+        if ($take !== null) {
+            $query->take($take);
+        }
+
+        $servings = $query->get();
+
+        $dto = $servings->map(function ($serving) {
+            return [
+                'id' => $serving->id,
+                'title' => $serving->title,
+                'description' => $serving->description,
+                'cost_amount' => $serving->cost_amount,
+                'image_url' => $serving->image_url,
+                'location_lat' => $serving->location_lat,
+                'location_lng' => $serving->location_lng,
+                'location_address' => $serving->location_address,
+                'meeting_type' => $serving->meeting_type,
+                'created_at' => $serving->created_at,
+                'updated_at' => $serving->updated_at,
+                'user_full_name' => $serving->user->full_name ?? null,
+                'user_email' => $serving->user->email ?? null,
+                'category_name' => $serving->category->name ?? null,
+                'unit_name' => $serving->unit->name ?? null,
+                'serving_type_name' => $serving->servingType->name ?? null,
+                'requested' => false,
+            ];
+        });
+
+        return [
+            'success' => true,
+            'data' => $dto,
+        ];
+    }
+
     public function reactToComment(int $userId, int $commentId, string $type): array
     {
         $comment = \App\Infrastructure\Models\Comment::find($commentId);

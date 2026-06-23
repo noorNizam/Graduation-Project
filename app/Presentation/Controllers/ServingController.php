@@ -97,6 +97,17 @@ class ServingController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
+    public function getMyServings(\Illuminate\Http\Request $request)
+    {
+        $result = $this->servingService->getMyServings(
+            auth()->id(),
+            $request->input('skip'),
+            $request->input('take'),
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
     public function addComment(int $servingId, CreateCommentRequest $request)
     {
         $data = $request->validated();
