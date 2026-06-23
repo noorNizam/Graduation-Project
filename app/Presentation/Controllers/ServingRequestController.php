@@ -4,6 +4,7 @@ namespace App\Presentation\Controllers;
 
 use App\Domain\Services\ServingRequestServiceInterface;
 use App\Presentation\Requests\CreateServingRequestRequest;
+use Illuminate\Http\Request;
 
 class ServingRequestController
 {
@@ -46,23 +47,23 @@ class ServingRequestController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
-    public function listByServing(int $servingId)
+    public function listByServing(Request $request, int $servingId)
     {
-        $result = $this->servingRequestService->getServingRequests($servingId);
+        $result = $this->servingRequestService->getServingRequests($servingId, $request->input('status'));
 
         return response()->json($result, $result['success'] ? 200 : 404);
     }
 
-    public function listByRequester()
+    public function listByRequester(Request $request)
     {
-        $result = $this->servingRequestService->getRequesterRequests(auth()->id());
+        $result = $this->servingRequestService->getRequesterRequests(auth()->id(), $request->input('status'));
 
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
-    public function listByOwner()
+    public function listByOwner(Request $request)
     {
-        $result = $this->servingRequestService->getReceivedRequests(auth()->id());
+        $result = $this->servingRequestService->getReceivedRequests(auth()->id(), $request->input('status'));
 
         return response()->json($result, $result['success'] ? 200 : 500);
     }

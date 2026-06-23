@@ -46,18 +46,7 @@
 		{
 			"name": "Health & Debug",
 			"item": [
-				{
-					"name": "Health Check",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/../up",
-							"host": ["{{base_url}}"],
-							"path": ["..", "up"]
-						}
-					}
-				},
+
 				{
 					"name": "Test Monitor",
 					"request": {
@@ -428,33 +417,58 @@
 						}
 					}
 				},
-				{
-					"name": "Nearby Servings",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"lat\": 33.5138,\n    \"lng\": 36.2765,\n    \"skip\": 0,\n    \"take\": 20\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/servings/nearby",
-							"host": ["{{base_url}}"],
-							"path": ["servings", "nearby"]
-						}
-					}
-				},
-				{
-					"name": "Update Availability Slots",
+                {
+                    "name": "Nearby Servings",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"lat\": 33.5138,\n    \"lng\": 36.2765,\n    \"skip\": 0,\n    \"take\": 20\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/servings/nearby",
+                            "host": ["{{base_url}}"],
+                            "path": ["servings", "nearby"]
+                        }
+                    }
+                },
+                {
+                    "name": "My Servings",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"skip\": 0,\n    \"take\": 20\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/servings/my",
+                            "host": ["{{base_url}}"],
+                            "path": ["servings", "my"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Availability Slots",
 					"request": {
 						"method": "PUT",
 						"header": [
@@ -582,9 +596,16 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/servings/requests/serving/{{serving_id}}",
+							"raw": "{{base_url}}/servings/requests/serving/{{serving_id}}?status=accepted",
 							"host": ["{{base_url}}"],
-							"path": ["servings", "requests", "serving", "{{serving_id}}"]
+							"path": ["servings", "requests", "serving", "{{serving_id}}"],
+							"query": [
+								{
+									"key": "status",
+									"value": "accepted",
+									"description": "Filter by status: pending, accepted, rejected, completed, cancelled"
+								}
+							]
 						}
 					}
 				},
@@ -599,9 +620,16 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/servings/requests/my",
+							"raw": "{{base_url}}/servings/requests/my?status=pending",
 							"host": ["{{base_url}}"],
-							"path": ["servings", "requests", "my"]
+							"path": ["servings", "requests", "my"],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Filter by status: pending, accepted, rejected, completed, cancelled"
+								}
+							]
 						}
 					}
 				},
@@ -616,9 +644,16 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/servings/requests/received",
+							"raw": "{{base_url}}/servings/requests/received?status=accepted",
 							"host": ["{{base_url}}"],
-							"path": ["servings", "requests", "received"]
+							"path": ["servings", "requests", "received"],
+							"query": [
+								{
+									"key": "status",
+									"value": "accepted",
+									"description": "Filter by status: pending, accepted, rejected, completed, cancelled"
+								}
+							]
 						}
 					}
 				},
