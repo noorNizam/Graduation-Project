@@ -1084,6 +1084,316 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "Complaints",
+			"item": [
+				{
+					"name": "Create Complaint",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"serving_id\": 1,\n    \"accused_user_id\": 2,\n    \"reason\": \"service_not_delivered\",\n    \"description\": \"The service was not provided as agreed\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/complaints",
+							"host": ["{{base_url}}"],
+							"path": ["complaints"]
+						}
+					}
+				},
+				{
+					"name": "Get My Complaints",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/my-complaints",
+							"host": ["{{base_url}}"],
+							"path": ["my-complaints"]
+						}
+					}
+				},
+				{
+					"name": "Get Complaint Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/complaints/:id",
+							"host": ["{{base_url}}"],
+							"path": ["complaints", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Wallet Balance",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/my-wallet",
+							"host": ["{{base_url}}"],
+							"path": ["my-wallet"]
+						}
+					}
+				},
+				{
+					"name": "Get My Penalties",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/my-penalties",
+							"host": ["{{base_url}}"],
+							"path": ["my-penalties"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Complaint Management",
+					"item": [
+						{
+							"name": "List All Complaints",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/complaints",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "complaints"]
+								}
+							}
+						},
+						{
+							"name": "Get Complaint Details",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/complaints/:id",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "complaints", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Update Complaint Status",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"under_review\",\n    \"admin_note\": \"We are looking into this matter.\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/complaints/:id/status",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "complaints", ":id", "status"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Delete Complaint",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/complaints/:id",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "complaints", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Get Complaint Statistics",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/complaints/statistics",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "complaints", "statistics"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Penalty Management",
+					"item": [
+						{
+							"name": "List All Penalties",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/penalties",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "penalties"]
+								}
+							}
+						},
+						{
+							"name": "Get Penalty Details",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/penalties/:id",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "penalties", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Get User Penalties",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/users/{{user_id}}/penalties",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "users", "{{user_id}}", "penalties"]
+								}
+							}
+						},
+						{
+							"name": "Delete Penalty",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/penalties/:id",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "penalties", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1"
+										}
+									]
+								}
+							}
+						}
+					]
+				}
+			]
 		}
 	]
 }
