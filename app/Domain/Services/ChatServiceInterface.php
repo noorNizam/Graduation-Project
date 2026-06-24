@@ -9,6 +9,7 @@ interface ChatServiceInterface
     public function getChats(int $userId): array;
     public function getMessages(int $chatId, int $userId, ?int $afterId = null, ?int $beforeId = null): array;
     public function markAsRead(int $chatId, int $userId): array;
+    public function markAsReceived(int $chatId, int $userId): array;
     public function getMembers(int $chatId, int $userId): array;
     public function addMembers(int $chatId, int $userId, array $memberIds): array;
     public function removeMember(int $chatId, int $userId, int $targetUserId): array;

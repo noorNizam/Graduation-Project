@@ -62,6 +62,13 @@ class ChatController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
+    public function markAsReceived(int $chatId)
+    {
+        $result = $this->chatService->markAsReceived($chatId, auth()->id());
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
     public function getMembers(int $chatId)
     {
         $result = $this->chatService->getMembers($chatId, auth()->id());

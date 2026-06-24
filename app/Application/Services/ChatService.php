@@ -6,6 +6,7 @@ use App\Domain\Repositories\ChatRepositoryInterface;
 use App\Domain\Services\ChatServiceInterface;
 use App\Infrastructure\Models\Chat;
 use App\Infrastructure\Models\Message;
+use App\Infrastructure\Models\MessageRecipient;
 use App\Infrastructure\Models\User;
 use App\Traits\HandlesDatabaseTransactions;
 
@@ -19,11 +20,11 @@ class ChatService implements ChatServiceInterface
 
     public function createChat(int $userId, array $data): array
     {
-        if (isset($data['receiver_id'])) {
+        if ($data['type'] === 'personal') {
             return $this->createPersonalChat($userId, $data);
         }
 
-        if (isset($data['type']) && $data['type'] === 'group') {
+        if ($data['type'] === 'group') {
             return $this->createGroupChat($userId, $data);
         }
 
@@ -52,6 +53,9 @@ class ChatService implements ChatServiceInterface
                     'sender_id' => $userId,
                     'content' => $data['content'],
                 ]);
+
+                $message->recipientStatus()->create(['user_id' => $receiverId]);
+
                 $this->chatRepository->updateLastMessageAt($chat->id);
                 $message->load('sender:id,full_name,profile_picture');
             }
@@ -134,12 +138,20 @@ class ChatService implements ChatServiceInterface
             return ['success' => false, 'message' => 'You are not a participant of this chat'];
         }
 
-        $result = $this->executeWithTransaction(function () use ($chatId, $senderId, $content) {
+        $result = $this->executeWithTransaction(function () use ($chatId, $senderId, $content, $chat) {
             $message = Message::create([
                 'chat_id' => $chatId,
                 'sender_id' => $senderId,
                 'content' => $content,
             ]);
+
+            $recipientIds = $chat->users()
+                ->where('users.id', '!=', $senderId)
+                ->pluck('users.id');
+
+            $message->recipientStatus()->createMany(
+                $recipientIds->map(fn($id) => ['user_id' => $id])->all()
+            );
 
             $this->chatRepository->updateLastMessageAt($chatId);
 
@@ -169,7 +181,7 @@ class ChatService implements ChatServiceInterface
 
             $chat->unread_count = Message::where('chat_id', $chat->id)
                 ->where('sender_id', '!=', $userId)
-                ->whereNull('read_at')
+                ->whereHas('recipientStatus', fn($q) => $q->where('user_id', $userId)->whereNull('read_at'))
                 ->count();
         });
 
@@ -191,20 +203,35 @@ class ChatService implements ChatServiceInterface
             return ['success' => false, 'message' => 'You are not a participant of this chat'];
         }
 
-        Message::where('chat_id', $chatId)
-            ->where('sender_id', '!=', $userId)
+        MessageRecipient::whereIn('message_id',
+            Message::where('chat_id', $chatId)->select('id')
+        )
+            ->where('user_id', $userId)
             ->whereNull('received_at')
             ->update(['received_at' => now()]);
 
+        $load = [
+            'sender:id,full_name,profile_picture',
+            'recipientStatus' => fn($q) => $q->where('user_id', $userId),
+        ];
+
+        $counts = [
+            'recipientStatus as total_recipients',
+            'recipientStatus as received_count' => fn($q) => $q->whereNotNull('received_at'),
+            'recipientStatus as read_count' => fn($q) => $q->whereNotNull('read_at'),
+        ];
+
         if ($afterId !== null) {
             $messages = $chat->messages()
-                ->with('sender:id,full_name,profile_picture')
+                ->with($load)
+                ->withCount($counts)
                 ->where('id', '>', $afterId)
                 ->orderBy('id', 'asc')
                 ->get();
         } elseif ($beforeId !== null) {
             $messages = $chat->messages()
-                ->with('sender:id,full_name,profile_picture')
+                ->with($load)
+                ->withCount($counts)
                 ->where('id', '<', $beforeId)
                 ->orderBy('id', 'desc')
                 ->take(50)
@@ -213,13 +240,21 @@ class ChatService implements ChatServiceInterface
                 ->values();
         } else {
             $messages = $chat->messages()
-                ->with('sender:id,full_name,profile_picture')
+                ->with($load)
+                ->withCount($counts)
                 ->orderBy('id', 'desc')
                 ->take(50)
                 ->get()
                 ->reverse()
                 ->values();
         }
+
+        $messages->each(function ($message) use ($userId) {
+            $myStatus = $message->recipientStatus->first();
+            $message->my_received_at = $myStatus?->received_at;
+            $message->my_read_at = $myStatus?->read_at;
+            unset($message->recipientStatus);
+        });
 
         $hasMore = false;
         if ($beforeId !== null || ($afterId === null && $beforeId === null)) {
@@ -248,12 +283,36 @@ class ChatService implements ChatServiceInterface
             return ['success' => false, 'message' => 'You are not a participant of this chat'];
         }
 
-        Message::where('chat_id', $chatId)
-            ->where('sender_id', '!=', $userId)
+        $messageIds = Message::where('chat_id', $chatId)->pluck('id');
+
+        MessageRecipient::whereIn('message_id', $messageIds)
+            ->where('user_id', $userId)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
         return ['success' => true, 'message' => 'Messages marked as read'];
+    }
+
+    public function markAsReceived(int $chatId, int $userId): array
+    {
+        $chat = $this->chatRepository->findById($chatId);
+
+        if (! $chat) {
+            return ['success' => false, 'message' => 'Chat not found'];
+        }
+
+        if (! $this->chatRepository->isMember($chatId, $userId)) {
+            return ['success' => false, 'message' => 'You are not a participant of this chat'];
+        }
+
+        $messageIds = Message::where('chat_id', $chatId)->pluck('id');
+
+        MessageRecipient::whereIn('message_id', $messageIds)
+            ->where('user_id', $userId)
+            ->whereNull('received_at')
+            ->update(['received_at' => now()]);
+
+        return ['success' => true, 'message' => 'Messages marked as received'];
     }
 
     public function getMembers(int $chatId, int $userId): array

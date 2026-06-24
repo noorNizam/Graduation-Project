@@ -4,6 +4,7 @@ namespace App\Infrastructure\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Message extends Model
 {
@@ -11,13 +12,6 @@ class Message extends Model
         'chat_id',
         'sender_id',
         'content',
-        'received_at',
-        'read_at',
-    ];
-
-    protected $casts = [
-        'received_at' => 'datetime',
-        'read_at' => 'datetime',
     ];
 
     public function chat(): BelongsTo
@@ -28,5 +22,10 @@ class Message extends Model
     public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
+    }
+
+    public function recipientStatus(): HasMany
+    {
+        return $this->hasMany(MessageRecipient::class, 'message_id');
     }
 }

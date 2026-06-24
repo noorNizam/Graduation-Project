@@ -134,6 +134,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chats/{chat}/messages', [ChatController::class, 'sendMessage']);
     Route::get('/chats/{chat}/messages', [ChatController::class, 'getMessages']);
     Route::put('/chats/{chat}/read', [ChatController::class, 'markAsRead']);
+    Route::put('/chats/{chat}/received', [ChatController::class, 'markAsReceived']);
 
     Route::get('/chats/{chat}/members', [ChatController::class, 'getMembers']);
     Route::post('/chats/{chat}/members', [ChatController::class, 'addMembers']);
