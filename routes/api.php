@@ -2,6 +2,7 @@
 
 use App\Presentation\Controllers\AdminComplaintController;
 use App\Presentation\Controllers\AuthController;
+use App\Presentation\Controllers\ChatController;
 use App\Presentation\Controllers\PaymentUnitController;
 use App\Presentation\Controllers\PenaltyController;
 use App\Presentation\Controllers\ServingCategoryController;
@@ -122,4 +123,21 @@ Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(func
     Route::get('/penalties/{id}', [PenaltyController::class, 'show']);
     Route::get('/users/{userId}/penalties', [PenaltyController::class, 'getUserPenalties']);
     Route::delete('/penalties/{id}', [PenaltyController::class, 'destroy']);
+});
+
+// ChatController
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/chats', [ChatController::class, 'createChat']);
+    Route::get('/chats', [ChatController::class, 'getChats']);
+    Route::put('/chats/{chat}', [ChatController::class, 'updateGroup']);
+
+    Route::post('/chats/{chat}/messages', [ChatController::class, 'sendMessage']);
+    Route::get('/chats/{chat}/messages', [ChatController::class, 'getMessages']);
+    Route::put('/chats/{chat}/read', [ChatController::class, 'markAsRead']);
+    Route::put('/chats/{chat}/received', [ChatController::class, 'markAsReceived']);
+
+    Route::get('/chats/{chat}/members', [ChatController::class, 'getMembers']);
+    Route::post('/chats/{chat}/members', [ChatController::class, 'addMembers']);
+    Route::delete('/chats/{chat}/members/{user}', [ChatController::class, 'removeMember']);
+    Route::post('/chats/{chat}/leave', [ChatController::class, 'leaveGroup']);
 });

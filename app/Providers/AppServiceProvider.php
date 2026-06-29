@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Application\Services\ChatService;
 use App\Application\Services\ComplaintService;
 use App\Application\Services\EmailVerificationService;
 use App\Application\Services\PaymentUnitService;
@@ -12,6 +13,7 @@ use App\Application\Services\ServingService;
 use App\Application\Services\UserManagementService;
 use App\Application\Services\UserRegistrationService;
 use App\Application\Services\WalletService;
+use App\Domain\Repositories\ChatRepositoryInterface;
 use App\Domain\Repositories\ComplaintRepositoryInterface;
 use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
 use App\Domain\Repositories\PaymentUnitRepositoryInterface;
@@ -20,6 +22,7 @@ use App\Domain\Repositories\ServingCategoryRepositoryInterface;
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
+use App\Domain\Services\ChatServiceInterface;
 use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
 use App\Domain\Services\PaymentUnitServiceInterface;
@@ -30,6 +33,7 @@ use App\Domain\Services\ServingServiceInterface;
 use App\Domain\Services\UserManagementServiceInterface;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Domain\Services\WalletServiceInterface;
+use App\Infrastructure\Repositories\ChatRepository;
 use App\Infrastructure\Repositories\ComplaintRepository;
 use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
 use App\Infrastructure\Repositories\PaymentUnitRepository;
@@ -141,6 +145,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             PenaltyServiceInterface::class,
             PenaltyService::class
+        );
+
+        // Chat bindings
+        $this->app->bind(
+            ChatRepositoryInterface::class,
+            ChatRepository::class
+        );
+
+        $this->app->bind(
+            ChatServiceInterface::class,
+            ChatService::class
         );
     }
 
