@@ -43,6 +43,7 @@ class EmailVerificationService implements EmailVerificationServiceInterface
         return [
             'success' => true,
             'message' => 'OTP sent successfully',
+            'note' => 'If you do not see the email in your inbox, please check your spam folder.',
             'expires_at' => $transactionResult['data']->expires_at,
         ];
     }

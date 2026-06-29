@@ -60,7 +60,7 @@
         <p>If you didn't create an account, please ignore this email.</p>
 
         <p>Best regards,<br>
-            Banking System</p>
+            In Time Co.</p>
     </div>
 
     <div class="footer">
