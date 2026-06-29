@@ -285,6 +285,7 @@ class ServingService implements ServingServiceInterface
                 'unit_name' => $serving->unit->name ?? null,
                 'serving_type_name' => $serving->servingType->name ?? null,
                 'requested' => $requested,
+                'isOwner' => $userId !== null && $serving->user_id === $userId,
             ],
         ];
     }
@@ -323,7 +324,7 @@ class ServingService implements ServingServiceInterface
                 ->toArray();
         }
 
-        $dto = $page->map(function ($serving) use ($requestedServingIds) {
+        $dto = $page->map(function ($serving) use ($requestedServingIds, $userId) {
             return [
                 'id' => $serving->id,
                 'title' => $serving->title,
@@ -343,6 +344,7 @@ class ServingService implements ServingServiceInterface
                 'unit_name' => $serving->unit->name ?? null,
                 'serving_type_name' => $serving->servingType->name ?? null,
                 'requested' => in_array($serving->id, $requestedServingIds),
+                'isOwner' => $serving->user_id === $userId,
             ];
         })->values();
 
@@ -401,7 +403,7 @@ class ServingService implements ServingServiceInterface
                 ->toArray();
         }
 
-        $dto = $servings->map(function ($serving) use ($requestedServingIds) {
+        $dto = $servings->map(function ($serving) use ($requestedServingIds, $excludeUserId) {
             return [
                 'id' => $serving->id,
                 'title' => $serving->title,
@@ -420,6 +422,7 @@ class ServingService implements ServingServiceInterface
                 'unit_name' => $serving->unit->name ?? null,
                 'serving_type_name' => $serving->servingType->name ?? null,
                 'requested' => in_array($serving->id, $requestedServingIds),
+                'isOwner' => $serving->user_id === $excludeUserId,
             ];
         });
 
@@ -464,6 +467,7 @@ class ServingService implements ServingServiceInterface
                 'unit_name' => $serving->unit->name ?? null,
                 'serving_type_name' => $serving->servingType->name ?? null,
                 'requested' => false,
+                'isOwner' => true,
             ];
         });
 
