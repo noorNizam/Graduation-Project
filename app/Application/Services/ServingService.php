@@ -26,6 +26,8 @@ class ServingService implements ServingServiceInterface
                 $data['serving_type_id'] = $type->id;
             }
 
+            $data['status'] = \App\Infrastructure\Models\Serving::STATUS_APPROVED;
+
             // Handle image storage if provided
             if ($image) {
                 $userId = $data['user_id'] ?? 'anonymous';
@@ -116,6 +118,113 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
+    public function createVoluntaryServing(array $data, $image = null): array
+    {
+        $transactionResult = $this->executeWithTransaction(function () use ($data, $image) {
+            if (empty($data['serving_type_id'])) {
+                $type = \App\Infrastructure\Models\ServingType::firstOrCreate(['name' => 'voluntary']);
+                $data['serving_type_id'] = $type->id;
+            }
+
+            if ($image) {
+                $userId = $data['user_id'] ?? 'anonymous';
+                $path = sprintf('servings/%s/%s', $userId, date('Y/m/d'));
+                $filename = sprintf('%s_%s.%s', time(), Str::random(8), $image->getClientOriginalExtension());
+
+                $stored = $image->storeAs($path, $filename, 'public');
+
+                $data['image_url'] = Storage::url($stored);
+            }
+
+            $data['status'] = \App\Infrastructure\Models\Serving::STATUS_PENDING;
+
+            return $this->repository->create($data);
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
+
+        return [
+            'success' => true,
+            'data' => $transactionResult['data'],
+            'message' => 'Voluntary serving submitted for admin review',
+        ];
+    }
+
+    public function approveServing(int $servingId): array
+    {
+        $serving = $this->repository->findById($servingId);
+        if (! $serving) {
+            return ['success' => false, 'message' => 'Serving not found'];
+        }
+
+        if (! $serving->isPending()) {
+            return ['success' => false, 'message' => 'Serving is not pending'];
+        }
+
+        $updated = $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_APPROVED);
+
+        return [
+            'success' => true,
+            'data' => $updated,
+            'message' => 'Serving approved successfully',
+        ];
+    }
+
+    public function rejectServing(int $servingId): array
+    {
+        $serving = $this->repository->findById($servingId);
+        if (! $serving) {
+            return ['success' => false, 'message' => 'Serving not found'];
+        }
+
+        if (! $serving->isPending()) {
+            return ['success' => false, 'message' => 'Serving is not pending'];
+        }
+
+        $updated = $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_REJECTED);
+
+        return [
+            'success' => true,
+            'data' => $updated,
+            'message' => 'Serving rejected',
+        ];
+    }
+
+    public function getPendingServings(): array
+    {
+        $servings = $this->repository->findPendingServings();
+
+        $dto = $servings->map(function ($serving) {
+            return [
+                'id' => $serving->id,
+                'title' => $serving->title,
+                'description' => $serving->description,
+                'cost_amount' => $serving->cost_amount,
+                'image_url' => $serving->image_url,
+                'location_lat' => $serving->location_lat,
+                'location_lng' => $serving->location_lng,
+                'location_address' => $serving->location_address,
+                'meeting_type' => $serving->meeting_type,
+                'status' => $serving->status,
+                'created_at' => $serving->created_at,
+                'updated_at' => $serving->updated_at,
+                'user_full_name' => $serving->user->full_name ?? null,
+                'user_email' => $serving->user->email ?? null,
+                'user_id' => $serving->user_id,
+                'category_name' => $serving->category->name ?? null,
+                'unit_name' => $serving->unit->name ?? null,
+                'serving_type_name' => $serving->servingType->name ?? null,
+            ];
+        });
+
+        return [
+            'success' => true,
+            'data' => $dto,
+        ];
+    }
+
     public function createComment(int $userId, int $servingId, string $content, ?int $parentId = null): array
     {
         $serving = $this->repository->findById($servingId);
@@ -123,6 +232,13 @@ class ServingService implements ServingServiceInterface
             return [
                 'success' => false,
                 'message' => 'Serving not found',
+            ];
+        }
+
+        if (! $serving->isApproved()) {
+            return [
+                'success' => false,
+                'message' => 'Cannot comment on a serving that is not approved',
             ];
         }
 
@@ -277,12 +393,14 @@ class ServingService implements ServingServiceInterface
                 'location_lng' => $serving->location_lng,
                 'location_address' => $serving->location_address,
                 'meeting_type' => $serving->meeting_type,
+                'status' => $serving->status,
                 'created_at' => $serving->created_at,
                 'updated_at' => $serving->updated_at,
                 'user_full_name' => $serving->user->full_name ?? null,
                 'user_email' => $serving->user->email ?? null,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
+                'user_id' => $serving->user_id,
                 'serving_type_name' => $serving->servingType->name ?? null,
                 'requested' => $requested,
                 'isOwner' => $userId !== null && $serving->user_id === $userId,
@@ -335,10 +453,12 @@ class ServingService implements ServingServiceInterface
                 'location_lng' => $serving->location_lng,
                 'location_address' => $serving->location_address,
                 'meeting_type' => $serving->meeting_type,
+                'status' => $serving->status,
                 'distance' => round($serving->distance, 3),
                 'created_at' => $serving->created_at,
                 'updated_at' => $serving->updated_at,
                 'user_full_name' => $serving->user->full_name ?? null,
+                'user_id' => $serving->user_id,
                 'user_email' => $serving->user->email ?? null,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
@@ -357,6 +477,7 @@ class ServingService implements ServingServiceInterface
     public function getServings(?int $excludeUserId, ?int $servingTypeId, ?int $paymentUnitId, ?int $categoryId, ?int $skip, ?int $take, ?string $name): array
     {
         $query = \App\Infrastructure\Models\Serving::with(['user', 'category', 'unit', 'servingType'])
+            ->approved()
             ->latest();
 
         // Exclude authenticated user's own servings
@@ -414,10 +535,12 @@ class ServingService implements ServingServiceInterface
                 'location_lng' => $serving->location_lng,
                 'location_address' => $serving->location_address,
                 'meeting_type' => $serving->meeting_type,
+                'status' => $serving->status,
                 'created_at' => $serving->created_at,
                 'updated_at' => $serving->updated_at,
                 'user_full_name' => $serving->user->full_name ?? null,
                 'user_email' => $serving->user->email ?? null,
+                'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
                 'serving_type_name' => $serving->servingType->name ?? null,
@@ -459,10 +582,12 @@ class ServingService implements ServingServiceInterface
                 'location_lng' => $serving->location_lng,
                 'location_address' => $serving->location_address,
                 'meeting_type' => $serving->meeting_type,
+                'status' => $serving->status,
                 'created_at' => $serving->created_at,
                 'updated_at' => $serving->updated_at,
                 'user_full_name' => $serving->user->full_name ?? null,
                 'user_email' => $serving->user->email ?? null,
+                'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
                 'serving_type_name' => $serving->servingType->name ?? null,

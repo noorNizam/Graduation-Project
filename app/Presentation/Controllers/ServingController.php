@@ -51,6 +51,40 @@ class ServingController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
+    public function addVoluntaryServing(AddPaidServingRequest $request)
+    {
+        $data = $request->validated();
+
+        $data['user_id'] = auth()->id();
+
+        $image = $request->file('image');
+
+        $result = $this->servingService->createVoluntaryServing($data, $image);
+
+        return response()->json($result, $result['success'] ? 201 : 500);
+    }
+
+    public function approveServing(int $id)
+    {
+        $result = $this->servingService->approveServing($id);
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function rejectServing(int $id)
+    {
+        $result = $this->servingService->rejectServing($id);
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function getPendingServings()
+    {
+        $result = $this->servingService->getPendingServings();
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
     public function getAvailabilitySlots(int $servingId)
     {
         $result = $this->servingService->getAvailabilitySlots($servingId);

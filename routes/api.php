@@ -8,6 +8,7 @@ use App\Presentation\Controllers\PenaltyController;
 use App\Presentation\Controllers\ServingCategoryController;
 use App\Presentation\Controllers\ServingController;
 use App\Presentation\Controllers\ServingRequestController;
+use App\Presentation\Controllers\ServingTypeController;
 use App\Presentation\Controllers\TroubleshootingController;
 use App\Presentation\Controllers\UserComplaintController;
 use App\Presentation\Controllers\UserManagementController;
@@ -30,6 +31,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/servings/add-paid', [ServingController::class, 'addPaidServing']);
     Route::put('/servings/add-paid/{id}', [ServingController::class, 'updatePaid']);
+    Route::post('/servings/add-voluntary', [ServingController::class, 'addVoluntaryServing']);
     Route::post('/servings/{servingId}/comments', [ServingController::class, 'addComment']);
     Route::post('/comments/{commentId}/react', [ServingController::class, 'reactToComment']);
     Route::put('/servings/{servingId}/availability-slots', [ServingController::class, 'updateAvailabilitySlots']);
@@ -71,6 +73,11 @@ Route::middleware('auth:sanctum')->group(function () {
 // WalletController
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/wallets', [WalletController::class, 'getMyWallets']);
+});
+
+// ServingTypeController
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/serving-types', [ServingTypeController::class, 'getAll']);
 });
 
 Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {
@@ -123,6 +130,10 @@ Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(func
     Route::get('/penalties/{id}', [PenaltyController::class, 'show']);
     Route::get('/users/{userId}/penalties', [PenaltyController::class, 'getUserPenalties']);
     Route::delete('/penalties/{id}', [PenaltyController::class, 'destroy']);
+
+    Route::get('/servings/pending', [ServingController::class, 'getPendingServings']);
+    Route::put('/servings/{id}/approve', [ServingController::class, 'approveServing']);
+    Route::put('/servings/{id}/reject', [ServingController::class, 'rejectServing']);
 });
 
 // ChatController

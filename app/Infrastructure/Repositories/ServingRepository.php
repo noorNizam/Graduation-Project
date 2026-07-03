@@ -4,6 +4,7 @@ namespace App\Infrastructure\Repositories;
 
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Infrastructure\Models\Serving;
+use Illuminate\Database\Eloquent\Collection;
 
 class ServingRepository implements ServingRepositoryInterface
 {
@@ -27,6 +28,23 @@ class ServingRepository implements ServingRepositoryInterface
         return $serving;
     }
 
+    public function updateStatus(int $id, string $status): Serving
+    {
+        $serving = Serving::findOrFail($id);
+        $serving->status = $status;
+        $serving->save();
+
+        return $serving;
+    }
+
+    public function findPendingServings(): Collection
+    {
+        return Serving::with(['user', 'category', 'unit', 'servingType'])
+            ->where('status', Serving::STATUS_PENDING)
+            ->latest()
+            ->get();
+    }
+
     public function findNearby(
         float $lat,
         float $lng,
@@ -35,7 +53,7 @@ class ServingRepository implements ServingRepositoryInterface
         float $minLng,
         float $maxLng,
         int $excludeUserId
-    ): \Illuminate\Database\Eloquent\Collection {
+    ): Collection {
         return Serving::with(['user', 'category', 'unit', 'servingType'])
             ->select('*')
             ->selectRaw('
@@ -46,6 +64,7 @@ class ServingRepository implements ServingRepositoryInterface
                 )) AS distance
             ', [$lat, $lng, $lat])
             ->where('user_id', '!=', $excludeUserId)
+            ->where('status', Serving::STATUS_APPROVED)
             ->whereNotNull('location_lat')
             ->whereNotNull('location_lng')
             ->whereBetween('location_lat', [$minLat, $maxLat])
