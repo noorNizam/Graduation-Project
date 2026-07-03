@@ -5,6 +5,8 @@ namespace App\Infrastructure\Listeners;
 use App\Domain\Services\PenaltyServiceInterface;
 use App\Events\ComplaintResolved;
 use App\Infrastructure\Models\ComplaintModel;
+use App\Domain\Services\NotificationServiceInterface;
+use App\Infrastructure\Models\User;
 
 class ApplyPenaltyOnComplaintResolved
 {
@@ -16,7 +18,7 @@ class ApplyPenaltyOnComplaintResolved
     {
         $complaint = $event->complaint;
         $accusedUserId = $complaint->accused_user_id;
-
+        $accusedUser = User::find($accusedUserId);
         $resolvedComplaintsCount = ComplaintModel::where('accused_user_id', $accusedUserId)
             ->where('status', 'resolved')
             ->count();
@@ -54,5 +56,19 @@ class ApplyPenaltyOnComplaintResolved
                 'Warning due to repeated complaints (2 resolved complaints)'
             );
         }
+        app(NotificationServiceInterface::class)->send(
+            $accusedUserId,
+            'penalty_applied',
+            'Penalty has been applied',
+            "{$hoursToDeduct} hours have been deducted because of a resolved complaint ",
+            ['complaint_id' => $complaint->id]
+        );
+        app(NotificationServiceInterface::class)->send(
+            $complaint->complainant_id,
+            'complaint_resolved',
+            'complaint solved ',
+            "Your complaint against {$accusedUser->full_name} has been solved",
+            ['complaint_id' => $complaint->id]
+        );
     }
 }
