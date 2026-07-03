@@ -9,6 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Serving extends Model
 {
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_APPROVED = 'approved';
+
+    public const STATUS_REJECTED = 'rejected';
+
     protected $table = 'servings';
 
     protected $fillable = [
@@ -24,6 +30,7 @@ class Serving extends Model
         'location_address',
         'image_url',
         'meeting_type',
+        'status',
     ];
 
     /**
@@ -74,5 +81,35 @@ class Serving extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class, 'serving_id');
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', self::STATUS_PENDING);
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('status', self::STATUS_REJECTED);
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === self::STATUS_APPROVED;
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isRejected(): bool
+    {
+        return $this->status === self::STATUS_REJECTED;
     }
 }

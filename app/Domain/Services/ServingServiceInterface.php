@@ -13,6 +13,14 @@ interface ServingServiceInterface
 
     public function updatePaidServing(int $id, array $data, $image = null): array;
 
+    public function createVoluntaryServing(array $data, $image = null): array;
+
+    public function approveServing(int $servingId): array;
+
+    public function rejectServing(int $servingId): array;
+
+    public function getPendingServings(): array;
+
     public function createComment(int $userId, int $servingId, string $content, ?int $parentId = null): array;
 
     public function getComments(int $servingId): array;
