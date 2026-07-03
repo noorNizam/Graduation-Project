@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         $hourUnit = PaymentUnit::where('name', 'Hour')->first();
 
         // 2. Create Serving Types (skip if exists)
-        $servingTypes = ['paid', 'unpaid'];
+        $servingTypes = ['paid', 'unpaid', 'voluntary'];
         foreach ($servingTypes as $typeName) {
             ServingType::firstOrCreate(['name' => $typeName]);
         }
