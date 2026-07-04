@@ -191,6 +191,43 @@ class ChatService implements ChatServiceInterface
         ];
     }
 
+    public function getPersonalChats(int $userId): array
+    {
+        $chats = $this->chatRepository->findByUserIdAndType($userId, 'personal');
+
+        $chats->each(function ($chat) use ($userId) {
+            $otherUser = $chat->users->firstWhere('id', '!=', $userId);
+            $chat->setRelation('otherUser', $otherUser);
+
+            $chat->unread_count = Message::where('chat_id', $chat->id)
+                ->where('sender_id', '!=', $userId)
+                ->whereHas('recipientStatus', fn($q) => $q->where('user_id', $userId)->whereNull('read_at'))
+                ->count();
+        });
+
+        return [
+            'success' => true,
+            'data' => $chats,
+        ];
+    }
+
+    public function getGroupChats(int $userId): array
+    {
+        $chats = $this->chatRepository->findByUserIdAndType($userId, 'group');
+
+        $chats->each(function ($chat) use ($userId) {
+            $chat->unread_count = Message::where('chat_id', $chat->id)
+                ->where('sender_id', '!=', $userId)
+                ->whereHas('recipientStatus', fn($q) => $q->where('user_id', $userId)->whereNull('read_at'))
+                ->count();
+        });
+
+        return [
+            'success' => true,
+            'data' => $chats,
+        ];
+    }
+
     public function getMessages(int $chatId, int $userId, ?int $afterId = null, ?int $beforeId = null): array
     {
         $chat = $this->chatRepository->findById($chatId);

@@ -1683,6 +1683,7 @@
 				{
 					"name": "Get Chats",
 					"request": {
+						"description": "Returns ALL chats (both personal and group) for the authenticated user. For filtered results, use the dedicated /personal or /groups endpoints.",
 						"method": "GET",
 						"header": [
 							{
@@ -1694,6 +1695,42 @@
 							"raw": "{{base_url}}/chats",
 							"host": ["{{base_url}}"],
 							"path": ["chats"]
+						}
+					}
+				},
+				{
+					"name": "Get Personal Chats",
+					"request": {
+						"description": "Returns only personal (one-on-one) chats for the authenticated user.",
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats/personal",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "personal"]
+						}
+					}
+				},
+				{
+					"name": "Get Group Chats",
+					"request": {
+						"description": "Returns only group chats for the authenticated user.",
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats/groups",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "groups"]
 						}
 					}
 				},

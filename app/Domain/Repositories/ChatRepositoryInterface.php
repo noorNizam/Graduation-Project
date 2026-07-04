@@ -10,6 +10,7 @@ interface ChatRepositoryInterface
     public function findOrCreateBetween(int $userIdOne, int $userIdTwo): Chat;
     public function findById(int $id): ?Chat;
     public function findByUserId(int $userId): Collection;
+    public function findByUserIdAndType(int $userId, string $type): Collection;
     public function updateLastMessageAt(int $chatId): void;
     public function getMembers(int $chatId): Collection;
     public function addMembers(int $chatId, array $userIds): void;
