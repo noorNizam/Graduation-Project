@@ -587,6 +587,44 @@
 							"path": ["servings", "{{serving_id}}", "availability-slots"]
 						}
 					}
+				},
+				{
+					"name": "Deactivate Serving",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/deactivate",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "deactivate"]
+						}
+					}
+				},
+				{
+					"name": "My Deactivated Servings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/my-deactivated",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "my-deactivated"]
+						}
+					}
 				}
 			]
 		},

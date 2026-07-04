@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('servings', function (Blueprint $table) {
-            $table->string('status', 20)->default('approved')->after('meeting_type');
+            $table->string('status', 20)->default('active')->after('meeting_type');
             $table->index('status');
         });
     }

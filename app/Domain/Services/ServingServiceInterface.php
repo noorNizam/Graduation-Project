@@ -40,4 +40,8 @@ interface ServingServiceInterface
     public function updateAvailabilitySlots(int $servingId, int $userId, array $slots): array;
 
     public function getAvailabilitySlots(int $servingId): array;
+
+    public function deactivateServing(int $servingId, int $userId): array;
+
+    public function getDeactivatedServings(int $userId): array;
 }

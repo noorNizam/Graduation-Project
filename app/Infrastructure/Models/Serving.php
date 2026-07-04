@@ -11,9 +11,11 @@ class Serving extends Model
 {
     public const STATUS_PENDING = 'pending';
 
-    public const STATUS_APPROVED = 'approved';
+    public const STATUS_ACTIVE = 'active';
 
     public const STATUS_REJECTED = 'rejected';
+
+    public const STATUS_INACTIVE = 'inactive';
 
     protected $table = 'servings';
 
@@ -83,9 +85,14 @@ class Serving extends Model
         return $this->hasMany(Comment::class, 'serving_id');
     }
 
+    public function scopeActive($query)
+    {
+        return $query->where('status', self::STATUS_ACTIVE);
+    }
+
     public function scopeApproved($query)
     {
-        return $query->where('status', self::STATUS_APPROVED);
+        return $query->where('status', self::STATUS_ACTIVE);
     }
 
     public function scopePending($query)
@@ -98,9 +105,19 @@ class Serving extends Model
         return $query->where('status', self::STATUS_REJECTED);
     }
 
+    public function scopeInactive($query)
+    {
+        return $query->where('status', self::STATUS_INACTIVE);
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === self::STATUS_ACTIVE;
+    }
+
     public function isApproved(): bool
     {
-        return $this->status === self::STATUS_APPROVED;
+        return $this->status === self::STATUS_ACTIVE;
     }
 
     public function isPending(): bool
@@ -111,5 +128,10 @@ class Serving extends Model
     public function isRejected(): bool
     {
         return $this->status === self::STATUS_REJECTED;
+    }
+
+    public function isInactive(): bool
+    {
+        return $this->status === self::STATUS_INACTIVE;
     }
 }
