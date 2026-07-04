@@ -39,6 +39,15 @@ class ChatRepository implements ChatRepositoryInterface
             ->get();
     }
 
+    public function findByUserIdAndType(int $userId, string $type): Collection
+    {
+        return Chat::where('type', $type)
+            ->whereHas('users', fn($q) => $q->where('users.id', $userId))
+            ->with(['users:id,full_name,profile_picture', 'latestMessage'])
+            ->orderBy('last_message_at', 'desc')
+            ->get();
+    }
+
     public function updateLastMessageAt(int $chatId): void
     {
         Chat::where('id', $chatId)->update(['last_message_at' => now()]);

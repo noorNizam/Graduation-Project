@@ -151,6 +151,8 @@ Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(func
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chats', [ChatController::class, 'createChat']);
     Route::get('/chats', [ChatController::class, 'getChats']);
+    Route::get('/chats/personal', [ChatController::class, 'getPersonalChats']);
+    Route::get('/chats/groups', [ChatController::class, 'getGroupChats']);
     Route::put('/chats/{chat}', [ChatController::class, 'updateGroup']);
 
     Route::post('/chats/{chat}/messages', [ChatController::class, 'sendMessage']);

@@ -41,6 +41,18 @@ class ChatController
         return response()->json($result, 200);
     }
 
+    public function getPersonalChats()
+    {
+        $result = $this->chatService->getPersonalChats(auth()->id());
+        return response()->json($result, 200);
+    }
+
+    public function getGroupChats()
+    {
+        $result = $this->chatService->getGroupChats(auth()->id());
+        return response()->json($result, 200);
+    }
+
     public function getMessages(int $chatId)
     {
         $afterId = request()->integer('after');
