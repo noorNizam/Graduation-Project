@@ -13,6 +13,7 @@ use App\Presentation\Controllers\TroubleshootingController;
 use App\Presentation\Controllers\UserComplaintController;
 use App\Presentation\Controllers\UserManagementController;
 use App\Presentation\Controllers\WalletController;
+use App\Presentation\Controllers\UserNotificationController;
 use Illuminate\Support\Facades\Route;
 
 // TroubleshootingController
@@ -116,6 +117,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/complaints/{id}', [UserComplaintController::class, 'show']);
     Route::get('/my-wallet', [UserComplaintController::class, 'getWalletBalance']);
     Route::get('/my-penalties', [UserComplaintController::class, 'myPenalties']);
+});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/my-notifications', [UserNotificationController::class, 'index']);
+    Route::put('/notifications/{id}/read', [UserNotificationController::class, 'markAsRead']);
+    Route::put('/notifications/read-all', [UserNotificationController::class, 'markAllAsRead']);
+    Route::get('/notifications/unread-count', [UserNotificationController::class, 'unreadCount']);
+    Route::post('/update-fcm-token', [UserNotificationController::class, 'updateFcmToken']);
 });
 
 // Admin complaint & penalty routes

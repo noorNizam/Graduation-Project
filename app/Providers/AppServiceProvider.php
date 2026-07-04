@@ -43,6 +43,10 @@ use App\Infrastructure\Repositories\ServingRepository;
 use App\Infrastructure\Repositories\ServingRequestRepository;
 use App\Infrastructure\Repositories\WalletRepository;
 use Illuminate\Support\ServiceProvider;
+use App\Domain\Services\NotificationServiceInterface;
+use App\Application\Services\NotificationService;
+use App\Domain\Repositories\NotificationRepositoryInterface;
+use App\Infrastructure\Repositories\NotificationRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -145,6 +149,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             PenaltyServiceInterface::class,
             PenaltyService::class
+        );
+        $this->app->bind(
+            NotificationRepositoryInterface::class,
+            NotificationRepository::class
+        );
+        
+        $this->app->bind(
+            NotificationServiceInterface::class,
+            NotificationService::class
         );
 
         // Chat bindings
