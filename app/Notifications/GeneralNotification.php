@@ -3,14 +3,19 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\Fcm\FcmChannel;
 use NotificationChannels\Fcm\FcmMessage;
 use NotificationChannels\Fcm\Resources\Notification as FcmNotification;
 
-class GeneralNotification extends Notification
+class GeneralNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 6;
+
+    public array $backoff = [5, 20, 60, 300, 900];
 
     public function __construct(
         public string $title,
@@ -20,17 +25,17 @@ class GeneralNotification extends Notification
 
     public function via($notifiable)
     {
-        return [FcmChannel::class]; 
+        return [FcmChannel::class];
     }
 
     public function toFcm($notifiable)
     {
         return FcmMessage::create()
-            ->setNotification(
+            ->notification(
                 FcmNotification::create()
-                    ->setTitle($this->title)
-                    ->setBody($this->body)
+                    ->title($this->title)
+                    ->body($this->body)
             )
-            ->setData($this->data);
+            ->data(array_map(fn ($v) => (string) $v, $this->data));
     }
 }

@@ -42,6 +42,7 @@ class User extends Authenticatable
         'profile_picture',
         'role',
         'is_active',
+        'fcm_token',
     ];
 
     protected $hidden = [
@@ -203,6 +204,11 @@ class User extends Authenticatable
     // {
     //     return $this->hasMany(NotificationModel::class, 'user_id');
     // }
+
+    public function routeNotificationForFcm($notification = null): ?string
+    {
+        return $this->fcm_token;
+    }
 
     public function chats(): BelongsToMany
     {
