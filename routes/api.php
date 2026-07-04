@@ -44,13 +44,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/comments/{commentId}/replies', [ServingController::class, 'getReplies']);
 });
 
+//any user can search for servings without authentication
+Route::post('/servings/search', [ServingController::class, 'getServings']);
+Route::post('/servings/nearby', [ServingController::class, 'getNearbyServings']);
 // ServingController
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/servings/{servingId}/availability-slots', [ServingController::class, 'getAvailabilitySlots']);
     Route::get('/servings/{id}', [ServingController::class, 'getById']);
-    Route::post('/servings/search', [ServingController::class, 'getServings']);
     Route::post('/servings/my', [ServingController::class, 'getMyServings']);
-    Route::post('/servings/nearby', [ServingController::class, 'getNearbyServings']);
     Route::get('/servings/my-deactivated', [ServingController::class, 'getDeactivated']);
 });
 
