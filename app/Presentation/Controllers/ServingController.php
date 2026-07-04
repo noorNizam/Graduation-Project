@@ -195,4 +195,22 @@ class ServingController
 
         return response()->json($result, $result['success'] ? 200 : 500);
     }
+
+    public function deactivate(int $id)
+    {
+        $result = $this->servingService->deactivateServing($id, auth()->id());
+
+        if (isset($result['success']) && $result['success'] === false && isset($result['message']) && $result['message'] === 'Forbidden') {
+            return response()->json($result, 403);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function getDeactivated()
+    {
+        $result = $this->servingService->getDeactivatedServings(auth()->id());
+
+        return response()->json($result, 200);
+    }
 }

@@ -26,7 +26,7 @@ class ServingService implements ServingServiceInterface
                 $data['serving_type_id'] = $type->id;
             }
 
-            $data['status'] = \App\Infrastructure\Models\Serving::STATUS_APPROVED;
+            $data['status'] = \App\Infrastructure\Models\Serving::STATUS_ACTIVE;
 
             // Handle image storage if provided
             if ($image) {
@@ -163,7 +163,7 @@ class ServingService implements ServingServiceInterface
             return ['success' => false, 'message' => 'Serving is not pending'];
         }
 
-        $updated = $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_APPROVED);
+        $updated = $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_ACTIVE);
 
         return [
             'success' => true,
@@ -235,10 +235,10 @@ class ServingService implements ServingServiceInterface
             ];
         }
 
-        if (! $serving->isApproved()) {
+        if (! $serving->isActive()) {
             return [
                 'success' => false,
-                'message' => 'Cannot comment on a serving that is not approved',
+                'message' => 'Cannot comment on a serving that is not active',
             ];
         }
 
@@ -477,7 +477,7 @@ class ServingService implements ServingServiceInterface
     public function getServings(?int $excludeUserId, ?int $servingTypeId, ?int $paymentUnitId, ?int $categoryId, ?int $skip, ?int $take, ?string $name): array
     {
         $query = \App\Infrastructure\Models\Serving::with(['user', 'category', 'unit', 'servingType'])
-            ->approved()
+            ->active()
             ->latest();
 
         // Exclude authenticated user's own servings
@@ -708,6 +708,70 @@ class ServingService implements ServingServiceInterface
         return [
             'success' => true,
             'data' => $slots,
+        ];
+    }
+
+    public function deactivateServing(int $servingId, int $userId): array
+    {
+        $serving = $this->repository->findById($servingId);
+
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        if ($serving->user_id !== $userId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+            ];
+        }
+
+        $serving = $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_INACTIVE);
+
+        return [
+            'success' => true,
+            'data' => $serving,
+            'message' => 'Serving deactivated',
+        ];
+    }
+
+    public function getDeactivatedServings(int $userId): array
+    {
+        $servings = \App\Infrastructure\Models\Serving::with(['user', 'category', 'unit', 'servingType'])
+            ->where('user_id', $userId)
+            ->inactive()
+            ->latest()
+            ->get();
+
+        $dto = $servings->map(function ($serving) {
+            return [
+                'id' => $serving->id,
+                'title' => $serving->title,
+                'description' => $serving->description,
+                'cost_amount' => $serving->cost_amount,
+                'image_url' => $serving->image_url,
+                'location_lat' => $serving->location_lat,
+                'location_lng' => $serving->location_lng,
+                'location_address' => $serving->location_address,
+                'meeting_type' => $serving->meeting_type,
+                'status' => $serving->status,
+                'created_at' => $serving->created_at,
+                'updated_at' => $serving->updated_at,
+                'user_full_name' => $serving->user->full_name ?? null,
+                'user_email' => $serving->user->email ?? null,
+                'user_id' => $serving->user_id,
+                'category_name' => $serving->category->name ?? null,
+                'unit_name' => $serving->unit->name ?? null,
+                'serving_type_name' => $serving->servingType->name ?? null,
+            ];
+        });
+
+        return [
+            'success' => true,
+            'data' => $dto,
         ];
     }
 

@@ -36,6 +36,7 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/servings/{servingId}/comments', [ServingController::class, 'addComment']);
     Route::post('/comments/{commentId}/react', [ServingController::class, 'reactToComment']);
     Route::put('/servings/{servingId}/availability-slots', [ServingController::class, 'updateAvailabilitySlots']);
+    Route::post('/servings/{id}/deactivate', [ServingController::class, 'deactivate']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -50,6 +51,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/servings/search', [ServingController::class, 'getServings']);
     Route::post('/servings/my', [ServingController::class, 'getMyServings']);
     Route::post('/servings/nearby', [ServingController::class, 'getNearbyServings']);
+    Route::get('/servings/my-deactivated', [ServingController::class, 'getDeactivated']);
 });
 
 // ServingRequestController

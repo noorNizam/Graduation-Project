@@ -64,7 +64,7 @@ class ServingRepository implements ServingRepositoryInterface
                 )) AS distance
             ', [$lat, $lng, $lat])
             ->where('user_id', '!=', $excludeUserId)
-            ->where('status', Serving::STATUS_APPROVED)
+            ->where('status', Serving::STATUS_ACTIVE)
             ->whereNotNull('location_lat')
             ->whereNotNull('location_lng')
             ->whereBetween('location_lat', [$minLat, $maxLat])
