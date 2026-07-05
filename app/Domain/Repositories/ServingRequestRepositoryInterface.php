@@ -21,5 +21,9 @@ interface ServingRequestRepositoryInterface
 
     public function findByServingOwnerId(int $ownerId, ?string $status = null): Collection;
 
+    public function findExpiredCompletionRequests(): Collection;
+
+    public function findStaleAcceptedRequests(): Collection;
+
     public function delete(int $id): bool;
 }

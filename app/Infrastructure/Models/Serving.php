@@ -3,12 +3,21 @@
 namespace App\Infrastructure\Models;
 
 use App\Models\ServingCategory;
+use Database\Factories\ServingFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Serving extends Model
 {
+    use HasFactory;
+
+    protected static function newFactory(): ServingFactory
+    {
+        return ServingFactory::new();
+    }
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_ACTIVE = 'active';
@@ -133,5 +142,15 @@ class Serving extends Model
     public function isInactive(): bool
     {
         return $this->status === self::STATUS_INACTIVE;
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->servingType && $this->servingType->name === 'paid';
+    }
+
+    public function isVoluntary(): bool
+    {
+        return $this->servingType && $this->servingType->name === 'voluntary';
     }
 }

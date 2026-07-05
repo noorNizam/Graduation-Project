@@ -5,6 +5,7 @@ namespace App\Infrastructure\Repositories;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Infrastructure\Models\ServingRequest;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class ServingRequestRepository implements ServingRequestRepositoryInterface
 {
@@ -66,6 +67,31 @@ class ServingRequestRepository implements ServingRequestRepositoryInterface
 
         if ($status !== null) {
             $query->where('serving_requests.status', $status);
+        }
+
+        return $query->get();
+    }
+
+    public function findExpiredCompletionRequests(): Collection
+    {
+        return ServingRequest::with('serving')
+            ->where('status', ServingRequest::STATUS_COMPLETION_REQUESTED)
+            ->where('completion_requested_at', '<=', now()->subDays(2))
+            ->get();
+    }
+
+    public function findStaleAcceptedRequests(): Collection
+    {
+        $query = ServingRequest::with('serving')
+            ->where('status', ServingRequest::STATUS_ACCEPTED)
+            ->whereNotNull('accepted_at');
+
+        $driver = DB::getDriverName();
+
+        if ($driver === 'mysql') {
+            $query->whereRaw('DATE_ADD(accepted_at, INTERVAL automatically_cancel_after DAY) <= NOW()');
+        } else {
+            $query->whereRaw("datetime(accepted_at, '+' || automatically_cancel_after || ' days') <= datetime('now')");
         }
 
         return $query->get();

@@ -26,3 +26,5 @@ Thumbs.db
 README.md
 /opencode.json
 /.opencode/
+/.env
+/firebase/

@@ -19,7 +19,8 @@ class ServingRequestController
         $result = $this->servingRequestService->createRequest(
             auth()->id(),
             $data['serving_id'],
-            $data['message'] ?? null
+            $data['message'] ?? null,
+            $data['automatically_cancel_after']
         );
 
         return response()->json($result, $result['success'] ? 201 : 422);
@@ -77,5 +78,34 @@ class ServingRequestController
         }
 
         return response()->json($result, $result['success'] ? 200 : $result['status'] ?? 500);
+    }
+
+    public function requestCompletion(int $id)
+    {
+        $result = $this->servingRequestService->requestCompletion($id, auth()->id());
+
+        if (isset($result['success']) && $result['success'] === false && isset($result['message']) && $result['message'] === 'Forbidden') {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function confirmCompletion(int $id)
+    {
+        $result = $this->servingRequestService->confirmCompletion($id, auth()->id());
+
+        if (isset($result['success']) && $result['success'] === false && isset($result['message']) && $result['message'] === 'Forbidden') {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function pendingConfirmations()
+    {
+        $result = $this->servingRequestService->getPendingConfirmations(auth()->id());
+
+        return response()->json($result, $result['success'] ? 200 : 500);
     }
 }

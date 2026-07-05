@@ -647,7 +647,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"serving_id\": 1,\n    \"message\": \"I am interested in this service, can we schedule it for next week?\"\n}"
+							"raw": "{\n    \"serving_id\": 1,\n    \"message\": \"I am interested in this service, can we schedule it for next week?\",\n    \"automatically_cancel_after\": 14\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/servings/requests",
@@ -720,7 +720,7 @@
 								{
 									"key": "status",
 									"value": "accepted",
-									"description": "Filter by status: pending, accepted, rejected, completed, cancelled"
+									"description": "Filter by status: pending, accepted, rejected, completion_requested, completed, canceled"
 								}
 							]
 						}
@@ -744,7 +744,7 @@
 								{
 									"key": "status",
 									"value": "pending",
-									"description": "Filter by status: pending, accepted, rejected, completed, cancelled"
+									"description": "Filter by status: pending, accepted, rejected, completion_requested, completed, canceled"
 								}
 							]
 						}
@@ -768,7 +768,7 @@
 								{
 									"key": "status",
 									"value": "accepted",
-									"description": "Filter by status: pending, accepted, rejected, completed, cancelled"
+									"description": "Filter by status: pending, accepted, rejected, completion_requested, completed, canceled"
 								}
 							]
 						}
@@ -788,6 +788,57 @@
 							"raw": "{{base_url}}/servings/requests/{{request_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["servings", "requests", "{{request_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Request Completion (Owner)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/{{request_id}}/request-completion",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "{{request_id}}", "request-completion"]
+						}
+					}
+				},
+				{
+					"name": "Confirm Completion (Beneficiary)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/{{request_id}}/confirm-completion",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "{{request_id}}", "confirm-completion"]
+						}
+					}
+				},
+				{
+					"name": "Pending Confirmations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/pending-confirmation",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "pending-confirmation"]
 						}
 					}
 				}
@@ -1358,6 +1409,110 @@
 							"raw": "{{base_url}}/my-penalties",
 							"host": ["{{base_url}}"],
 							"path": ["my-penalties"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Notifications",
+			"item": [
+				{
+					"name": "Get My Notifications",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/my-notifications",
+							"host": ["{{base_url}}"],
+							"path": ["my-notifications"]
+						}
+					}
+				},
+				{
+					"name": "Mark Notification as Read",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/notifications/:id/read",
+							"host": ["{{base_url}}"],
+							"path": ["notifications", ":id", "read"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Mark All Notifications as Read",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/notifications/read-all",
+							"host": ["{{base_url}}"],
+							"path": ["notifications", "read-all"]
+						}
+					}
+				},
+				{
+					"name": "Get Unread Notifications Count",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/notifications/unread-count",
+							"host": ["{{base_url}}"],
+							"path": ["notifications", "unread-count"]
+						}
+					}
+				},
+				{
+					"name": "Update FCM Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fcm_token\": \"your-fcm-device-token\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/update-fcm-token",
+							"host": ["{{base_url}}"],
+							"path": ["update-fcm-token"]
 						}
 					}
 				}

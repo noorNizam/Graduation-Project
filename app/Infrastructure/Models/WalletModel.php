@@ -2,11 +2,20 @@
 
 namespace App\Infrastructure\Models;
 
+use Database\Factories\WalletModelFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WalletModel extends Model
 {
+    use HasFactory;
+
+    protected static function newFactory(): WalletModelFactory
+    {
+        return WalletModelFactory::new();
+    }
+
     protected $table = 'wallets';
 
     protected $fillable = [

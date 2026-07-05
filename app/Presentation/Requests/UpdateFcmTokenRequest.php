@@ -2,9 +2,7 @@
 
 namespace App\Presentation\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class UpdateFcmTokenRequest extends FormRequest
+class UpdateFcmTokenRequest extends BaseRequest
 {
     public function authorize(): bool
     {
