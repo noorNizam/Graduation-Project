@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use Database\Factories\ServingCategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ServingCategory extends Model
 {
     use HasFactory;
+
+    protected static function newFactory(): ServingCategoryFactory
+    {
+        return ServingCategoryFactory::new();
+    }
 
     protected $table = 'serving_categories';
 

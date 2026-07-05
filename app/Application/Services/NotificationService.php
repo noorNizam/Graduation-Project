@@ -7,6 +7,7 @@ use App\Domain\Repositories\NotificationRepositoryInterface;
 use App\Infrastructure\Models\User;
 use App\Notifications\GeneralNotification;
 use App\Traits\HandlesDatabaseTransactions;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService implements NotificationServiceInterface
 {
@@ -32,8 +33,14 @@ class NotificationService implements NotificationServiceInterface
             return $result;
         }
 
-        // 🔥 إرسال Firebase
-        $this->sendFirebase($userId, $title, $body, $data);
+        try {
+            $this->sendFirebase($userId, $title, $body, $data);
+        } catch (\Throwable $e) {
+            Log::warning('Firebase notification failed', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return [
             'success' => true,
