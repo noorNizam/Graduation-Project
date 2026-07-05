@@ -5,6 +5,7 @@ namespace App\Application\Services;
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\ServingRequestServiceInterface;
 use App\Infrastructure\Models\ServingRequest;
 use App\Traits\HandlesDatabaseTransactions;
@@ -16,7 +17,8 @@ class ServingRequestService implements ServingRequestServiceInterface
     public function __construct(
         private ServingRequestRepositoryInterface $requestRepository,
         private ServingRepositoryInterface $servingRepository,
-        private WalletRepositoryInterface $walletRepository
+        private WalletRepositoryInterface $walletRepository,
+        private NotificationServiceInterface $notificationService
     ) {}
 
     public function createRequest(int $requesterId, int $servingId, ?string $message = null, ?int $automaticallyCancelAfter = null): array
@@ -56,6 +58,18 @@ class ServingRequestService implements ServingRequestServiceInterface
         if (! $transactionResult['success']) {
             return $transactionResult;
         }
+
+        $this->notificationService->send(
+            $serving->user_id,
+            'serving_request',
+            'طلب خدمة جديد',
+            'لديك طلب جديد على خدمتك',
+            [
+                'serving_id' => $servingId,
+                'request_id' => $transactionResult['data']->id,
+                'requester_id' => $requesterId,
+            ]
+        );
 
         return [
             'success' => true,
