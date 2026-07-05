@@ -134,4 +134,14 @@ class Serving extends Model
     {
         return $this->status === self::STATUS_INACTIVE;
     }
+
+    public function isPaid(): bool
+    {
+        return $this->servingType && $this->servingType->name === 'paid';
+    }
+
+    public function isVoluntary(): bool
+    {
+        return $this->servingType && $this->servingType->name === 'voluntary';
+    }
 }

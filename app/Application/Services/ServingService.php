@@ -3,7 +3,9 @@
 namespace App\Application\Services;
 
 use App\Domain\Repositories\ServingRepositoryInterface;
+use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Services\ServingServiceInterface;
+use App\Infrastructure\Models\ServingRequest;
 use App\Jobs\DeleteServingImageJob;
 use App\Traits\HandlesDatabaseTransactions;
 use Illuminate\Support\Facades\Storage;
@@ -14,7 +16,8 @@ class ServingService implements ServingServiceInterface
     use HandlesDatabaseTransactions;
 
     public function __construct(
-        private ServingRepositoryInterface $repository
+        private ServingRepositoryInterface $repository,
+        private ServingRequestRepositoryInterface $requestRepository
     ) {}
 
     public function createPaidServing(array $data, $image = null): array
@@ -729,13 +732,30 @@ class ServingService implements ServingServiceInterface
             ];
         }
 
-        $serving = $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_INACTIVE);
+        $transactionResult = $this->executeWithTransaction(function () use ($servingId) {
+            $this->rejectPendingRequestsForServing($servingId);
+
+            return $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_INACTIVE);
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
 
         return [
             'success' => true,
-            'data' => $serving,
+            'data' => $transactionResult['data'],
             'message' => 'Serving deactivated',
         ];
+    }
+
+    private function rejectPendingRequestsForServing(int $servingId): void
+    {
+        $pending = $this->requestRepository->findByServingId($servingId, ServingRequest::STATUS_PENDING);
+
+        foreach ($pending as $request) {
+            $this->requestRepository->updateStatus($request->id, ServingRequest::STATUS_REJECTED);
+        }
     }
 
     public function getDeactivatedServings(int $userId): array

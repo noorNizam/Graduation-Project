@@ -17,15 +17,33 @@ class ServingRequest extends Model
 
     public const STATUS_COMPLETED = 'completed';
 
+    public const STATUS_COMPLETION_REQUESTED = 'completion_requested';
+
+    public const STATUS_CANCELED = 'canceled';
+
     protected $fillable = [
         'serving_id',
         'requester_id',
         'message',
         'status',
+        'held_amount',
+        'held_at',
+        'automatically_cancel_after',
+        'accepted_at',
+        'completion_requested_at',
+        'completed_at',
+        'canceled_at',
     ];
 
     protected $casts = [
         'status' => 'string',
+        'held_amount' => 'decimal:2',
+        'held_at' => 'datetime',
+        'automatically_cancel_after' => 'integer',
+        'accepted_at' => 'datetime',
+        'completion_requested_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'canceled_at' => 'datetime',
     ];
 
     public function serving(): BelongsTo
@@ -58,6 +76,16 @@ class ServingRequest extends Model
         return $query->where('status', self::STATUS_COMPLETED);
     }
 
+    public function scopeCompletionRequested($query)
+    {
+        return $query->where('status', self::STATUS_COMPLETION_REQUESTED);
+    }
+
+    public function scopeCanceled($query)
+    {
+        return $query->where('status', self::STATUS_CANCELED);
+    }
+
     public function scopeForServing($query, int $servingId)
     {
         return $query->where('serving_id', $servingId);
@@ -71,6 +99,14 @@ class ServingRequest extends Model
     public function accept(): void
     {
         $this->status = self::STATUS_ACCEPTED;
+        $this->accepted_at = now();
+        $this->save();
+    }
+
+    public function cancel(): void
+    {
+        $this->status = self::STATUS_CANCELED;
+        $this->canceled_at = now();
         $this->save();
     }
 
@@ -83,11 +119,39 @@ class ServingRequest extends Model
     public function complete(): void
     {
         $this->status = self::STATUS_COMPLETED;
+        $this->completed_at = now();
         $this->save();
     }
 
     public function isPending(): bool
     {
         return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isAccepted(): bool
+    {
+        return $this->status === self::STATUS_ACCEPTED;
+    }
+
+    public function isCompletionRequested(): bool
+    {
+        return $this->status === self::STATUS_COMPLETION_REQUESTED;
+    }
+
+    public function isCanceled(): bool
+    {
+        return $this->status === self::STATUS_CANCELED;
+    }
+
+    public function requestCompletion(): void
+    {
+        $this->status = self::STATUS_COMPLETION_REQUESTED;
+        $this->completion_requested_at = now();
+        $this->save();
+    }
+
+    public function confirmCompletion(): void
+    {
+        $this->complete();
     }
 }

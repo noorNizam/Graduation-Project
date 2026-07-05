@@ -4,7 +4,7 @@ namespace App\Domain\Services;
 
 interface ServingRequestServiceInterface
 {
-    public function createRequest(int $requesterId, int $servingId, ?string $message = null): array;
+    public function createRequest(int $requesterId, int $servingId, ?string $message = null, ?int $automaticallyCancelAfter = null): array;
 
     public function acceptRequest(int $requestId, int $ownerId): array;
 
@@ -17,4 +17,10 @@ interface ServingRequestServiceInterface
     public function getReceivedRequests(int $ownerId, ?string $status = null): array;
 
     public function deleteRequest(int $requestId, int $userId): array;
+
+    public function requestCompletion(int $requestId, int $ownerId): array;
+
+    public function confirmCompletion(int $requestId, int $userId): array;
+
+    public function getPendingConfirmations(int $userId): array;
 }

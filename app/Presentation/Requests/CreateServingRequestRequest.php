@@ -14,6 +14,7 @@ class CreateServingRequestRequest extends BaseRequest
         return [
             'serving_id' => ['required', 'integer', 'exists:servings,id'],
             'message' => ['nullable', 'string', 'max:1000'],
+            'automatically_cancel_after' => ['required', 'integer', 'min:7'],
         ];
     }
 }

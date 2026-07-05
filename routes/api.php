@@ -12,8 +12,8 @@ use App\Presentation\Controllers\ServingTypeController;
 use App\Presentation\Controllers\TroubleshootingController;
 use App\Presentation\Controllers\UserComplaintController;
 use App\Presentation\Controllers\UserManagementController;
-use App\Presentation\Controllers\WalletController;
 use App\Presentation\Controllers\UserNotificationController;
+use App\Presentation\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
 
 // TroubleshootingController
@@ -44,7 +44,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/comments/{commentId}/replies', [ServingController::class, 'getReplies']);
 });
 
-//any user can search for servings without authentication
+// any user can search for servings without authentication
 Route::post('/servings/search', [ServingController::class, 'getServings']);
 Route::post('/servings/nearby', [ServingController::class, 'getNearbyServings']);
 // ServingController
@@ -60,6 +60,8 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/servings/requests', [ServingRequestController::class, 'create']);
     Route::put('/servings/requests/{id}/accept', [ServingRequestController::class, 'accept']);
     Route::put('/servings/requests/{id}/reject', [ServingRequestController::class, 'reject']);
+    Route::put('/servings/requests/{id}/request-completion', [ServingRequestController::class, 'requestCompletion']);
+    Route::put('/servings/requests/{id}/confirm-completion', [ServingRequestController::class, 'confirmCompletion']);
     Route::delete('/servings/requests/{id}', [ServingRequestController::class, 'remove']);
 });
 
@@ -67,6 +69,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/servings/requests/my', [ServingRequestController::class, 'listByRequester']);
     Route::get('/servings/requests/received', [ServingRequestController::class, 'listByOwner']);
     Route::get('/servings/requests/serving/{servingId}', [ServingRequestController::class, 'listByServing']);
+    Route::get('/servings/requests/pending-confirmation', [ServingRequestController::class, 'pendingConfirmations']);
 });
 
 // PaymentUnitController

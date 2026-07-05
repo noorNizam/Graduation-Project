@@ -14,4 +14,11 @@ class WalletRepository implements WalletRepositoryInterface
             ->with('unit')
             ->get();
     }
+
+    public function findByUserAndUnit(int $userId, int $unitId): ?WalletModel
+    {
+        return WalletModel::where('user_id', $userId)
+            ->where('unit_id', $unitId)
+            ->first();
+    }
 }
