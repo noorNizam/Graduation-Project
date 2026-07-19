@@ -12,6 +12,7 @@ use App\Application\Services\ServingCategoryService;
 use App\Application\Services\ServingRequestService;
 use App\Application\Services\ServingService;
 use App\Application\Services\UserManagementService;
+use App\Application\Services\UserRatingService;
 use App\Application\Services\UserRegistrationService;
 use App\Application\Services\WalletService;
 use App\Domain\Repositories\ChatRepositoryInterface;
@@ -23,6 +24,7 @@ use App\Domain\Repositories\PenaltyRepositoryInterface;
 use App\Domain\Repositories\ServingCategoryRepositoryInterface;
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
+use App\Domain\Repositories\UserRatingRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
 use App\Domain\Services\ChatServiceInterface;
 use App\Domain\Services\ComplaintServiceInterface;
@@ -34,6 +36,7 @@ use App\Domain\Services\ServingCategoryServiceInterface;
 use App\Domain\Services\ServingRequestServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Domain\Services\UserManagementServiceInterface;
+use App\Domain\Services\UserRatingServiceInterface;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Domain\Services\WalletServiceInterface;
 use App\Infrastructure\Repositories\ChatRepository;
@@ -45,6 +48,7 @@ use App\Infrastructure\Repositories\PenaltyRepository;
 use App\Infrastructure\Repositories\ServingCategoryRepository;
 use App\Infrastructure\Repositories\ServingRepository;
 use App\Infrastructure\Repositories\ServingRequestRepository;
+use App\Infrastructure\Repositories\UserRatingRepository;
 use App\Infrastructure\Repositories\WalletRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -127,6 +131,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             WalletServiceInterface::class,
             WalletService::class
+        );
+
+        // User Rating bindings
+        $this->app->bind(
+            UserRatingRepositoryInterface::class,
+            UserRatingRepository::class
+        );
+
+        $this->app->bind(
+            UserRatingServiceInterface::class,
+            UserRatingService::class
         );
 
         // Complaint & Penalty bindings
