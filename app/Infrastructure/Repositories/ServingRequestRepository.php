@@ -89,9 +89,27 @@ class ServingRequestRepository implements ServingRequestRepositoryInterface
         $driver = DB::getDriverName();
 
         if ($driver === 'mysql') {
-            $query->whereRaw('DATE_ADD(accepted_at, INTERVAL automatically_cancel_after DAY) <= NOW()');
+            $query->whereRaw('DATE_ADD(updated_at, INTERVAL automatically_cancel_after DAY) <= NOW()');
         } else {
-            $query->whereRaw("datetime(accepted_at, '+' || automatically_cancel_after || ' days') <= datetime('now')");
+            $query->whereRaw("datetime(updated_at, '+' || automatically_cancel_after || ' days') <= datetime('now')");
+        }
+
+        return $query->get();
+    }
+
+    public function findExpiredRevisionRequests(): Collection
+    {
+        $query = ServingRequest::with('serving')
+            ->where('status', ServingRequest::STATUS_ACCEPTED)
+            ->where('revision_count', '>', 0)
+            ->whereNotNull('accepted_at');
+
+        $driver = DB::getDriverName();
+
+        if ($driver === 'mysql') {
+            $query->whereRaw('DATE_ADD(updated_at, INTERVAL automatically_cancel_after DAY) <= NOW()');
+        } else {
+            $query->whereRaw("datetime(updated_at, '+' || automatically_cancel_after || ' days') <= datetime('now')");
         }
 
         return $query->get();

@@ -11,6 +11,7 @@ class ComplaintModel extends Model
 
     protected $fillable = [
         'serving_id',
+        'serving_request_id',
         'complainant_id',
         'accused_user_id',
         'reason',

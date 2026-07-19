@@ -826,6 +826,40 @@
 					}
 				},
 				{
+					"name": "Request Revision",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/{{request_id}}/request-revision",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "{{request_id}}", "request-revision"]
+						}
+					}
+				},
+				{
+					"name": "Dispute Request",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/requests/{{request_id}}/dispute",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "requests", "{{request_id}}", "dispute"]
+						}
+					}
+				},
+				{
 					"name": "Pending Confirmations",
 					"request": {
 						"method": "GET",
@@ -1534,11 +1568,18 @@
 										"value": "Bearer {{token}}"
 									}
 								],
-								"url": {
-									"raw": "{{base_url}}/admin/complaints",
-									"host": ["{{base_url}}"],
-									"path": ["admin", "complaints"]
-								}
+							"url": {
+								"raw": "{{base_url}}/admin/complaints?status=&complainant_id=&accused_user_id=&serving_request_id=&per_page=",
+								"host": ["{{base_url}}"],
+								"path": ["admin", "complaints"],
+								"query": [
+									{ "key": "status", "value": "", "description": "Filter: pending, under_review, resolved, rejected" },
+									{ "key": "complainant_id", "value": "", "description": "Filter by complainant user ID" },
+									{ "key": "accused_user_id", "value": "", "description": "Filter by accused user ID" },
+									{ "key": "serving_request_id", "value": "", "description": "Filter by serving request ID (e.g., dispute)" },
+									{ "key": "per_page", "value": "15", "description": "Items per page (max 100)" }
+								]
+							}
 							}
 						},
 						{

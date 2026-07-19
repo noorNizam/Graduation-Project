@@ -3,6 +3,7 @@
 namespace App\Presentation\Controllers;
 
 use App\Domain\Services\ComplaintServiceInterface;
+use App\Domain\Services\ServingRequestServiceInterface;
 use App\Events\ComplaintResolved;
 use App\Presentation\Requests\ComplaintFilterRequest;
 use App\Presentation\Requests\UpdateComplaintStatusRequest;
@@ -10,7 +11,8 @@ use App\Presentation\Requests\UpdateComplaintStatusRequest;
 class AdminComplaintController
 {
     public function __construct(
-        private ComplaintServiceInterface $complaintService
+        private ComplaintServiceInterface $complaintService,
+        private ServingRequestServiceInterface $servingRequestService
     ) {}
 
     public function index(ComplaintFilterRequest $request)
@@ -43,6 +45,14 @@ class AdminComplaintController
         if ($validated['status'] === 'resolved') {
             $complaintModel = $this->complaintService->getComplaintModel($id);
             if ($complaintModel) {
+                if (! empty($validated['escrow_action']) && $complaintModel->serving_request_id) {
+                    $this->servingRequestService->resolveDispute(
+                        $complaintModel->serving_request_id,
+                        $validated['escrow_action'],
+                        $complaintModel->id
+                    );
+                }
+
                 event(new ComplaintResolved($complaintModel, $validated['admin_note'] ?? ''));
             }
         }

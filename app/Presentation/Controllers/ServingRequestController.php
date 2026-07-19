@@ -108,4 +108,26 @@ class ServingRequestController
 
         return response()->json($result, $result['success'] ? 200 : 500);
     }
+
+    public function requestRevision(int $id)
+    {
+        $result = $this->servingRequestService->requestRevision($id, auth()->id());
+
+        if (isset($result['success']) && $result['success'] === false && isset($result['message']) && $result['message'] === 'Forbidden') {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function dispute(int $id)
+    {
+        $result = $this->servingRequestService->disputeRequest($id, auth()->id());
+
+        if (isset($result['success']) && $result['success'] === false && isset($result['message']) && $result['message'] === 'Forbidden') {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
 }

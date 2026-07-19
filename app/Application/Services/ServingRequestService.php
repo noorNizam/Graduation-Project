@@ -5,6 +5,7 @@ namespace App\Application\Services;
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
+use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\ServingRequestServiceInterface;
 use App\Infrastructure\Models\ServingRequest;
@@ -18,7 +19,8 @@ class ServingRequestService implements ServingRequestServiceInterface
         private ServingRequestRepositoryInterface $requestRepository,
         private ServingRepositoryInterface $servingRepository,
         private WalletRepositoryInterface $walletRepository,
-        private NotificationServiceInterface $notificationService
+        private NotificationServiceInterface $notificationService,
+        private ComplaintServiceInterface $complaintService
     ) {}
 
     public function createRequest(int $requesterId, int $servingId, ?string $message = null, ?int $automaticallyCancelAfter = null): array
@@ -412,6 +414,259 @@ class ServingRequestService implements ServingRequestServiceInterface
         return [
             'success' => true,
             'data' => $requests,
+        ];
+    }
+
+    public function requestRevision(int $requestId, int $requesterId): array
+    {
+        $servingRequest = $this->requestRepository->findById($requestId);
+        if (! $servingRequest) {
+            return [
+                'success' => false,
+                'message' => 'Request not found',
+            ];
+        }
+
+        if ($servingRequest->requester_id !== $requesterId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+            ];
+        }
+
+        if (! $servingRequest->isCompletionRequested()) {
+            return [
+                'success' => false,
+                'message' => 'Completion has not been requested for this request',
+            ];
+        }
+
+        if ($servingRequest->revision_count >= 2) {
+            return [
+                'success' => false,
+                'message' => 'Maximum revisions reached. You can dispute or confirm instead.',
+            ];
+        }
+
+        $transactionResult = $this->executeWithTransaction(function () use ($servingRequest) {
+            $servingRequest->requestRevision();
+
+            return $servingRequest;
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
+
+        $serving = $this->servingRepository->findById($servingRequest->serving_id);
+
+        $this->notificationService->send(
+            $serving->user_id,
+            'revision_requested',
+            'طلب تعديل',
+            'قام طالب الخدمة بطلب تعديل، يرجى إعادة إرسال الطلب',
+            [
+                'serving_id' => $servingRequest->serving_id,
+                'request_id' => $servingRequest->id,
+            ]
+        );
+
+        return [
+            'success' => true,
+            'data' => $transactionResult['data'],
+            'message' => 'Revision requested successfully',
+        ];
+    }
+
+    public function disputeRequest(int $requestId, int $requesterId): array
+    {
+        $servingRequest = $this->requestRepository->findById($requestId);
+        if (! $servingRequest) {
+            return [
+                'success' => false,
+                'message' => 'Request not found',
+            ];
+        }
+
+        if ($servingRequest->requester_id !== $requesterId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+            ];
+        }
+
+        if (! $servingRequest->isCompletionRequested()) {
+            return [
+                'success' => false,
+                'message' => 'Completion has not been requested for this request',
+            ];
+        }
+
+        $serving = $this->servingRepository->findById($servingRequest->serving_id);
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Associated serving not found',
+            ];
+        }
+
+        $transactionResult = $this->executeWithTransaction(function () use ($servingRequest, $serving, $requesterId) {
+            $servingRequest->dispute();
+
+            $complaintResult = $this->complaintService->createComplaint([
+                'serving_id' => $servingRequest->serving_id,
+                'serving_request_id' => $servingRequest->id,
+                'complainant_id' => $requesterId,
+                'accused_user_id' => $serving->user_id,
+                'reason' => 'Dispute on serving request',
+                'description' => 'Requester opened a dispute on a completed serving request',
+                'status' => 'pending',
+            ]);
+
+            if (! $complaintResult['success']) {
+                throw new \Exception('Failed to create complaint: '.($complaintResult['message'] ?? 'Unknown error'));
+            }
+
+            return $servingRequest;
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
+
+        $this->notificationService->send(
+            $serving->user_id,
+            'dispute_opened',
+            'تم فتح نزاع',
+            'قام طالب الخدمة بفتح نزاع على طلبك، ينتظر حل المشرف',
+            [
+                'serving_id' => $servingRequest->serving_id,
+                'request_id' => $servingRequest->id,
+            ]
+        );
+
+        return [
+            'success' => true,
+            'data' => $transactionResult['data'],
+            'message' => 'Dispute opened successfully',
+        ];
+    }
+
+    public function resolveDispute(int $requestId, string $escrowAction, int $complaintId): array
+    {
+        $servingRequest = $this->requestRepository->findById($requestId);
+        if (! $servingRequest) {
+            return [
+                'success' => false,
+                'message' => 'Request not found',
+            ];
+        }
+
+        if (! $servingRequest->isDisputed()) {
+            return [
+                'success' => false,
+                'message' => 'Request is not disputed',
+            ];
+        }
+
+        $serving = $this->servingRepository->findById($servingRequest->serving_id);
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Associated serving not found',
+            ];
+        }
+
+        $transactionResult = $this->executeWithTransaction(function () use ($servingRequest, $serving, $escrowAction) {
+            if ($escrowAction === 'release_to_owner') {
+                if ($servingRequest->held_amount > 0) {
+                    $ownerWallet = $this->walletRepository->findByUserAndUnit(
+                        $serving->user_id,
+                        $serving->unit_id
+                    );
+
+                    if (! $ownerWallet) {
+                        throw new \Exception('Owner wallet not found for the required payment unit');
+                    }
+
+                    $ownerWallet->balance += $servingRequest->held_amount;
+                    $ownerWallet->save();
+                }
+
+                $servingRequest->held_amount = null;
+                $servingRequest->held_at = null;
+                $servingRequest->complete();
+            } elseif ($escrowAction === 'refund_to_requester') {
+                if ($servingRequest->held_amount > 0) {
+                    $wallet = $this->walletRepository->findByUserAndUnit(
+                        $servingRequest->requester_id,
+                        $serving->unit_id
+                    );
+
+                    if (! $wallet) {
+                        throw new \Exception('Requester wallet not found for the required payment unit');
+                    }
+
+                    $wallet->balance += $servingRequest->held_amount;
+                    $wallet->save();
+                }
+
+                $servingRequest->held_amount = null;
+                $servingRequest->held_at = null;
+                $servingRequest->cancel();
+            }
+
+            return $servingRequest;
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
+
+        $notificationType = 'dispute_resolved';
+        $ownerTitle = 'تم حل النزاع';
+        $ownerBody = 'تم حل النزاع لصالحك وتم تحويل الساعات لمحفظتك';
+        $requesterTitle = 'تم حل النزاع';
+        $requesterBody = 'تم حل النزاع لصالحك وتم استرداد الساعات';
+
+        if ($escrowAction === 'refund_to_requester') {
+            $this->notificationService->send(
+                $servingRequest->requester_id,
+                $notificationType,
+                $requesterTitle,
+                $requesterBody,
+                ['request_id' => $servingRequest->id, 'complaint_id' => $complaintId]
+            );
+
+            $this->notificationService->send(
+                $serving->user_id,
+                $notificationType,
+                $ownerTitle,
+                'تم حل النزاع ورد الساعات لطالب الخدمة',
+                ['request_id' => $servingRequest->id, 'complaint_id' => $complaintId]
+            );
+        } else {
+            $this->notificationService->send(
+                $serving->user_id,
+                $notificationType,
+                $ownerTitle,
+                $ownerBody,
+                ['request_id' => $servingRequest->id, 'complaint_id' => $complaintId]
+            );
+
+            $this->notificationService->send(
+                $servingRequest->requester_id,
+                $notificationType,
+                $requesterTitle,
+                'تم حل النزاع وتم تحويل الساعات لمزود الخدمة',
+                ['request_id' => $servingRequest->id, 'complaint_id' => $complaintId]
+            );
+        }
+
+        return [
+            'success' => true,
+            'data' => $transactionResult['data'],
+            'message' => 'Dispute resolved successfully',
         ];
     }
 }

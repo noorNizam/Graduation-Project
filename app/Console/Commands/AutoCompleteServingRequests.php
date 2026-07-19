@@ -24,8 +24,11 @@ class AutoCompleteServingRequests extends Command
     {
         $completed = $this->processAutoCompletions();
         $canceled = $this->processAutoCancels();
+        $revisionExpired = $this->processRevisionTimeouts();
 
-        return ($completed['failed'] + $canceled['failed']) > 0 ? Command::FAILURE : Command::SUCCESS;
+        $totalFailed = $completed['failed'] + $canceled['failed'] + $revisionExpired['failed'];
+
+        return $totalFailed > 0 ? Command::FAILURE : Command::SUCCESS;
     }
 
     private function processAutoCompletions(): array
@@ -89,6 +92,27 @@ class AutoCompleteServingRequests extends Command
         $request->held_amount = null;
         $request->held_at = null;
         $request->confirmCompletion();
+    }
+
+    private function processRevisionTimeouts(): array
+    {
+        $stale = $this->requestRepository->findExpiredRevisionRequests();
+        $ok = 0;
+        $fail = 0;
+
+        foreach ($stale as $request) {
+            try {
+                $this->cancelRequest($request);
+                $ok++;
+            } catch (\Exception $e) {
+                $this->error("Failed to auto-cancel revision request #{$request->id}: {$e->getMessage()}");
+                $fail++;
+            }
+        }
+
+        $this->info("Auto-canceled {$ok} revision-expired requests.");
+
+        return ['ok' => $ok, 'failed' => $fail];
     }
 
     private function cancelRequest(ServingRequest $request): void

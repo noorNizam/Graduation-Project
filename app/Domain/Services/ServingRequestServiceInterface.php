@@ -23,4 +23,10 @@ interface ServingRequestServiceInterface
     public function confirmCompletion(int $requestId, int $userId): array;
 
     public function getPendingConfirmations(int $userId): array;
+
+    public function requestRevision(int $requestId, int $requesterId): array;
+
+    public function disputeRequest(int $requestId, int $requesterId): array;
+
+    public function resolveDispute(int $requestId, string $escrowAction, int $complaintId): array;
 }

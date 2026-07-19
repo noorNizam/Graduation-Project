@@ -62,6 +62,8 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::put('/servings/requests/{id}/reject', [ServingRequestController::class, 'reject']);
     Route::put('/servings/requests/{id}/request-completion', [ServingRequestController::class, 'requestCompletion']);
     Route::put('/servings/requests/{id}/confirm-completion', [ServingRequestController::class, 'confirmCompletion']);
+    Route::put('/servings/requests/{id}/request-revision', [ServingRequestController::class, 'requestRevision']);
+    Route::put('/servings/requests/{id}/dispute', [ServingRequestController::class, 'dispute']);
     Route::delete('/servings/requests/{id}', [ServingRequestController::class, 'remove']);
 });
 

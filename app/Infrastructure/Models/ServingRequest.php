@@ -21,6 +21,8 @@ class ServingRequest extends Model
 
     public const STATUS_CANCELED = 'canceled';
 
+    public const STATUS_DISPUTED = 'disputed';
+
     protected $fillable = [
         'serving_id',
         'requester_id',
@@ -33,6 +35,8 @@ class ServingRequest extends Model
         'completion_requested_at',
         'completed_at',
         'canceled_at',
+        'disputed_at',
+        'revision_count',
     ];
 
     protected $casts = [
@@ -44,6 +48,8 @@ class ServingRequest extends Model
         'completion_requested_at' => 'datetime',
         'completed_at' => 'datetime',
         'canceled_at' => 'datetime',
+        'disputed_at' => 'datetime',
+        'revision_count' => 'integer',
     ];
 
     public function serving(): BelongsTo
@@ -86,6 +92,11 @@ class ServingRequest extends Model
         return $query->where('status', self::STATUS_CANCELED);
     }
 
+    public function scopeDisputed($query)
+    {
+        return $query->where('status', self::STATUS_DISPUTED);
+    }
+
     public function scopeForServing($query, int $servingId)
     {
         return $query->where('serving_id', $servingId);
@@ -94,13 +105,6 @@ class ServingRequest extends Model
     public function scopeForRequester($query, int $requesterId)
     {
         return $query->where('requester_id', $requesterId);
-    }
-
-    public function accept(): void
-    {
-        $this->status = self::STATUS_ACCEPTED;
-        $this->accepted_at = now();
-        $this->save();
     }
 
     public function cancel(): void
@@ -141,6 +145,26 @@ class ServingRequest extends Model
     public function isCanceled(): bool
     {
         return $this->status === self::STATUS_CANCELED;
+    }
+
+    public function isDisputed(): bool
+    {
+        return $this->status === self::STATUS_DISPUTED;
+    }
+
+    public function requestRevision(): void
+    {
+        $this->status = self::STATUS_ACCEPTED;
+        $this->completion_requested_at = null;
+        $this->revision_count++;
+        $this->save();
+    }
+
+    public function dispute(): void
+    {
+        $this->status = self::STATUS_DISPUTED;
+        $this->disputed_at = now();
+        $this->save();
     }
 
     public function requestCompletion(): void

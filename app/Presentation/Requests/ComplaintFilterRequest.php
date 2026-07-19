@@ -17,6 +17,7 @@ class ComplaintFilterRequest extends FormRequest
             'status' => 'nullable|in:pending,under_review,resolved,rejected',
             'complainant_id' => 'nullable|integer|exists:users,id',
             'accused_user_id' => 'nullable|integer|exists:users,id',
+            'serving_request_id' => 'nullable|integer|exists:serving_requests,id',
             'per_page' => 'nullable|integer|min:1|max:100',
         ];
     }
