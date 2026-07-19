@@ -25,5 +25,7 @@ interface ServingRequestRepositoryInterface
 
     public function findStaleAcceptedRequests(): Collection;
 
+    public function findExpiredRevisionRequests(): Collection;
+
     public function delete(int $id): bool;
 }

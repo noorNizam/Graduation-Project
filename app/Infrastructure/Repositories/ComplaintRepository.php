@@ -34,6 +34,10 @@ class ComplaintRepository implements ComplaintRepositoryInterface
             $query->where('accused_user_id', $filters['accused_user_id']);
         }
 
+        if (! empty($filters['serving_request_id'])) {
+            $query->where('serving_request_id', $filters['serving_request_id']);
+        }
+
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 

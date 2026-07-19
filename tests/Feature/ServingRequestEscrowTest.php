@@ -17,10 +17,15 @@ class ServingRequestEscrowTest extends TestCase
     use RefreshDatabase;
 
     private User $owner;
+
     private User $requester;
+
     private Serving $serving;
+
     private PaymentUnit $hourUnit;
+
     private WalletModel $ownerWallet;
+
     private WalletModel $requesterWallet;
 
     protected function setUp(): void
@@ -131,6 +136,8 @@ class ServingRequestEscrowTest extends TestCase
 
         $servingRequest = ServingRequest::find($requestId);
         $servingRequest->accepted_at = now()->subDays(8);
+        $servingRequest->updated_at = now()->subDays(8);
+        $servingRequest->timestamps = false;
         $servingRequest->save();
 
         $this->artisan('serving-requests:auto-complete')
