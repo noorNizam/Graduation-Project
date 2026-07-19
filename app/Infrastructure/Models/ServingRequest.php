@@ -178,4 +178,21 @@ class ServingRequest extends Model
     {
         $this->complete();
     }
+
+    public static function computeActionFlags(self $request, int $userId): array
+    {
+        $isOwner = $request->relationLoaded('serving') && $request->serving && $request->serving->user_id === $userId;
+        $isRequester = $request->requester_id === $userId;
+        $status = $request->status;
+
+        return [
+            'canAccept' => $status === self::STATUS_PENDING && $isOwner,
+            'canReject' => $status === self::STATUS_PENDING && $isOwner,
+            'canDelete' => $status === self::STATUS_PENDING && $isRequester,
+            'canRequestCompletion' => $status === self::STATUS_ACCEPTED && $isOwner,
+            'canConfirmCompletion' => $status === self::STATUS_COMPLETION_REQUESTED && $isRequester,
+            'canRequestRevision' => $status === self::STATUS_COMPLETION_REQUESTED && $isRequester && $request->revision_count < 2,
+            'canDispute' => $status === self::STATUS_COMPLETION_REQUESTED && $isRequester,
+        ];
+    }
 }

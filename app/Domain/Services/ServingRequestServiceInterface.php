@@ -10,7 +10,7 @@ interface ServingRequestServiceInterface
 
     public function rejectRequest(int $requestId, int $ownerId): array;
 
-    public function getServingRequests(int $servingId, ?string $status = null): array;
+    public function getServingRequests(int $servingId, int $userId, ?string $status = null): array;
 
     public function getRequesterRequests(int $requesterId, ?string $status = null): array;
 

@@ -212,7 +212,7 @@ class ServingRequestService implements ServingRequestServiceInterface
         ];
     }
 
-    public function getServingRequests(int $servingId, ?string $status = null): array
+    public function getServingRequests(int $servingId, int $userId, ?string $status = null): array
     {
         $serving = $this->servingRepository->findById($servingId);
         if (! $serving) {
@@ -224,9 +224,17 @@ class ServingRequestService implements ServingRequestServiceInterface
 
         $requests = $this->requestRepository->findByServingId($servingId, $status);
 
+        $requests->load(['serving', 'requester']);
+
+        $data = $requests->map(function ($r) use ($userId) {
+            $flags = ServingRequest::computeActionFlags($r, $userId);
+
+            return array_merge($r->toArray(), $flags);
+        });
+
         return [
             'success' => true,
-            'data' => $requests->load(['requester']),
+            'data' => $data,
         ];
     }
 
@@ -234,12 +242,18 @@ class ServingRequestService implements ServingRequestServiceInterface
     {
         $requests = $this->requestRepository->findByRequesterId($requesterId, $status);
 
-        $requests->load(['serving.user' => fn ($q) => $q->select(['id', 'full_name'])]);
-        $requests->each(fn ($r) => $r->removable = $r->isPending());
+        $requests->load(['serving' => fn ($q) => $q->select(['id', 'title', 'user_id'])]);
+
+        $data = $requests->map(function ($r) use ($requesterId) {
+            $r->removable = $r->isPending();
+            $flags = ServingRequest::computeActionFlags($r, $requesterId);
+
+            return array_merge($r->toArray(), $flags);
+        });
 
         return [
             'success' => true,
-            'data' => $requests,
+            'data' => $data,
         ];
     }
 
@@ -258,13 +272,15 @@ class ServingRequestService implements ServingRequestServiceInterface
 
         $grouped = $requests->filter(fn ($request) => $request->serving !== null && $request->requester !== null)
             ->groupBy('serving_id')
-            ->map(function ($groupedRequests) {
+            ->map(function ($groupedRequests) use ($ownerId) {
                 $serving = $groupedRequests->first()->serving;
 
                 return [
                     'serving_id' => $serving->id,
                     'serving_title' => $serving->title,
-                    'requests' => $groupedRequests->map(function ($request) {
+                    'requests' => $groupedRequests->map(function ($request) use ($ownerId) {
+                        $flags = ServingRequest::computeActionFlags($request, $ownerId);
+
                         return [
                             'id' => $request->id,
                             'requester_id' => $request->requester_id,
@@ -273,6 +289,7 @@ class ServingRequestService implements ServingRequestServiceInterface
                             'status' => $request->status,
                             'automatically_cancel_after' => $request->automatically_cancel_after,
                             'created_at' => $request->created_at,
+                            ...$flags,
                         ];
                     })->values(),
                 ];
@@ -457,11 +474,17 @@ class ServingRequestService implements ServingRequestServiceInterface
     {
         $requests = $this->requestRepository->findByRequesterId($userId, ServingRequest::STATUS_COMPLETION_REQUESTED);
 
-        $requests->load(['serving' => fn ($q) => $q->select(['id', 'title'])]);
+        $requests->load(['serving' => fn ($q) => $q->select(['id', 'title', 'user_id'])]);
+
+        $data = $requests->map(function ($r) use ($userId) {
+            $flags = ServingRequest::computeActionFlags($r, $userId);
+
+            return array_merge($r->toArray(), $flags);
+        });
 
         return [
             'success' => true,
-            'data' => $requests,
+            'data' => $data,
         ];
     }
 

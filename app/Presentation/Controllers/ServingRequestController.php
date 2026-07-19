@@ -50,7 +50,7 @@ class ServingRequestController
 
     public function listByServing(Request $request, int $servingId)
     {
-        $result = $this->servingRequestService->getServingRequests($servingId, $request->input('status'));
+        $result = $this->servingRequestService->getServingRequests($servingId, auth()->id(), $request->input('status'));
 
         return response()->json($result, $result['success'] ? 200 : 404);
     }
