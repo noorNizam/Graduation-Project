@@ -4,6 +4,7 @@ namespace App\Application\Services;
 
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Infrastructure\Models\ServingRequest;
 use App\Jobs\DeleteServingImageJob;
@@ -17,7 +18,8 @@ class ServingService implements ServingServiceInterface
 
     public function __construct(
         private ServingRepositoryInterface $repository,
-        private ServingRequestRepositoryInterface $requestRepository
+        private ServingRequestRepositoryInterface $requestRepository,
+        private NotificationServiceInterface $notificationService
     ) {}
 
     public function createPaidServing(array $data, $image = null): array
@@ -168,6 +170,14 @@ class ServingService implements ServingServiceInterface
 
         $updated = $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_ACTIVE);
 
+        $this->notificationService->send(
+            $serving->user_id,
+            'serving_approved',
+            'تم قبول الخدمة',
+            "تم قبول خدمتك {$serving->title} ونشرها",
+            ['serving_id' => $serving->id]
+        );
+
         return [
             'success' => true,
             'data' => $updated,
@@ -187,6 +197,14 @@ class ServingService implements ServingServiceInterface
         }
 
         $updated = $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_REJECTED);
+
+        $this->notificationService->send(
+            $serving->user_id,
+            'serving_rejected_admin',
+            'تم رفض الخدمة',
+            "تم رفض خدمتك {$serving->title} من قبل الإدارة",
+            ['serving_id' => $serving->id]
+        );
 
         return [
             'success' => true,

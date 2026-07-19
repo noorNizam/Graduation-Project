@@ -4,6 +4,7 @@ namespace App\Application\Services;
 
 use App\Domain\Repositories\ChatRepositoryInterface;
 use App\Domain\Services\ChatServiceInterface;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Infrastructure\Models\Chat;
 use App\Infrastructure\Models\Message;
 use App\Infrastructure\Models\MessageRecipient;
@@ -15,7 +16,8 @@ class ChatService implements ChatServiceInterface
     use HandlesDatabaseTransactions;
 
     public function __construct(
-        private ChatRepositoryInterface $chatRepository
+        private ChatRepositoryInterface $chatRepository,
+        private NotificationServiceInterface $notificationService
     ) {}
 
     public function createChat(int $userId, array $data): array
@@ -70,6 +72,19 @@ class ChatService implements ChatServiceInterface
             return $result;
         }
 
+        $message = $result['data']['message'] ?? null;
+        $chat = $result['data']['chat'] ?? null;
+        if ($message && $chat) {
+            $senderName = $message->sender->full_name ?? 'مستخدم';
+            $this->notificationService->send(
+                $receiverId,
+                'new_message',
+                'رسالة جديدة',
+                "رسالة جديدة من {$senderName}",
+                ['chat_id' => $chat->id]
+            );
+        }
+
         return [
             'success' => true,
             'data' => $result['data'],
@@ -109,7 +124,7 @@ class ChatService implements ChatServiceInterface
             $allMembers = array_merge([$userId], $memberIds);
             $now = now();
             $chat->users()->attach(
-                collect($allMembers)->mapWithKeys(fn($id) => [$id => ['joined_at' => $now]])->all()
+                collect($allMembers)->mapWithKeys(fn ($id) => [$id => ['joined_at' => $now]])->all()
             );
 
             return ['chat' => $chat->load('users:id,full_name,profile_picture')];
@@ -150,16 +165,34 @@ class ChatService implements ChatServiceInterface
                 ->pluck('users.id');
 
             $message->recipientStatus()->createMany(
-                $recipientIds->map(fn($id) => ['user_id' => $id])->all()
+                $recipientIds->map(fn ($id) => ['user_id' => $id])->all()
             );
 
             $this->chatRepository->updateLastMessageAt($chatId);
 
-            return ['message' => $message->load('sender:id,full_name,profile_picture')];
+            return [
+                'message' => $message->load('sender:id,full_name,profile_picture'),
+                'recipient_ids' => $recipientIds,
+            ];
         });
 
         if (! $result['success']) {
             return $result;
+        }
+
+        $message = $result['data']['message'];
+        $recipientIds = $result['data']['recipient_ids'];
+        $senderName = $message->sender->full_name ?? 'مستخدم';
+        $chatName = $chat->name ?? 'المحادثة';
+
+        foreach ($recipientIds as $recipientId) {
+            $this->notificationService->send(
+                $recipientId,
+                'new_message',
+                'رسالة جديدة',
+                "رسالة جديدة من {$senderName} في {$chatName}",
+                ['chat_id' => $chatId, 'message_id' => $message->id]
+            );
         }
 
         return [
@@ -181,7 +214,7 @@ class ChatService implements ChatServiceInterface
 
             $chat->unread_count = Message::where('chat_id', $chat->id)
                 ->where('sender_id', '!=', $userId)
-                ->whereHas('recipientStatus', fn($q) => $q->where('user_id', $userId)->whereNull('read_at'))
+                ->whereHas('recipientStatus', fn ($q) => $q->where('user_id', $userId)->whereNull('read_at'))
                 ->count();
         });
 
@@ -201,7 +234,7 @@ class ChatService implements ChatServiceInterface
 
             $chat->unread_count = Message::where('chat_id', $chat->id)
                 ->where('sender_id', '!=', $userId)
-                ->whereHas('recipientStatus', fn($q) => $q->where('user_id', $userId)->whereNull('read_at'))
+                ->whereHas('recipientStatus', fn ($q) => $q->where('user_id', $userId)->whereNull('read_at'))
                 ->count();
         });
 
@@ -218,7 +251,7 @@ class ChatService implements ChatServiceInterface
         $chats->each(function ($chat) use ($userId) {
             $chat->unread_count = Message::where('chat_id', $chat->id)
                 ->where('sender_id', '!=', $userId)
-                ->whereHas('recipientStatus', fn($q) => $q->where('user_id', $userId)->whereNull('read_at'))
+                ->whereHas('recipientStatus', fn ($q) => $q->where('user_id', $userId)->whereNull('read_at'))
                 ->count();
         });
 
@@ -249,13 +282,13 @@ class ChatService implements ChatServiceInterface
 
         $load = [
             'sender:id,full_name,profile_picture',
-            'recipientStatus' => fn($q) => $q->where('user_id', $userId),
+            'recipientStatus' => fn ($q) => $q->where('user_id', $userId),
         ];
 
         $counts = [
             'recipientStatus as total_recipients',
-            'recipientStatus as received_count' => fn($q) => $q->whereNotNull('received_at'),
-            'recipientStatus as read_count' => fn($q) => $q->whereNotNull('read_at'),
+            'recipientStatus as received_count' => fn ($q) => $q->whereNotNull('received_at'),
+            'recipientStatus as read_count' => fn ($q) => $q->whereNotNull('read_at'),
         ];
 
         if ($afterId !== null) {
@@ -286,7 +319,7 @@ class ChatService implements ChatServiceInterface
                 ->values();
         }
 
-        $messages->each(function ($message) use ($userId) {
+        $messages->each(function ($message) {
             $myStatus = $message->recipientStatus->first();
             $message->my_received_at = $myStatus?->received_at;
             $message->my_read_at = $myStatus?->read_at;
@@ -395,6 +428,19 @@ class ChatService implements ChatServiceInterface
 
         $this->chatRepository->addMembers($chatId, $memberIds);
 
+        $adder = User::find($userId);
+        $adderName = $adder?->full_name ?? 'مستخدم';
+
+        foreach ($memberIds as $memberId) {
+            $this->notificationService->send(
+                $memberId,
+                'added_to_group',
+                'تمت إضافتك إلى مجموعة',
+                "تمت إضافتك إلى مجموعة {$chat->name} من قبل {$adderName}",
+                ['chat_id' => $chatId]
+            );
+        }
+
         return ['success' => true, 'message' => 'Members added'];
     }
 
@@ -419,6 +465,14 @@ class ChatService implements ChatServiceInterface
         }
 
         $this->chatRepository->removeMember($chatId, $targetUserId);
+
+        $this->notificationService->send(
+            $targetUserId,
+            'removed_from_group',
+            'تمت إزالتك من المجموعة',
+            "تمت إزالتك من مجموعة {$chat->name}",
+            ['chat_id' => $chatId]
+        );
 
         return ['success' => true, 'message' => 'Member removed'];
     }
@@ -451,6 +505,20 @@ class ChatService implements ChatServiceInterface
 
         if (! $result['success']) {
             return $result;
+        }
+
+        $leaver = User::find($userId);
+        $leaverName = $leaver?->full_name ?? 'مستخدم';
+
+        $remainingMembers = $chat->users()->where('users.id', '!=', $userId)->get();
+        foreach ($remainingMembers as $member) {
+            $this->notificationService->send(
+                $member->id,
+                'group_member_left',
+                'مغادرة عضو',
+                "قام {$leaverName} بمغادرة المجموعة",
+                ['chat_id' => $chatId]
+            );
         }
 
         return ['success' => true, 'message' => 'Left group'];

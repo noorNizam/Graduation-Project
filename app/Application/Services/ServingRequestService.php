@@ -143,6 +143,17 @@ class ServingRequestService implements ServingRequestServiceInterface
             return $transactionResult;
         }
 
+        $this->notificationService->send(
+            $servingRequest->requester_id,
+            'serving_accepted',
+            'تم قبول طلبك',
+            "تم قبول طلبك على خدمة {$serving->title}",
+            [
+                'serving_id' => $serving->id,
+                'request_id' => $servingRequest->id,
+            ]
+        );
+
         return [
             'success' => true,
             'data' => $transactionResult['data'],
@@ -182,6 +193,17 @@ class ServingRequestService implements ServingRequestServiceInterface
         if (! $transactionResult['success']) {
             return $transactionResult;
         }
+
+        $this->notificationService->send(
+            $servingRequest->requester_id,
+            'serving_rejected',
+            'تم رفض طلبك',
+            "تم رفض طلبك على خدمة {$serving->title}",
+            [
+                'serving_id' => $serving->id,
+                'request_id' => $servingRequest->id,
+            ]
+        );
 
         return [
             'success' => true,
@@ -291,6 +313,21 @@ class ServingRequestService implements ServingRequestServiceInterface
 
         $this->requestRepository->delete($requestId);
 
+        $serving = $this->servingRepository->findById($servingRequest->serving_id);
+
+        if ($serving) {
+            $this->notificationService->send(
+                $serving->user_id,
+                'request_deleted',
+                'تم حذف طلب',
+                "قام طالب الخدمة بحذف طلبه على خدمة {$serving->title}",
+                [
+                    'serving_id' => $serving->id,
+                    'request_id' => $servingRequest->id,
+                ]
+            );
+        }
+
         return [
             'success' => true,
             'message' => 'Request deleted successfully',
@@ -397,6 +434,17 @@ class ServingRequestService implements ServingRequestServiceInterface
         if (! $transactionResult['success']) {
             return $transactionResult;
         }
+
+        $this->notificationService->send(
+            $serving->user_id,
+            'completion_confirmed',
+            'تم تأكيد إتمام الخدمة',
+            "قام طالب الخدمة بتأكيد إتمام خدمة {$serving->title}",
+            [
+                'serving_id' => $serving->id,
+                'request_id' => $servingRequest->id,
+            ]
+        );
 
         return [
             'success' => true,

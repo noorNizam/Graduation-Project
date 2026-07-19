@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Application\Services\ChatService;
 use App\Application\Services\ComplaintService;
 use App\Application\Services\EmailVerificationService;
+use App\Application\Services\NotificationService;
 use App\Application\Services\PaymentUnitService;
 use App\Application\Services\PenaltyService;
 use App\Application\Services\ServingCategoryService;
@@ -16,6 +17,7 @@ use App\Application\Services\WalletService;
 use App\Domain\Repositories\ChatRepositoryInterface;
 use App\Domain\Repositories\ComplaintRepositoryInterface;
 use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
+use App\Domain\Repositories\NotificationRepositoryInterface;
 use App\Domain\Repositories\PaymentUnitRepositoryInterface;
 use App\Domain\Repositories\PenaltyRepositoryInterface;
 use App\Domain\Repositories\ServingCategoryRepositoryInterface;
@@ -25,6 +27,7 @@ use App\Domain\Repositories\WalletRepositoryInterface;
 use App\Domain\Services\ChatServiceInterface;
 use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\PaymentUnitServiceInterface;
 use App\Domain\Services\PenaltyServiceInterface;
 use App\Domain\Services\ServingCategoryServiceInterface;
@@ -36,6 +39,7 @@ use App\Domain\Services\WalletServiceInterface;
 use App\Infrastructure\Repositories\ChatRepository;
 use App\Infrastructure\Repositories\ComplaintRepository;
 use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
+use App\Infrastructure\Repositories\NotificationRepository;
 use App\Infrastructure\Repositories\PaymentUnitRepository;
 use App\Infrastructure\Repositories\PenaltyRepository;
 use App\Infrastructure\Repositories\ServingCategoryRepository;
@@ -43,10 +47,6 @@ use App\Infrastructure\Repositories\ServingRepository;
 use App\Infrastructure\Repositories\ServingRequestRepository;
 use App\Infrastructure\Repositories\WalletRepository;
 use Illuminate\Support\ServiceProvider;
-use App\Domain\Services\NotificationServiceInterface;
-use App\Application\Services\NotificationService;
-use App\Domain\Repositories\NotificationRepositoryInterface;
-use App\Infrastructure\Repositories\NotificationRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -135,11 +135,10 @@ class AppServiceProvider extends ServiceProvider
             ComplaintRepository::class
         );
 
-        $this->app->singleton(ComplaintServiceInterface::class, function ($app) {
-            return new ComplaintService(
-                $app->make(ComplaintRepositoryInterface::class)
-            );
-        });
+        $this->app->bind(
+            ComplaintServiceInterface::class,
+            ComplaintService::class
+        );
 
         $this->app->bind(
             PenaltyRepositoryInterface::class,
@@ -154,7 +153,7 @@ class AppServiceProvider extends ServiceProvider
             NotificationRepositoryInterface::class,
             NotificationRepository::class
         );
-        
+
         $this->app->bind(
             NotificationServiceInterface::class,
             NotificationService::class
