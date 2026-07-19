@@ -13,18 +13,16 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Create Payment Units (skip if exists)
-        $paymentUnits = ['USD', 'Hour', 'SYP'];
-        foreach ($paymentUnits as $unitName) {
-            PaymentUnit::firstOrCreate(['name' => $unitName]);
-        }
-        $hourUnit = PaymentUnit::where('name', 'Hour')->first();
+        // 1. Ensure only Hour payment unit exists
+        PaymentUnit::where('name', '!=', 'Hour')->delete();
+        $hourUnit = PaymentUnit::firstOrCreate(['name' => 'Hour']);
 
-        // 2. Create Serving Types (skip if exists)
-        $servingTypes = ['paid', 'unpaid', 'voluntary'];
+        // 2. Create Serving Types (skip if exists), ensure unpaid is removed
+        $servingTypes = ['paid', 'voluntary'];
         foreach ($servingTypes as $typeName) {
             ServingType::firstOrCreate(['name' => $typeName]);
         }
+        ServingType::where('name', 'unpaid')->delete();
 
         // 3. Create Serving Categories (5 entities, no children, skip if exists)
         $categories = [
@@ -57,32 +55,22 @@ class DatabaseSeeder extends Seeder
         );
 
         // 5. Create Regular Users (skip if email exists)
-        $regularUsers = [
-            [
-                'full_name' => 'systemUser',
-                'email' => 'user@system.com',
+        for ($i = 1; $i <= 30; $i++) {
+            $suffix = $i === 1 ? '' : $i;
+            $userData = [
+                'full_name' => "systemUser{$suffix}",
+                'email' => "user{$suffix}@system.com",
                 'role' => 'user',
                 'is_active' => true,
                 'phone_number' => null,
                 'password' => bcrypt('P@ssw0rd'),
-            ],
-            [
-                'full_name' => 'systemUser2',
-                'email' => 'user2@system.com',
-                'role' => 'user',
-                'is_active' => true,
-                'phone_number' => null,
-                'password' => bcrypt('P@ssw0rd'),
-            ],
-        ];
+            ];
 
-        foreach ($regularUsers as $userData) {
             $user = User::firstOrCreate(
                 ['email' => $userData['email']],
                 $userData
             );
 
-            // Create or retrieve Wallet for each user
             WalletModel::firstOrCreate(
                 ['user_id' => $user->id],
                 ['title' => $userData['full_name']."'s Wallet", 'balance' => 0.00, 'unit_id' => $hourUnit->id]
