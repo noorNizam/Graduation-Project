@@ -4,6 +4,7 @@ namespace App\Application\Services;
 
 use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
+use App\Domain\Repositories\UserRatingRepositoryInterface;
 use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Infrastructure\Models\ServingRequest;
@@ -19,7 +20,8 @@ class ServingService implements ServingServiceInterface
     public function __construct(
         private ServingRepositoryInterface $repository,
         private ServingRequestRepositoryInterface $requestRepository,
-        private NotificationServiceInterface $notificationService
+        private NotificationServiceInterface $notificationService,
+        private UserRatingRepositoryInterface $ratingRepository
     ) {}
 
     public function createPaidServing(array $data, $image = null): array
@@ -395,11 +397,21 @@ class ServingService implements ServingServiceInterface
         $serving->load(['user', 'category', 'unit', 'servingType']);
 
         $requested = false;
+        $canBeRated = false;
+        $userPreviousRate = null;
         if ($userId !== null) {
             $requested = \App\Infrastructure\Models\ServingRequest::where('serving_id', $id)
                 ->where('requester_id', $userId)
                 ->where('status', '!=', \App\Infrastructure\Models\ServingRequest::STATUS_COMPLETED)
                 ->exists();
+
+            $canBeRated = \App\Infrastructure\Models\ServingRequest::where('serving_id', $id)
+                ->where('requester_id', $userId)
+                ->where('status', ServingRequest::STATUS_COMPLETED)
+                ->exists();
+
+            $userRating = $this->ratingRepository->findByUserAndServing($userId, $id);
+            $userPreviousRate = $userRating ? (float) $userRating->rating : null;
         }
 
         return [
@@ -409,6 +421,7 @@ class ServingService implements ServingServiceInterface
                 'title' => $serving->title,
                 'description' => $serving->description,
                 'cost_amount' => $serving->cost_amount,
+                'rate' => (float) $serving->rate,
                 'image_url' => $serving->image_url,
                 'location_lat' => $serving->location_lat,
                 'location_lng' => $serving->location_lng,
@@ -425,6 +438,8 @@ class ServingService implements ServingServiceInterface
                 'serving_type_name' => $serving->servingType->name ?? null,
                 'requested' => $requested,
                 'isOwner' => $userId !== null && $serving->user_id === $userId,
+                'canBeRated' => $canBeRated,
+                'userPreviousRate' => $userPreviousRate,
             ],
         ];
     }
@@ -469,6 +484,7 @@ class ServingService implements ServingServiceInterface
                 'title' => $serving->title,
                 'description' => $serving->description,
                 'cost_amount' => $serving->cost_amount,
+                'rate' => (float) $serving->rate,
                 'image_url' => $serving->image_url,
                 'location_lat' => $serving->location_lat,
                 'location_lng' => $serving->location_lng,
@@ -551,6 +567,7 @@ class ServingService implements ServingServiceInterface
                 'title' => $serving->title,
                 'description' => $serving->description,
                 'cost_amount' => $serving->cost_amount,
+                'rate' => (float) $serving->rate,
                 'image_url' => $serving->image_url,
                 'location_lat' => $serving->location_lat,
                 'location_lng' => $serving->location_lng,
@@ -598,6 +615,7 @@ class ServingService implements ServingServiceInterface
                 'title' => $serving->title,
                 'description' => $serving->description,
                 'cost_amount' => $serving->cost_amount,
+                'rate' => (float) $serving->rate,
                 'image_url' => $serving->image_url,
                 'location_lat' => $serving->location_lat,
                 'location_lng' => $serving->location_lng,
@@ -790,6 +808,7 @@ class ServingService implements ServingServiceInterface
                 'title' => $serving->title,
                 'description' => $serving->description,
                 'cost_amount' => $serving->cost_amount,
+                'rate' => (float) $serving->rate,
                 'image_url' => $serving->image_url,
                 'location_lat' => $serving->location_lat,
                 'location_lng' => $serving->location_lng,

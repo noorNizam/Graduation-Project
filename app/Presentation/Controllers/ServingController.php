@@ -3,10 +3,12 @@
 namespace App\Presentation\Controllers;
 
 use App\Domain\Services\ServingServiceInterface;
+use App\Domain\Services\UserRatingServiceInterface;
 use App\Presentation\Requests\AddPaidServingRequest;
 use App\Presentation\Requests\CreateCommentRequest;
 use App\Presentation\Requests\GetServingsRequest;
 use App\Presentation\Requests\NearbyServingsRequest;
+use App\Presentation\Requests\RateServingRequest;
 use App\Presentation\Requests\ReactCommentRequest;
 use App\Presentation\Requests\UpdateAvailabilitySlotsRequest;
 use App\Presentation\Requests\UpdatePaidServingRequest;
@@ -14,7 +16,8 @@ use App\Presentation\Requests\UpdatePaidServingRequest;
 class ServingController
 {
     public function __construct(
-        private ServingServiceInterface $servingService
+        private ServingServiceInterface $servingService,
+        private UserRatingServiceInterface $userRatingService
     ) {}
 
     public function addPaidServing(AddPaidServingRequest $request)
@@ -212,5 +215,16 @@ class ServingController
         $result = $this->servingService->getDeactivatedServings(auth()->id());
 
         return response()->json($result, 200);
+    }
+
+    public function rate(int $servingId, RateServingRequest $request)
+    {
+        $result = $this->userRatingService->rateServing(
+            auth()->id(),
+            $servingId,
+            $request->validated()['rating'],
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 }

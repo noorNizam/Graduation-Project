@@ -875,7 +875,37 @@
 							"path": ["servings", "requests", "pending-confirmation"]
 						}
 					}
-				}
+				},
+				{
+					"name": "Rate Serving",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rating\": 4.5\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/rate",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "rate"]
+						}
+					}
+                }
 			]
 		},
 		{

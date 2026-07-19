@@ -35,6 +35,7 @@ class Serving extends Model
         'serving_type_id',
         'category_id',
         'cost_amount',
+        'rate',
         'unit_id',
         'location_lat',
         'location_lng',

@@ -55,6 +55,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/servings/my-deactivated', [ServingController::class, 'getDeactivated']);
 });
 
+Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
+    Route::post('/servings/{servingId}/rate', [ServingController::class, 'rate']);
+});
+
 // ServingRequestController
 Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/servings/requests', [ServingRequestController::class, 'create']);
