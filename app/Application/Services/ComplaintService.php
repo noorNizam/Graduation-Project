@@ -4,6 +4,7 @@ namespace App\Application\Services;
 
 use App\Domain\Repositories\ComplaintRepositoryInterface;
 use App\Domain\Services\ComplaintServiceInterface;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Infrastructure\Models\ComplaintModel;
 use App\Traits\HandlesDatabaseTransactions;
 use Illuminate\Http\UploadedFile;
@@ -14,7 +15,8 @@ class ComplaintService implements ComplaintServiceInterface
     use HandlesDatabaseTransactions;
 
     public function __construct(
-        private ComplaintRepositoryInterface $complaintRepository
+        private ComplaintRepositoryInterface $complaintRepository,
+        private NotificationServiceInterface $notificationService
     ) {}
 
     public function createComplaint(array $data, $attachment = null): array
@@ -38,9 +40,20 @@ class ComplaintService implements ComplaintServiceInterface
             return $result;
         }
 
+        $complaint = $result['data'];
+        if (! empty($complaint->accused_user_id)) {
+            $this->notificationService->send(
+                $complaint->accused_user_id,
+                'complaint_filed',
+                'تم تقديم شكوى ضدك',
+                'تم تقديم شكوى جديدة ضدك، ينتظر مراجعة المشرف',
+                ['complaint_id' => $complaint->id]
+            );
+        }
+
         return [
             'success' => true,
-            'data' => $result['data'],
+            'data' => $complaint,
             'message' => 'Complaint created successfully',
         ];
     }
@@ -112,12 +125,33 @@ class ComplaintService implements ComplaintServiceInterface
 
     public function updateComplaintStatus(int $id, string $status, ?string $adminNote = null): array
     {
+        $complaint = $this->complaintRepository->findById($id);
+        if (! $complaint) {
+            return ['success' => false, 'message' => 'Complaint not found'];
+        }
+
         $result = $this->executeWithTransaction(function () use ($id, $status, $adminNote) {
             return $this->complaintRepository->updateStatus($id, $status, $adminNote);
         });
 
         if (! $result['success']) {
             return $result;
+        }
+
+        if ($status !== 'resolved') {
+            $statusLabels = [
+                'under_review' => 'قيد المراجعة',
+                'rejected' => 'مرفوضة',
+            ];
+            $label = $statusLabels[$status] ?? $status;
+
+            $this->notificationService->send(
+                $complaint->complainant_id,
+                'complaint_status_changed',
+                'تحديث حالة الشكوى',
+                "تم تحديث حالة شكواك إلى {$label}",
+                ['complaint_id' => $id, 'status' => $status]
+            );
         }
 
         return [

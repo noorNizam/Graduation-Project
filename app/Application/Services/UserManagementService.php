@@ -2,6 +2,7 @@
 
 namespace App\Application\Services;
 
+use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\UserManagementServiceInterface;
 use App\Infrastructure\Models\User;
 use App\Traits\HandlesDatabaseTransactions;
@@ -11,6 +12,10 @@ use Illuminate\Support\Str;
 class UserManagementService implements UserManagementServiceInterface
 {
     use HandlesDatabaseTransactions;
+
+    public function __construct(
+        private NotificationServiceInterface $notificationService
+    ) {}
 
     private const ALLOWED_PROFILE_FIELDS = [
         'full_name',
@@ -146,6 +151,14 @@ class UserManagementService implements UserManagementServiceInterface
             return $transactionResult;
         }
 
+        $this->notificationService->send(
+            $userId,
+            'account_blocked',
+            'تم حظر حسابك',
+            'تم حظر حسابك من قبل الإدارة',
+            ['user_id' => $userId]
+        );
+
         return [
             'success' => true,
             'data' => $this->formatUser($transactionResult['data']),
@@ -179,6 +192,14 @@ class UserManagementService implements UserManagementServiceInterface
         if (! $transactionResult['success']) {
             return $transactionResult;
         }
+
+        $this->notificationService->send(
+            $userId,
+            'account_unblocked',
+            'تم إلغاء حظر حسابك',
+            'تم إلغاء حظر حسابك من قبل الإدارة',
+            ['user_id' => $userId]
+        );
 
         return [
             'success' => true,

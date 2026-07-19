@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Infrastructure\Models\ServingRequest;
 use Illuminate\Console\Command;
 
@@ -15,7 +16,8 @@ class AutoCompleteServingRequests extends Command
 
     public function __construct(
         private ServingRequestRepositoryInterface $requestRepository,
-        private WalletRepositoryInterface $walletRepository
+        private WalletRepositoryInterface $walletRepository,
+        private NotificationServiceInterface $notificationService
     ) {
         parent::__construct();
     }
@@ -92,6 +94,19 @@ class AutoCompleteServingRequests extends Command
         $request->held_amount = null;
         $request->held_at = null;
         $request->confirmCompletion();
+
+        if ($serving) {
+            $this->notificationService->send(
+                $request->requester_id,
+                'auto_completed',
+                'تم إتمام الخدمة تلقائياً',
+                "تم إتمام خدمة {$serving->title} تلقائياً لعدم ردك",
+                [
+                    'serving_id' => $serving->id,
+                    'request_id' => $request->id,
+                ]
+            );
+        }
     }
 
     private function processRevisionTimeouts(): array
@@ -134,5 +149,33 @@ class AutoCompleteServingRequests extends Command
         $request->held_amount = null;
         $request->held_at = null;
         $request->cancel();
+
+        if ($serving) {
+            $this->notificationService->send(
+                $request->requester_id,
+                'auto_canceled',
+                'تم إلغاء الطلب تلقائياً',
+                $request->revision_count > 0
+                    ? "تم إلغاء طلب خدمة {$serving->title} لعدم إعادة الإرسال من مقدم الخدمة"
+                    : "تم إلغاء طلب خدمة {$serving->title} لعدم الرد",
+                [
+                    'serving_id' => $serving->id,
+                    'request_id' => $request->id,
+                ]
+            );
+
+            if ($request->revision_count > 0) {
+                $this->notificationService->send(
+                    $serving->user_id,
+                    'auto_canceled',
+                    'تم إلغاء الطلب تلقائياً',
+                    "تم إلغاء طلب خدمة {$serving->title} بسبب عدم إعادة الإرسال بعد طلب التعديل",
+                    [
+                        'serving_id' => $serving->id,
+                        'request_id' => $request->id,
+                    ]
+                );
+            }
+        }
     }
 }
