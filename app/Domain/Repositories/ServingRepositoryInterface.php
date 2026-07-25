@@ -27,6 +27,6 @@ interface ServingRepositoryInterface
         float $maxLat,
         float $minLng,
         float $maxLng,
-        int $excludeUserId
+        ?int $excludeUserId
     ): \Illuminate\Database\Eloquent\Collection;
 }
