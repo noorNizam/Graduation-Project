@@ -33,7 +33,7 @@ interface ServingServiceInterface
 
     public function getMyServings(int $userId, ?int $skip, ?int $take): array;
 
-    public function getNearbyServings(int $userId, float $lat, float $lng, ?int $skip, ?int $take): array;
+    public function getNearbyServings(?int $userId, float $lat, float $lng, ?int $skip, ?int $take): array;
 
     public function getServingById(int $id, ?int $userId = null): array;
 

@@ -52,9 +52,9 @@ class ServingRepository implements ServingRepositoryInterface
         float $maxLat,
         float $minLng,
         float $maxLng,
-        int $excludeUserId
+        ?int $excludeUserId
     ): Collection {
-        return Serving::with(['user', 'category', 'unit', 'servingType'])
+        $query = Serving::with(['user', 'category', 'unit', 'servingType'])
             ->select('*')
             ->selectRaw('
                 (6371 * ACOS(
@@ -63,9 +63,13 @@ class ServingRepository implements ServingRepositoryInterface
                     + SIN(RADIANS(?)) * SIN(RADIANS(location_lat))
                 )) AS distance
             ', [$lat, $lng, $lat])
-            ->where('user_id', '!=', $excludeUserId)
-            ->where('status', Serving::STATUS_ACTIVE)
-            ->whereNotNull('location_lat')
+            ->where('status', Serving::STATUS_ACTIVE);
+
+        if ($excludeUserId !== null) {
+            $query->where('user_id', '!=', $excludeUserId);
+        }
+
+        return $query->whereNotNull('location_lat')
             ->whereNotNull('location_lng')
             ->whereBetween('location_lat', [$minLat, $maxLat])
             ->whereBetween('location_lng', [$minLng, $maxLng])

@@ -444,7 +444,7 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
-    public function getNearbyServings(int $userId, float $lat, float $lng, ?int $skip, ?int $take): array
+    public function getNearbyServings(?int $userId, float $lat, float $lng, ?int $skip, ?int $take): array
     {
         $radius = 1;
         $latDelta = $radius / 111;
