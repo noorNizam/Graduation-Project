@@ -48,6 +48,7 @@ php artisan storage:link --force --quiet 2>/dev/null || true
 
 if [ "${APP_ENV}" = "production" ]; then
     touch database/database.sqlite
+    php artisan package:discover --quiet || true
     php artisan config:cache --quiet || true
     php artisan route:cache --quiet || true
     php artisan view:cache --quiet || true
@@ -57,6 +58,7 @@ php artisan storage:link --force --quiet 2>/dev/null || true
 
 if [ "${APP_ENV}" = "production" ]; then
     touch database/database.sqlite
+    php artisan package:discover --quiet || true
     php artisan config:cache --quiet || true
     php artisan route:cache --quiet || true
     php artisan view:cache --quiet || true
