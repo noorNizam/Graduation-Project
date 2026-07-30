@@ -2,8 +2,8 @@
 
 namespace App\Application\Services;
 
-use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Repositories\NotificationRepositoryInterface;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Infrastructure\Models\User;
 use App\Notifications\GeneralNotification;
 use App\Traits\HandlesDatabaseTransactions;
@@ -29,7 +29,7 @@ class NotificationService implements NotificationServiceInterface
             ]);
         });
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return $result;
         }
 
@@ -45,7 +45,7 @@ class NotificationService implements NotificationServiceInterface
         return [
             'success' => true,
             'data' => $result['data'],
-            'message' => 'تم إرسال الإشعار'
+            'message' => 'تم إرسال الإشعار',
         ];
     }
 
@@ -61,28 +61,31 @@ class NotificationService implements NotificationServiceInterface
                 'per_page' => $notifications->perPage(),
                 'total' => $notifications->total(),
                 'last_page' => $notifications->lastPage(),
-            ]
+            ],
         ];
     }
 
     public function markAsRead(int $notificationId): array
     {
         $result = $this->notificationRepository->markAsRead($notificationId);
-        if (!$result) {
+        if (! $result) {
             return ['success' => false, 'message' => 'الإشعار غير موجود'];
         }
+
         return ['success' => true, 'message' => 'تم تحديث الإشعار'];
     }
 
     public function markAllAsRead(int $userId): array
     {
         $this->notificationRepository->markAllAsRead($userId);
+
         return ['success' => true, 'message' => 'تم تحديث كل الإشعارات'];
     }
 
     public function getUnreadCount(int $userId): array
     {
         $count = $this->notificationRepository->getUnreadCount($userId);
+
         return ['success' => true, 'data' => ['count' => $count]];
     }
 

@@ -23,9 +23,12 @@ class NotificationRepository implements NotificationRepositoryInterface
     public function markAsRead(int $notificationId): bool
     {
         $notification = NotificationModel::find($notificationId);
-        if (!$notification) return false;
+        if (! $notification) {
+            return false;
+        }
 
         $notification->markAsRead();
+
         return true;
     }
 
@@ -34,6 +37,7 @@ class NotificationRepository implements NotificationRepositoryInterface
         NotificationModel::where('user_id', $userId)
             ->where('is_read', false)
             ->update(['is_read' => true, 'read_at' => now()]);
+
         return true;
     }
 

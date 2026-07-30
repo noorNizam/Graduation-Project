@@ -10,6 +10,7 @@ use App\Presentation\Controllers\ServingController;
 use App\Presentation\Controllers\ServingRequestController;
 use App\Presentation\Controllers\ServingTypeController;
 use App\Presentation\Controllers\TroubleshootingController;
+use App\Presentation\Controllers\TypingController;
 use App\Presentation\Controllers\UserComplaintController;
 use App\Presentation\Controllers\UserManagementController;
 use App\Presentation\Controllers\UserNotificationController;
@@ -173,4 +174,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chats/{chat}/members', [ChatController::class, 'addMembers']);
     Route::delete('/chats/{chat}/members/{user}', [ChatController::class, 'removeMember']);
     Route::post('/chats/{chat}/leave', [ChatController::class, 'leaveGroup']);
+
+    Route::post('/chats/{chat}/typing', [TypingController::class, 'typing']);
+    Route::post('/chats/{chat}/stop-typing', [TypingController::class, 'stopTyping']);
 });

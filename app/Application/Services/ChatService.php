@@ -5,6 +5,10 @@ namespace App\Application\Services;
 use App\Domain\Repositories\ChatRepositoryInterface;
 use App\Domain\Services\ChatServiceInterface;
 use App\Domain\Services\NotificationServiceInterface;
+use App\Events\ChatMessagesDeliveredEvent;
+use App\Events\ChatMessagesReadEvent;
+use App\Events\ChatUpdatedEvent;
+use App\Events\NewMessageEvent;
 use App\Infrastructure\Models\Chat;
 use App\Infrastructure\Models\Message;
 use App\Infrastructure\Models\MessageRecipient;
@@ -75,6 +79,8 @@ class ChatService implements ChatServiceInterface
         $message = $result['data']['message'] ?? null;
         $chat = $result['data']['chat'] ?? null;
         if ($message && $chat) {
+            broadcast(new NewMessageEvent($message, $chat->id, 'personal', ''))->toOthers();
+
             $senderName = $message->sender->full_name ?? 'مستخدم';
             $this->notificationService->send(
                 $receiverId,
@@ -134,6 +140,15 @@ class ChatService implements ChatServiceInterface
             return $result;
         }
 
+        $chat = $result['data']['chat'];
+        broadcast(new ChatUpdatedEvent($chat->id, 'group_created', [
+            'chat_id' => $chat->id,
+            'name' => $chat->name,
+            'type' => 'group',
+            'created_by' => $userId,
+            'member_ids' => $chat->users->pluck('id')->all(),
+        ], 'group'))->toOthers();
+
         return [
             'success' => true,
             'data' => $result['data'],
@@ -182,6 +197,9 @@ class ChatService implements ChatServiceInterface
 
         $message = $result['data']['message'];
         $recipientIds = $result['data']['recipient_ids'];
+
+        broadcast(new NewMessageEvent($message, $chatId, $chat->type, $chat->name ?? ''))->toOthers();
+
         $senderName = $message->sender->full_name ?? 'مستخدم';
         $chatName = $chat->name ?? 'المحادثة';
 
@@ -273,12 +291,24 @@ class ChatService implements ChatServiceInterface
             return ['success' => false, 'message' => 'You are not a participant of this chat'];
         }
 
+        $pendingDeliveryMessageIds = MessageRecipient::whereIn('message_id',
+            Message::where('chat_id', $chatId)->select('id')
+        )
+            ->where('user_id', $userId)
+            ->whereNull('received_at')
+            ->pluck('message_id')
+            ->all();
+
         MessageRecipient::whereIn('message_id',
             Message::where('chat_id', $chatId)->select('id')
         )
             ->where('user_id', $userId)
             ->whereNull('received_at')
-            ->update(['received_at' => now()]);
+            ->update(['received_at' => $receivedAt = now()]);
+
+        if (! empty($pendingDeliveryMessageIds)) {
+            broadcast(new ChatMessagesDeliveredEvent($chatId, $userId, $pendingDeliveryMessageIds, $receivedAt, $chat->type))->toOthers();
+        }
 
         $load = [
             'sender:id,full_name,profile_picture',
@@ -353,12 +383,18 @@ class ChatService implements ChatServiceInterface
             return ['success' => false, 'message' => 'You are not a participant of this chat'];
         }
 
-        $messageIds = Message::where('chat_id', $chatId)->pluck('id');
+        $messageIds = MessageRecipient::where('user_id', $userId)
+            ->whereNull('read_at')
+            ->whereHas('message', fn ($q) => $q->where('chat_id', $chatId))
+            ->pluck('message_id');
 
         MessageRecipient::whereIn('message_id', $messageIds)
             ->where('user_id', $userId)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
+            ->update(['read_at' => $readAt = now()]);
+
+        if ($messageIds->isNotEmpty()) {
+            broadcast(new ChatMessagesReadEvent($chatId, $userId, $messageIds->all(), $readAt, $chat->type))->toOthers();
+        }
 
         return ['success' => true, 'message' => 'Messages marked as read'];
     }
@@ -375,12 +411,18 @@ class ChatService implements ChatServiceInterface
             return ['success' => false, 'message' => 'You are not a participant of this chat'];
         }
 
-        $messageIds = Message::where('chat_id', $chatId)->pluck('id');
+        $messageIds = MessageRecipient::where('user_id', $userId)
+            ->whereNull('received_at')
+            ->whereHas('message', fn ($q) => $q->where('chat_id', $chatId))
+            ->pluck('message_id');
 
         MessageRecipient::whereIn('message_id', $messageIds)
             ->where('user_id', $userId)
-            ->whereNull('received_at')
-            ->update(['received_at' => now()]);
+            ->update(['received_at' => $receivedAt = now()]);
+
+        if ($messageIds->isNotEmpty()) {
+            broadcast(new ChatMessagesDeliveredEvent($chatId, $userId, $messageIds->all(), $receivedAt, $chat->type))->toOthers();
+        }
 
         return ['success' => true, 'message' => 'Messages marked as received'];
     }
@@ -428,6 +470,11 @@ class ChatService implements ChatServiceInterface
 
         $this->chatRepository->addMembers($chatId, $memberIds);
 
+        broadcast(new ChatUpdatedEvent($chatId, 'member_added', [
+            'added_user_ids' => $memberIds,
+            'added_by' => $userId,
+        ], 'group'))->toOthers();
+
         $adder = User::find($userId);
         $adderName = $adder?->full_name ?? 'مستخدم';
 
@@ -466,6 +513,11 @@ class ChatService implements ChatServiceInterface
 
         $this->chatRepository->removeMember($chatId, $targetUserId);
 
+        broadcast(new ChatUpdatedEvent($chatId, 'member_removed', [
+            'removed_user_id' => $targetUserId,
+            'removed_by' => $userId,
+        ], 'group'))->toOthers();
+
         $this->notificationService->send(
             $targetUserId,
             'removed_from_group',
@@ -493,11 +545,13 @@ class ChatService implements ChatServiceInterface
             return ['success' => false, 'message' => 'You are not a member of this group'];
         }
 
-        $result = $this->executeWithTransaction(function () use ($chatId, $userId, $chat) {
+        $chatDeleted = false;
+        $result = $this->executeWithTransaction(function () use ($chatId, $userId, $chat, &$chatDeleted) {
             $this->chatRepository->removeMember($chatId, $userId);
 
             if ($chat->users()->count() === 0) {
                 $chat->delete();
+                $chatDeleted = true;
             }
 
             return true;
@@ -505,6 +559,12 @@ class ChatService implements ChatServiceInterface
 
         if (! $result['success']) {
             return $result;
+        }
+
+        if (! $chatDeleted) {
+            broadcast(new ChatUpdatedEvent($chatId, 'member_left', [
+                'left_user_id' => $userId,
+            ], 'group'))->toOthers();
         }
 
         $leaver = User::find($userId);
@@ -542,6 +602,10 @@ class ChatService implements ChatServiceInterface
 
         if (isset($data['name'])) {
             $chat->update(['name' => $data['name']]);
+
+            broadcast(new ChatUpdatedEvent($chatId, 'group_updated', [
+                'name' => $data['name'],
+            ], 'group'))->toOthers();
         }
 
         return [
