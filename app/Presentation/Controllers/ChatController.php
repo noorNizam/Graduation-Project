@@ -38,18 +38,21 @@ class ChatController
     public function getChats()
     {
         $result = $this->chatService->getChats(auth()->id());
+
         return response()->json($result, 200);
     }
 
     public function getPersonalChats()
     {
         $result = $this->chatService->getPersonalChats(auth()->id());
+
         return response()->json($result, 200);
     }
 
     public function getGroupChats()
     {
         $result = $this->chatService->getGroupChats(auth()->id());
+
         return response()->json($result, 200);
     }
 

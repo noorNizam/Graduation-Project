@@ -11,8 +11,8 @@ class ChatRepository implements ChatRepositoryInterface
     public function findOrCreateBetween(int $userIdOne, int $userIdTwo): Chat
     {
         $chat = Chat::where('type', 'personal')
-            ->whereHas('users', fn($q) => $q->where('users.id', $userIdOne))
-            ->whereHas('users', fn($q) => $q->where('users.id', $userIdTwo))
+            ->whereHas('users', fn ($q) => $q->where('users.id', $userIdOne))
+            ->whereHas('users', fn ($q) => $q->where('users.id', $userIdTwo))
             ->whereHas('users', null, '=', 2)
             ->first();
 
@@ -33,7 +33,7 @@ class ChatRepository implements ChatRepositoryInterface
 
     public function findByUserId(int $userId): Collection
     {
-        return Chat::whereHas('users', fn($q) => $q->where('users.id', $userId))
+        return Chat::whereHas('users', fn ($q) => $q->where('users.id', $userId))
             ->with(['users:id,full_name,profile_picture', 'latestMessage'])
             ->orderBy('last_message_at', 'desc')
             ->get();
@@ -42,7 +42,7 @@ class ChatRepository implements ChatRepositoryInterface
     public function findByUserIdAndType(int $userId, string $type): Collection
     {
         return Chat::where('type', $type)
-            ->whereHas('users', fn($q) => $q->where('users.id', $userId))
+            ->whereHas('users', fn ($q) => $q->where('users.id', $userId))
             ->with(['users:id,full_name,profile_picture', 'latestMessage'])
             ->orderBy('last_message_at', 'desc')
             ->get();
@@ -67,7 +67,7 @@ class ChatRepository implements ChatRepositoryInterface
         if (! empty($new)) {
             $now = now();
             $chat->users()->attach(
-                collect($new)->mapWithKeys(fn($id) => [$id => ['joined_at' => $now]])->all()
+                collect($new)->mapWithKeys(fn ($id) => [$id => ['joined_at' => $now]])->all()
             );
         }
     }
@@ -80,7 +80,7 @@ class ChatRepository implements ChatRepositoryInterface
     public function isMember(int $chatId, int $userId): bool
     {
         return Chat::where('id', $chatId)
-            ->whereHas('users', fn($q) => $q->where('users.id', $userId))
+            ->whereHas('users', fn ($q) => $q->where('users.id', $userId))
             ->exists();
     }
 }

@@ -36,10 +36,12 @@ RUN set -eux; \
         gd \
         mbstring \
         opcache \
+        pcntl \
         pdo \
         pdo_mysql \
         pdo_sqlite \
         session \
+        sockets \
         xml \
         zip \
     ; \
