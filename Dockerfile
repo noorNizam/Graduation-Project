@@ -6,6 +6,7 @@ ARG GID=1000
 RUN set -eux; \
     apk add --no-cache --virtual .build-deps \
         $PHPIZE_DEPS \
+        linux-headers \
         libpng-dev \
         libjpeg-turbo-dev \
         freetype-dev \
