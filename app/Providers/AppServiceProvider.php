@@ -15,6 +15,7 @@ use App\Application\Services\UserManagementService;
 use App\Application\Services\UserRatingService;
 use App\Application\Services\UserRegistrationService;
 use App\Application\Services\WalletService;
+use App\Application\Services\WorkGalleryItemService;
 use App\Domain\Repositories\ChatRepositoryInterface;
 use App\Domain\Repositories\ComplaintRepositoryInterface;
 use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
@@ -26,6 +27,8 @@ use App\Domain\Repositories\ServingRepositoryInterface;
 use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Repositories\UserRatingRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
+use App\Domain\Repositories\WorkGalleryItemFileRepositoryInterface;
+use App\Domain\Repositories\WorkGalleryItemRepositoryInterface;
 use App\Domain\Services\ChatServiceInterface;
 use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
@@ -39,6 +42,7 @@ use App\Domain\Services\UserManagementServiceInterface;
 use App\Domain\Services\UserRatingServiceInterface;
 use App\Domain\Services\UserRegistrationServiceInterface;
 use App\Domain\Services\WalletServiceInterface;
+use App\Domain\Services\WorkGalleryItemServiceInterface;
 use App\Infrastructure\Repositories\ChatRepository;
 use App\Infrastructure\Repositories\ComplaintRepository;
 use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
@@ -50,6 +54,8 @@ use App\Infrastructure\Repositories\ServingRepository;
 use App\Infrastructure\Repositories\ServingRequestRepository;
 use App\Infrastructure\Repositories\UserRatingRepository;
 use App\Infrastructure\Repositories\WalletRepository;
+use App\Infrastructure\Repositories\WorkGalleryItemFileRepository;
+use App\Infrastructure\Repositories\WorkGalleryItemRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -183,6 +189,22 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             ChatServiceInterface::class,
             ChatService::class
+        );
+
+        // Work Gallery Item bindings
+        $this->app->bind(
+            WorkGalleryItemRepositoryInterface::class,
+            WorkGalleryItemRepository::class
+        );
+
+        $this->app->bind(
+            WorkGalleryItemFileRepositoryInterface::class,
+            WorkGalleryItemFileRepository::class
+        );
+
+        $this->app->bind(
+            WorkGalleryItemServiceInterface::class,
+            WorkGalleryItemService::class
         );
     }
 

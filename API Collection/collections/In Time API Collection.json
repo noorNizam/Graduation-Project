@@ -45,6 +45,11 @@
 			"key": "chat_id",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "work_gallery_item_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -2146,6 +2151,207 @@
 							"raw": "{{base_url}}/chats/{{chat_id}}/leave",
 							"host": ["{{base_url}}"],
 							"path": ["chats", "{{chat_id}}", "leave"]
+						}
+					}
+				},
+				{
+					"name": "Typing",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}/typing",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}", "typing"]
+						}
+					}
+				},
+				{
+					"name": "Stop Typing",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/chats/{{chat_id}}/stop-typing",
+							"host": ["{{base_url}}"],
+							"path": ["chats", "{{chat_id}}", "stop-typing"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Work Gallery",
+			"item": [
+				{
+					"name": "Add Work Gallery Item",
+					"request": {
+						"description": "Required fields: title (string max 255). Optional: description, date_of_achievement (YYYY-MM-DD), files (max 10, each 5 MB).",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "My project",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "A sample project",
+									"type": "text"
+								},
+								{
+									"key": "date_of_achievement",
+									"value": "2026-07-01",
+									"type": "text"
+								},
+								{
+									"key": "files[]",
+									"value": "",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/work-gallery",
+							"host": ["{{base_url}}"],
+							"path": ["work-gallery"]
+						}
+					}
+				},
+				{
+					"name": "Update Work Gallery Item",
+					"request": {
+						"description": "Only provided fields are updated. Sending files replaces all existing files.",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Updated title",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Updated description",
+									"type": "text"
+								},
+								{
+									"key": "files[]",
+									"value": "",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/work-gallery/{{work_gallery_item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["work-gallery", "{{work_gallery_item_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete Work Gallery Item",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/work-gallery/{{work_gallery_item_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["work-gallery", "{{work_gallery_item_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Get My Work Gallery Items",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/work-gallery/my?skip=0&take=20",
+							"host": ["{{base_url}}"],
+							"path": ["work-gallery", "my"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0",
+									"description": "Number of records to skip (pagination)"
+								},
+								{
+									"key": "take",
+									"value": "20",
+									"description": "Number of records to take (pagination, max 100)"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User Work Gallery Items",
+					"request": {
+						"description": "Public endpoint — no auth required.",
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/work-gallery/user/{{user_id}}?skip=0&take=20",
+							"host": ["{{base_url}}"],
+							"path": ["work-gallery", "user", "{{user_id}}"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0",
+									"description": "Number of records to skip (pagination)"
+								},
+								{
+									"key": "take",
+									"value": "20",
+									"description": "Number of records to take (pagination, max 100)"
+								}
+							]
 						}
 					}
 				}

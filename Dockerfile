@@ -67,6 +67,7 @@ RUN set -eux; \
     chmod -R 775 storage bootstrap/cache
 
 COPY infra/docker/php/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+COPY infra/docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
 COPY --chmod=+x infra/docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
