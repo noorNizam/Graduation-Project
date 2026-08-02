@@ -15,6 +15,7 @@ use App\Presentation\Controllers\UserComplaintController;
 use App\Presentation\Controllers\UserManagementController;
 use App\Presentation\Controllers\UserNotificationController;
 use App\Presentation\Controllers\WalletController;
+use App\Presentation\Controllers\WorkGalleryItemController;
 use Illuminate\Support\Facades\Route;
 
 // TroubleshootingController
@@ -156,6 +157,16 @@ Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(func
     Route::put('/servings/{id}/approve', [ServingController::class, 'approveServing']);
     Route::put('/servings/{id}/reject', [ServingController::class, 'rejectServing']);
 });
+
+// WorkGalleryItemController
+Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
+    Route::post('/work-gallery', [WorkGalleryItemController::class, 'add']);
+    Route::post('/work-gallery/{id}', [WorkGalleryItemController::class, 'edit']);
+    Route::delete('/work-gallery/{id}', [WorkGalleryItemController::class, 'remove']);
+    Route::get('/work-gallery/my', [WorkGalleryItemController::class, 'getMy']);
+});
+
+Route::get('/work-gallery/user/{userId}', [WorkGalleryItemController::class, 'getUserItems']);
 
 // ChatController
 Route::middleware('auth:sanctum')->group(function () {
