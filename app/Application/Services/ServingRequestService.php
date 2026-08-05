@@ -47,6 +47,13 @@ class ServingRequestService implements ServingRequestServiceInterface
             ];
         }
 
+        if (! $serving->isRequestable()) {
+            return [
+                'success' => false,
+                'message' => 'Requests are only allowed for paid servings priced in hours or voluntary servings',
+            ];
+        }
+
         $transactionResult = $this->executeWithTransaction(function () use ($requesterId, $servingId, $message, $automaticallyCancelAfter) {
             return $this->requestRepository->create([
                 'serving_id' => $servingId,
@@ -106,7 +113,7 @@ class ServingRequestService implements ServingRequestServiceInterface
         }
 
         $transactionResult = $this->executeWithTransaction(function () use ($servingRequest, $serving) {
-            if ($serving->isPaid() && $serving->cost_amount > 0) {
+            if ($serving->supportsEscrow()) {
                 $wallet = $this->walletRepository->findByUserAndUnit(
                     $servingRequest->requester_id,
                     $serving->unit_id

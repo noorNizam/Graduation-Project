@@ -30,6 +30,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'ensure.admin' => \App\Presentation\Middleware\EnsureAdminRole::class,
             'ensure.user' => \App\Presentation\Middleware\EnsureUserRole::class,
         ]);
+
+        $middleware->trustProxies(
+            '*',
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
+            \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Handle missing token or invalid token for API routes
