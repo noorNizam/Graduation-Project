@@ -13,9 +13,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Ensure only Hour payment unit exists
-        PaymentUnit::where('name', '!=', 'Hour')->delete();
+        // 1. Ensure payment units exist
         $hourUnit = PaymentUnit::firstOrCreate(['name' => 'Hour']);
+        PaymentUnit::firstOrCreate(['name' => 'SYP']);
+        PaymentUnit::firstOrCreate(['name' => 'USD']);
 
         // 2. Create Serving Types (skip if exists), ensure unpaid is removed
         $servingTypes = ['paid', 'voluntary'];

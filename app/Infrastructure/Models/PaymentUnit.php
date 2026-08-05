@@ -10,6 +10,8 @@ class PaymentUnit extends Model
 {
     use HasFactory;
 
+    public const NAME_HOUR = 'Hour';
+
     protected static function newFactory(): PaymentUnitFactory
     {
         return PaymentUnitFactory::new();

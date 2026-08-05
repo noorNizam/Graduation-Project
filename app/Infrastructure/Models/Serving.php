@@ -154,4 +154,19 @@ class Serving extends Model
     {
         return $this->servingType && $this->servingType->name === 'voluntary';
     }
+
+    public function isHourPriced(): bool
+    {
+        return $this->unit && $this->unit->name === PaymentUnit::NAME_HOUR;
+    }
+
+    public function isRequestable(): bool
+    {
+        return $this->isVoluntary() || ($this->isPaid() && $this->isHourPriced());
+    }
+
+    public function supportsEscrow(): bool
+    {
+        return $this->isPaid() && $this->isHourPriced() && $this->cost_amount > 0;
+    }
 }
