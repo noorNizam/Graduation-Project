@@ -96,7 +96,7 @@ class TopPerformerTest extends TestCase
         $this->assertDatabaseHas('top_performers', ['user_id' => $ratedUser->id, 'rank' => 2]);
     }
 
-    public function test_calculate_command_ignores_non_hour_and_non_paid_servings(): void
+    public function test_calculate_command_ignores_paid_servings_not_priced_in_hours(): void
     {
         Carbon::setTestNow('2026-02-28 23:00:00');
 
@@ -117,7 +117,142 @@ class TopPerformerTest extends TestCase
 
         $this->assertDatabaseHas('top_performers', ['user_id' => $hourPaidUser->id, 'rank' => 1]);
         $this->assertDatabaseMissing('top_performers', ['user_id' => $usdPaidUser->id]);
-        $this->assertDatabaseMissing('top_performers', ['user_id' => $voluntaryUser->id]);
+        $this->assertDatabaseHas('top_performers', [
+            'user_id' => $voluntaryUser->id,
+            'serving_type_id' => $this->voluntaryTypeId,
+            'rank' => 1,
+        ]);
+    }
+
+    public function test_calculate_command_ranks_voluntary_users_by_completed_count(): void
+    {
+        Carbon::setTestNow('2026-02-28 23:00:00');
+
+        $requester = $this->createProvider();
+        $userA = $this->createProvider();
+        $userB = $this->createProvider();
+        $userC = $this->createProvider();
+
+        $servingA = $this->createServing($userA, $this->voluntaryTypeId, $this->hourUnitId, 0, 4.0);
+        $servingB = $this->createServing($userB, $this->voluntaryTypeId, $this->hourUnitId, 0, 3.0);
+        $servingC = $this->createServing($userC, $this->voluntaryTypeId, $this->hourUnitId, 0, 0);
+
+        $this->completeRequest($servingA, $requester, '2026-02-10 10:00:00');
+        $this->completeRequest($servingA, $requester, '2026-02-15 10:00:00');
+        $this->completeRequest($servingB, $requester, '2026-02-10 10:00:00');
+        $this->completeRequest($servingC, $requester, '2026-02-10 10:00:00');
+
+        $this->artisan('top-performers:calculate')->assertSuccessful();
+
+        $this->assertDatabaseHas('top_performers', [
+            'user_id' => $userA->id,
+            'serving_type_id' => $this->voluntaryTypeId,
+            'rank' => 1,
+        ]);
+        $this->assertDatabaseHas('top_performers', [
+            'user_id' => $userB->id,
+            'serving_type_id' => $this->voluntaryTypeId,
+            'rank' => 2,
+        ]);
+        $this->assertDatabaseHas('top_performers', [
+            'user_id' => $userC->id,
+            'serving_type_id' => $this->voluntaryTypeId,
+            'rank' => 3,
+        ]);
+    }
+
+    public function test_calculate_command_scores_voluntary_by_count_not_cost_amount(): void
+    {
+        Carbon::setTestNow('2026-02-28 23:00:00');
+
+        $requester = $this->createProvider();
+        $manyRequestsUser = $this->createProvider();
+        $highCostUser = $this->createProvider();
+
+        $manyServing = $this->createServing($manyRequestsUser, $this->voluntaryTypeId, $this->hourUnitId, 0, 4.0);
+        $highCostServing = $this->createServing($highCostUser, $this->voluntaryTypeId, $this->hourUnitId, 100, 4.0);
+
+        $this->completeRequest($manyServing, $requester, '2026-02-10 10:00:00');
+        $this->completeRequest($manyServing, $requester, '2026-02-15 10:00:00');
+        $this->completeRequest($highCostServing, $requester, '2026-02-10 10:00:00');
+
+        $this->artisan('top-performers:calculate')->assertSuccessful();
+
+        $this->assertDatabaseHas('top_performers', [
+            'user_id' => $manyRequestsUser->id,
+            'serving_type_id' => $this->voluntaryTypeId,
+            'rank' => 1,
+        ]);
+        $this->assertDatabaseHas('top_performers', [
+            'user_id' => $highCostUser->id,
+            'serving_type_id' => $this->voluntaryTypeId,
+            'rank' => 2,
+        ]);
+    }
+
+    public function test_calculate_command_ranks_paid_and_voluntary_pools_separately(): void
+    {
+        Carbon::setTestNow('2026-02-28 23:00:00');
+
+        $requester = $this->createProvider();
+        $paidUser = $this->createProvider();
+        $voluntaryUser = $this->createProvider();
+
+        $paidServing = $this->createServing($paidUser, $this->paidTypeId, $this->hourUnitId, 10, 4.0);
+        $voluntaryServing = $this->createServing($voluntaryUser, $this->voluntaryTypeId, $this->hourUnitId, 0, 4.0);
+
+        $this->completeRequest($paidServing, $requester, '2026-02-10 10:00:00');
+        $this->completeRequest($voluntaryServing, $requester, '2026-02-10 10:00:00');
+
+        $this->artisan('top-performers:calculate')->assertSuccessful();
+
+        $this->assertDatabaseHas('top_performers', [
+            'user_id' => $paidUser->id,
+            'serving_type_id' => $this->paidTypeId,
+            'rank' => 1,
+        ]);
+        $this->assertDatabaseHas('top_performers', [
+            'user_id' => $voluntaryUser->id,
+            'serving_type_id' => $this->voluntaryTypeId,
+            'rank' => 1,
+        ]);
+    }
+
+    public function test_calculate_command_caps_voluntary_rankings_at_ten_users(): void
+    {
+        Carbon::setTestNow('2026-02-28 23:00:00');
+
+        $requester = $this->createProvider();
+
+        for ($i = 0; $i < 12; $i++) {
+            $user = $this->createProvider();
+            $serving = $this->createServing($user, $this->voluntaryTypeId, $this->hourUnitId, 0, 1.0);
+            $this->completeRequest($serving, $requester, '2026-02-10 10:00:00');
+        }
+
+        $this->artisan('top-performers:calculate')->assertSuccessful();
+
+        $this->assertEquals(
+            10,
+            DB::table('top_performers')->where('serving_type_id', $this->voluntaryTypeId)->count()
+        );
+    }
+
+    public function test_calculate_command_writes_voluntary_entries_to_cache(): void
+    {
+        Carbon::setTestNow('2026-02-28 23:00:00');
+
+        $requester = $this->createProvider();
+        $voluntaryUser = $this->createProvider(['full_name' => 'Volunteer']);
+        $serving = $this->createServing($voluntaryUser, $this->voluntaryTypeId, $this->hourUnitId, 0, 4.0);
+        $this->completeRequest($serving, $requester, '2026-02-10 10:00:00');
+
+        $this->artisan('top-performers:calculate')->assertSuccessful();
+
+        $cached = Cache::get('top_performers:2026-02');
+        $this->assertNotEmpty($cached);
+        $this->assertEquals($voluntaryUser->id, $cached[0]['user_id']);
+        $this->assertEquals($this->voluntaryTypeId, $cached[0]['serving_type_id']);
     }
 
     public function test_calculate_command_only_counts_completions_within_the_ranked_month(): void
@@ -274,6 +409,30 @@ class TopPerformerTest extends TestCase
         $this->postJson('/api/servings/top-performers', [])
             ->assertStatus(422)
             ->assertJsonPath('success', false);
+    }
+
+    public function test_top_performers_api_returns_voluntary_performers(): void
+    {
+        Carbon::setTestNow('2026-03-15 10:00:00');
+
+        $user = $this->createProvider(['full_name' => 'Volunteer']);
+
+        TopPerformer::create([
+            'user_id' => $user->id,
+            'serving_type_id' => $this->voluntaryTypeId,
+            'rank' => 1,
+            'date' => '2026-02-28 23:00:00',
+        ]);
+
+        $response = $this->postJson('/api/servings/top-performers', [
+            'serving_type_id' => $this->voluntaryTypeId,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.full_name', 'Volunteer')
+            ->assertJsonPath('data.0.serving_type_id', $this->voluntaryTypeId);
     }
 
     public function test_calculate_command_writes_cache_for_the_month(): void

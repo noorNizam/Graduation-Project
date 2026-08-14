@@ -11,6 +11,7 @@ use App\Infrastructure\Models\ServingType;
 use App\Infrastructure\Models\TopPerformer;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class TopPerformerService implements TopPerformerServiceInterface
@@ -18,6 +19,10 @@ class TopPerformerService implements TopPerformerServiceInterface
     private const DEFAULT_RATING = 2.5;
 
     private const MAX_RANKED_USERS = 10;
+
+    private const SCORE_BY_HOURS = 'hours';
+
+    private const SCORE_BY_COUNT = 'count';
 
     public function __construct(
         private TopPerformerRepositoryInterface $topPerformerRepository,
@@ -55,6 +60,7 @@ class TopPerformerService implements TopPerformerServiceInterface
 
         $paidType = ServingType::where('name', 'paid')->first();
         $hourUnit = PaymentUnit::where('name', PaymentUnit::NAME_HOUR)->first();
+        $voluntaryType = ServingType::where('name', 'voluntary')->first();
 
         if (! $paidType || ! $hourUnit) {
             return [
@@ -63,59 +69,24 @@ class TopPerformerService implements TopPerformerServiceInterface
             ];
         }
 
-        $servings = $this->servingRepository->findByTypeAndUnit($paidType->id, $hourUnit->id);
-
-        if ($servings->isEmpty()) {
-            $this->cacheMonth($monthStart, $monthEndExclusive);
-
-            return [
-                'success' => true,
-                'data' => [
-                    'ranked_users' => [],
-                    'month' => $monthStart->format('Y-m'),
-                ],
-            ];
-        }
-
-        $ratings = $servings->groupBy('user_id')
-            ->map(fn ($group) => (float) $group->avg('rate'));
-
-        $completed = $this->requestRepository->findCompletedByServingIds(
-            $servings->pluck('id')->toArray(),
-            $monthStart->toDateTimeString(),
-            $monthEndExclusive->toDateTimeString()
+        $entries = $this->rankUsers(
+            $this->servingRepository->findByTypeAndUnit($paidType->id, $hourUnit->id),
+            $paidType->id,
+            $monthStart,
+            $monthEndExclusive,
+            $executionAt,
+            self::SCORE_BY_HOURS
         );
 
-        $hoursByUser = [];
-        foreach ($completed as $request) {
-            $serving = $request->serving;
-            if ($serving) {
-                $hoursByUser[$serving->user_id] = ($hoursByUser[$serving->user_id] ?? 0) + (float) $serving->cost_amount;
-            }
-        }
-
-        $scores = [];
-        foreach ($hoursByUser as $userId => $hours) {
-            $rating = $ratings[$userId] ?? 0;
-            if ($rating <= 0) {
-                $rating = self::DEFAULT_RATING;
-            }
-
-            $scores[$userId] = $hours * $rating;
-        }
-
-        arsort($scores);
-
-        $entries = [];
-        $rank = 1;
-        foreach (array_slice($scores, 0, self::MAX_RANKED_USERS, true) as $userId => $score) {
-            $entries[] = [
-                'user_id' => (int) $userId,
-                'serving_type_id' => $paidType->id,
-                'rank' => $rank,
-                'date' => $executionAt->toDateTimeString(),
-            ];
-            $rank++;
+        if ($voluntaryType) {
+            $entries = array_merge($entries, $this->rankUsers(
+                $this->servingRepository->findByTypeAndUnit($voluntaryType->id, null),
+                $voluntaryType->id,
+                $monthStart,
+                $monthEndExclusive,
+                $executionAt,
+                self::SCORE_BY_COUNT
+            ));
         }
 
         $this->topPerformerRepository->insertMany($entries);
@@ -129,6 +100,68 @@ class TopPerformerService implements TopPerformerServiceInterface
                 'month' => $monthStart->format('Y-m'),
             ],
         ];
+    }
+
+    private function rankUsers(
+        Collection $servings,
+        int $servingTypeId,
+        CarbonInterface $monthStart,
+        CarbonInterface $monthEndExclusive,
+        CarbonInterface $executionAt,
+        string $scoringMode
+    ): array {
+        if ($servings->isEmpty()) {
+            return [];
+        }
+
+        $ratings = $servings->groupBy('user_id')
+            ->map(fn ($group) => (float) $group->avg('rate'));
+
+        $completed = $this->requestRepository->findCompletedByServingIds(
+            $servings->pluck('id')->toArray(),
+            $monthStart->toDateTimeString(),
+            $monthEndExclusive->toDateTimeString()
+        );
+
+        $volumeByUser = [];
+        foreach ($completed as $request) {
+            $serving = $request->serving;
+            if (! $serving) {
+                continue;
+            }
+
+            if ($scoringMode === self::SCORE_BY_COUNT) {
+                $volumeByUser[$serving->user_id] = ($volumeByUser[$serving->user_id] ?? 0) + 1;
+            } else {
+                $volumeByUser[$serving->user_id] = ($volumeByUser[$serving->user_id] ?? 0) + (float) $serving->cost_amount;
+            }
+        }
+
+        $scores = [];
+        foreach ($volumeByUser as $userId => $volume) {
+            $rating = $ratings[$userId] ?? 0;
+            if ($rating <= 0) {
+                $rating = self::DEFAULT_RATING;
+            }
+
+            $scores[$userId] = $volume * $rating;
+        }
+
+        arsort($scores);
+
+        $entries = [];
+        $rank = 1;
+        foreach (array_slice($scores, 0, self::MAX_RANKED_USERS, true) as $userId => $score) {
+            $entries[] = [
+                'user_id' => (int) $userId,
+                'serving_type_id' => $servingTypeId,
+                'rank' => $rank,
+                'date' => $executionAt->toDateTimeString(),
+            ];
+            $rank++;
+        }
+
+        return $entries;
     }
 
     private function cacheMonth(CarbonInterface $monthStart, CarbonInterface $monthEndExclusive): void
