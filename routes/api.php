@@ -5,6 +5,7 @@ use App\Presentation\Controllers\AuthController;
 use App\Presentation\Controllers\ChatController;
 use App\Presentation\Controllers\PaymentUnitController;
 use App\Presentation\Controllers\PenaltyController;
+use App\Presentation\Controllers\SchedulerLogController;
 use App\Presentation\Controllers\ServingCategoryController;
 use App\Presentation\Controllers\ServingController;
 use App\Presentation\Controllers\ServingRequestController;
@@ -21,6 +22,9 @@ use Illuminate\Support\Facades\Route;
 // TroubleshootingController
 Route::get('/test-monitor', [TroubleshootingController::class, 'testMonitor']);
 Route::get('/test-error', [TroubleshootingController::class, 'testError']);
+
+// SchedulerLogController
+Route::get('/scheduler-logs', [SchedulerLogController::class, 'index']);
 
 // AuthController
 Route::prefix('auth')->group(function () {
@@ -49,6 +53,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // any user can search for servings without authentication
 Route::post('/servings/search', [ServingController::class, 'getServings']);
 Route::post('/servings/nearby', [ServingController::class, 'getNearbyServings']);
+Route::post('/servings/top-performers', [ServingController::class, 'topPerformers']);
 // ServingController
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/servings/{servingId}/availability-slots', [ServingController::class, 'getAvailabilitySlots']);
