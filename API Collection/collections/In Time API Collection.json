@@ -80,6 +80,32 @@
 							"path": ["test-error"]
 						}
 					}
+				},
+				{
+					"name": "Scheduler Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/scheduler-logs?skip=0&take=20",
+							"host": ["{{base_url}}"],
+							"path": ["scheduler-logs"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "take",
+									"value": "20"
+								},
+								{
+									"key": "job_name",
+									"value": ""
+								}
+							]
+						}
+					}
 				}
 			]
 		},
@@ -630,6 +656,63 @@
 							"path": ["servings", "my-deactivated"]
 						}
 					}
+				}
+			]
+		},
+		{
+			"name": "Honor Board",
+			"item": [
+				{
+					"name": "Top Performers",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"serving_type_id\": 1,\n    \"month\": \"2026-07\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/top-performers",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "top-performers"]
+						}
+					},
+					"response": [
+						{
+							"name": "Success - Returns top performers for the month",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"serving_type_id\": 1,\n    \"month\": \"2026-07\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/servings/top-performers",
+									"host": ["{{base_url}}"],
+									"path": ["servings", "top-performers"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"rank\": 1,\n            \"user_id\": 2,\n            \"full_name\": \"user@system.com\",\n            \"profile_picture\": null,\n            \"serving_type_id\": 1,\n            \"date\": \"2026-07-31T23:00:00.000000Z\"\n        }\n    ]\n}"
+						}
+					]
 				}
 			]
 		},

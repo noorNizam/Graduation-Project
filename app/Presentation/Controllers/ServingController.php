@@ -3,10 +3,12 @@
 namespace App\Presentation\Controllers;
 
 use App\Domain\Services\ServingServiceInterface;
+use App\Domain\Services\TopPerformerServiceInterface;
 use App\Domain\Services\UserRatingServiceInterface;
 use App\Presentation\Requests\AddPaidServingRequest;
 use App\Presentation\Requests\CreateCommentRequest;
 use App\Presentation\Requests\GetServingsRequest;
+use App\Presentation\Requests\GetTopPerformersRequest;
 use App\Presentation\Requests\NearbyServingsRequest;
 use App\Presentation\Requests\RateServingRequest;
 use App\Presentation\Requests\ReactCommentRequest;
@@ -17,7 +19,8 @@ class ServingController
 {
     public function __construct(
         private ServingServiceInterface $servingService,
-        private UserRatingServiceInterface $userRatingService
+        private UserRatingServiceInterface $userRatingService,
+        private TopPerformerServiceInterface $topPerformerService
     ) {}
 
     public function addPaidServing(AddPaidServingRequest $request)
@@ -226,5 +229,17 @@ class ServingController
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function topPerformers(GetTopPerformersRequest $request)
+    {
+        $validated = $request->validated();
+
+        $result = $this->topPerformerService->getTopPerformers(
+            $validated['serving_type_id'],
+            $validated['month'] ?? null,
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 500);
     }
 }
