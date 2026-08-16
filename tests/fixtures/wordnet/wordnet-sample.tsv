@@ -1,0 +1,9 @@
+# Sample cross-lingual WordNet pairs for tests
+# Format: <synset_id>	<language>	<lemma>
+00001234-n	en	plumbing
+00001234-n	en	plumber
+00001234-n	ar	سباكة
+00001234-n	ar	السباكة
+00005678-n	en	decorating
+00005678-n	ar	دهان
+00005678-n	ar	طلاء

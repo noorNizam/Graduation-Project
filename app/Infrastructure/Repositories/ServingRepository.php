@@ -77,4 +77,19 @@ class ServingRepository implements ServingRepositoryInterface
             ->orderBy('distance')
             ->get();
     }
+
+    public function findByTypeAndUnit(?int $servingTypeId, ?int $unitId): Collection
+    {
+        $query = Serving::with(['user', 'category', 'unit', 'servingType']);
+
+        if ($servingTypeId !== null) {
+            $query->where('serving_type_id', $servingTypeId);
+        }
+
+        if ($unitId !== null) {
+            $query->where('unit_id', $unitId);
+        }
+
+        return $query->get();
+    }
 }

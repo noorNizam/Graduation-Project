@@ -29,4 +29,9 @@ interface ServingRepositoryInterface
         float $maxLng,
         ?int $excludeUserId
     ): \Illuminate\Database\Eloquent\Collection;
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Collection<int, Serving>
+     */
+    public function findByTypeAndUnit(?int $servingTypeId, ?int $unitId): \Illuminate\Database\Eloquent\Collection;
 }

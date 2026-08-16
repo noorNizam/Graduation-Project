@@ -2,11 +2,15 @@
 
 namespace App\Presentation\Controllers;
 
+use App\Domain\Services\ServingProposalServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
+use App\Domain\Services\TopPerformerServiceInterface;
 use App\Domain\Services\UserRatingServiceInterface;
 use App\Presentation\Requests\AddPaidServingRequest;
 use App\Presentation\Requests\CreateCommentRequest;
+use App\Presentation\Requests\GetProposedServingsRequest;
 use App\Presentation\Requests\GetServingsRequest;
+use App\Presentation\Requests\GetTopPerformersRequest;
 use App\Presentation\Requests\NearbyServingsRequest;
 use App\Presentation\Requests\RateServingRequest;
 use App\Presentation\Requests\ReactCommentRequest;
@@ -17,7 +21,9 @@ class ServingController
 {
     public function __construct(
         private ServingServiceInterface $servingService,
-        private UserRatingServiceInterface $userRatingService
+        private UserRatingServiceInterface $userRatingService,
+        private TopPerformerServiceInterface $topPerformerService,
+        private ServingProposalServiceInterface $servingProposalService
     ) {}
 
     public function addPaidServing(AddPaidServingRequest $request)
@@ -118,7 +124,7 @@ class ServingController
 
     public function getServings(GetServingsRequest $request)
     {
-        $excludeUserId = auth()->id();
+        $excludeUserId = auth('sanctum')->id();
         $validated = $request->validated();
 
         $result = $this->servingService->getServings(
@@ -129,6 +135,19 @@ class ServingController
             $validated['skip'] ?? null,
             $validated['take'] ?? null,
             $validated['name'] ?? null
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function getProposed(GetProposedServingsRequest $request)
+    {
+        $validated = $request->validated();
+
+        $result = $this->servingProposalService->getProposedServings(
+            auth()->id(),
+            $validated['skip'] ?? 0,
+            $validated['take'] ?? 10,
         );
 
         return response()->json($result, $result['success'] ? 200 : 500);
@@ -210,6 +229,17 @@ class ServingController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
+    public function activate(int $id)
+    {
+        $result = $this->servingService->activateServing($id, auth()->id());
+
+        if (isset($result['success']) && $result['success'] === false && isset($result['message']) && $result['message'] === 'Forbidden') {
+            return response()->json($result, 403);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
     public function getDeactivated()
     {
         $result = $this->servingService->getDeactivatedServings(auth()->id());
@@ -226,5 +256,17 @@ class ServingController
         );
 
         return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function topPerformers(GetTopPerformersRequest $request)
+    {
+        $validated = $request->validated();
+
+        $result = $this->topPerformerService->getTopPerformers(
+            $validated['serving_type_id'],
+            $validated['month'] ?? null,
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 500);
     }
 }

@@ -119,4 +119,14 @@ class ServingRequestRepository implements ServingRequestRepositoryInterface
     {
         return ServingRequest::destroy($id) > 0;
     }
+
+    public function findCompletedByServingIds(array $servingIds, string $from, string $to): Collection
+    {
+        return ServingRequest::with('serving')
+            ->whereIn('serving_id', $servingIds)
+            ->where('status', ServingRequest::STATUS_COMPLETED)
+            ->where('completed_at', '>=', $from)
+            ->where('completed_at', '<', $to)
+            ->get();
+    }
 }
