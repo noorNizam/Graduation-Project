@@ -136,4 +136,23 @@ class AuthController
             'expires_in' => 86400,
         ]);
     }
+
+    /**
+     * Logout user — revokes the current access token.
+     */
+    public function logout()
+    {
+        $user = auth()->user();
+
+        $token = $user ? $user->currentAccessToken() : null;
+
+        if ($token instanceof \Laravel\Sanctum\PersonalAccessToken) {
+            $token->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logged out successfully',
+        ], 200);
+    }
 }

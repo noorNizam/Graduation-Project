@@ -795,6 +795,46 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
+    public function activateServing(int $servingId, int $userId): array
+    {
+        $serving = $this->repository->findById($servingId);
+
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        if ($serving->user_id !== $userId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+            ];
+        }
+
+        if ($serving->status !== \App\Infrastructure\Models\Serving::STATUS_INACTIVE) {
+            return [
+                'success' => false,
+                'message' => 'Only inactive servings can be activated',
+            ];
+        }
+
+        $transactionResult = $this->executeWithTransaction(function () use ($servingId) {
+            return $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_ACTIVE);
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
+
+        return [
+            'success' => true,
+            'data' => $transactionResult['data'],
+            'message' => 'Serving activated',
+        ];
+    }
+
     private function rejectPendingRequestsForServing(int $servingId): void
     {
         $pending = $this->requestRepository->findByServingId($servingId, ServingRequest::STATUS_PENDING);

@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Route;
 // TroubleshootingController
 Route::get('/test-monitor', [TroubleshootingController::class, 'testMonitor']);
 Route::get('/test-error', [TroubleshootingController::class, 'testError']);
+Route::get('/test-index', [TroubleshootingController::class, 'testIndex']);
 
 // SchedulerLogController
 Route::get('/scheduler-logs', [SchedulerLogController::class, 'index']);
@@ -34,6 +35,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
+Route::middleware('auth:sanctum')->post('/auth/logout', [AuthController::class, 'logout']);
+
 // ServingController
 Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/servings/add-paid', [ServingController::class, 'addPaidServing']);
@@ -43,6 +46,7 @@ Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {
     Route::post('/comments/{commentId}/react', [ServingController::class, 'reactToComment']);
     Route::put('/servings/{servingId}/availability-slots', [ServingController::class, 'updateAvailabilitySlots']);
     Route::post('/servings/{id}/deactivate', [ServingController::class, 'deactivate']);
+    Route::post('/servings/{id}/activate', [ServingController::class, 'activate']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -58,9 +62,9 @@ Route::post('/servings/top-performers', [ServingController::class, 'topPerformer
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/servings/{servingId}/availability-slots', [ServingController::class, 'getAvailabilitySlots']);
     Route::get('/servings/proposed', [ServingController::class, 'getProposed']);
+    Route::get('/servings/my-deactivated', [ServingController::class, 'getDeactivated']);
     Route::get('/servings/{id}', [ServingController::class, 'getById']);
     Route::post('/servings/my', [ServingController::class, 'getMyServings']);
-    Route::get('/servings/my-deactivated', [ServingController::class, 'getDeactivated']);
 });
 
 Route::middleware(['auth:sanctum', 'ensure.user'])->group(function () {

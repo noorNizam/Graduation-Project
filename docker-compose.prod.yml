@@ -4,6 +4,7 @@ services:
     image: ghcr.io/noornizam/in-time-app:latest
     volumes:
       - storage_data:/var/www/html/storage/app/public
+      - index_data:/var/www/html/storage/app/tntsearch
     environment:
       APP_NAME: "${APP_NAME:-In Time}"
       APP_ENV: production
@@ -95,6 +96,7 @@ services:
     image: ghcr.io/noornizam/in-time-app:latest
     volumes:
       - storage_data:/var/www/html/storage/app/public
+      - index_data:/var/www/html/storage/app/tntsearch
     environment:
       APP_NAME: "${APP_NAME:-In Time}"
       APP_ENV: production
@@ -187,4 +189,5 @@ services:
 
 volumes:
   storage_data:
+  index_data:
   dbdata:
