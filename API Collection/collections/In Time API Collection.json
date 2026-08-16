@@ -295,6 +295,33 @@
 					}
 				},
 				{
+					"name": "Get Proposed Servings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/proposed?skip=0&take=10",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "proposed"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "take",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
 					"name": "Search Servings",
 					"request": {
 						"method": "POST",

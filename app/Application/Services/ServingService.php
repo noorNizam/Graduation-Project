@@ -9,6 +9,7 @@ use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Infrastructure\Models\ServingRequest;
 use App\Jobs\DeleteServingImageJob;
+use App\Jobs\LogSearchHistoryJob;
 use App\Traits\HandlesDatabaseTransactions;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -537,6 +538,15 @@ class ServingService implements ServingServiceInterface
 
         if ($name !== null) {
             $query->where('title', 'LIKE', "%{$name}%");
+        }
+
+        if ($excludeUserId !== null && $name !== null) {
+            try {
+                LogSearchHistoryJob::dispatch($excludeUserId, $name);
+            } catch (\Throwable $e) {
+                // Log and continue; do not fail the search request because of logging problems
+                \Illuminate\Support\Facades\Log::error('Failed to dispatch LogSearchHistoryJob job: '.$e->getMessage());
+            }
         }
 
         // Apply pagination

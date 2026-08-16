@@ -57,6 +57,7 @@ Route::post('/servings/top-performers', [ServingController::class, 'topPerformer
 // ServingController
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/servings/{servingId}/availability-slots', [ServingController::class, 'getAvailabilitySlots']);
+    Route::get('/servings/proposed', [ServingController::class, 'getProposed']);
     Route::get('/servings/{id}', [ServingController::class, 'getById']);
     Route::post('/servings/my', [ServingController::class, 'getMyServings']);
     Route::get('/servings/my-deactivated', [ServingController::class, 'getDeactivated']);
