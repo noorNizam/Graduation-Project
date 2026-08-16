@@ -266,6 +266,34 @@ class ServingProposalTest extends TestCase
         $this->assertEquals($popular->id, $result['data'][0]['id']);
     }
 
+    public function test_index_status_reports_missing_index(): void
+    {
+        $this->createServing($this->owner, 'تركيب مواسير السباكة');
+
+        $status = app(ServingProposalServiceInterface::class)->indexStatus();
+
+        $this->assertTrue($status['success']);
+        $this->assertFalse($status['data']['exists']);
+        $this->assertSame(1, $status['data']['active_servings']);
+        $this->assertNull($status['data']['indexed_docs']);
+    }
+
+    public function test_index_status_reports_built_index(): void
+    {
+        $this->createServing($this->owner, 'تركيب مواسير السباكة');
+        $this->createServing($this->owner, 'دهان وطلاء الجدران');
+        $this->rebuildIndex();
+
+        $status = app(ServingProposalServiceInterface::class)->indexStatus();
+
+        $this->assertTrue($status['success']);
+        $this->assertTrue($status['data']['exists']);
+        $this->assertSame(2, $status['data']['indexed_docs']);
+        $this->assertSame(2, $status['data']['active_servings']);
+        $this->assertTrue($status['data']['up_to_date']);
+        $this->assertFileExists($status['data']['path']);
+    }
+
     private function createServing(User $user, string $title, string $description = '', string $status = Serving::STATUS_ACTIVE): Serving
     {
         return Serving::factory()->create([

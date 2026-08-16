@@ -82,6 +82,18 @@
 					}
 				},
 				{
+					"name": "Test Index",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-index",
+							"host": ["{{base_url}}"],
+							"path": ["test-index"]
+						}
+					}
+				},
+				{
 					"name": "Scheduler Logs",
 					"request": {
 						"method": "GET",
@@ -269,6 +281,27 @@
 							"raw": "{{base_url}}/auth/refresh",
 							"host": ["{{base_url}}"],
 							"path": ["auth", "refresh"]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout"]
 						}
 					}
 				}
@@ -664,6 +697,27 @@
 							"raw": "{{base_url}}/servings/{{serving_id}}/deactivate",
 							"host": ["{{base_url}}"],
 							"path": ["servings", "{{serving_id}}", "deactivate"]
+						}
+					}
+				},
+				{
+					"name": "Activate Serving",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/activate",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "activate"]
 						}
 					}
 				},

@@ -2,11 +2,16 @@
 
 namespace App\Presentation\Controllers;
 
+use App\Domain\Services\ServingProposalServiceInterface;
 use App\Traits\Loggable;
 
 class TroubleshootingController
 {
     use Loggable;
+
+    public function __construct(
+        private ServingProposalServiceInterface $proposalService
+    ) {}
 
     public function testMonitor()
     {
@@ -26,6 +31,13 @@ class TroubleshootingController
                 'data' => $data,
                 'execution_note' => 'This endpoint tests AOP logging and monitoring',
             ]);
+        });
+    }
+
+    public function testIndex()
+    {
+        return $this->executeWithLogging(__METHOD__, function () {
+            return response()->json($this->proposalService->indexStatus());
         });
     }
 

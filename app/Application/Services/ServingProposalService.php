@@ -162,6 +162,48 @@ class ServingProposalService implements ServingProposalServiceInterface
         return $scores;
     }
 
+    public function indexStatus(): array
+    {
+        $path = $this->storagePath().DIRECTORY_SEPARATOR.self::INDEX_NAME;
+
+        if (! file_exists($path)) {
+            return [
+                'success' => true,
+                'data' => [
+                    'exists' => false,
+                    'path' => $path,
+                    'indexed_docs' => null,
+                    'active_servings' => Serving::active()->count(),
+                    'message' => 'Index not built yet — proposed servings will fall back to trending',
+                ],
+            ];
+        }
+
+        $indexedDocs = null;
+        try {
+            $engine = $this->engine();
+            $engine->selectIndex(self::INDEX_NAME);
+            $indexedDocs = (int) $engine->getValueFromInfoTable('total_documents');
+        } catch (\Throwable $e) {
+            Log::error('ServingProposalService::indexStatus failed: '.$e->getMessage());
+        }
+
+        $activeServings = Serving::active()->count();
+
+        return [
+            'success' => true,
+            'data' => [
+                'exists' => true,
+                'path' => $path,
+                'size_bytes' => (int) filesize($path),
+                'modified_at' => date('Y-m-d H:i:s', filemtime($path)),
+                'indexed_docs' => $indexedDocs,
+                'active_servings' => $activeServings,
+                'up_to_date' => $indexedDocs !== null && $indexedDocs === $activeServings,
+            ],
+        ];
+    }
+
     private function trendingResponse(int $userId, int $skip, int $take): array
     {
         $requestedIds = ServingRequest::where('requester_id', $userId)->pluck('serving_id')->all();
