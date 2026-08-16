@@ -16,3 +16,5 @@ $logCommand = function (string $jobName, string $signature) {
 Schedule::call(fn () => $logCommand('serving-requests:auto-complete', 'serving-requests:auto-complete'))->hourly();
 
 Schedule::call(fn () => $logCommand('top-performers:calculate', 'top-performers:calculate'))->lastDayOfMonth('23:00');
+
+Schedule::call(fn () => $logCommand('serving-index:rebuild', 'serving-index:rebuild'))->dailyAt('03:00');

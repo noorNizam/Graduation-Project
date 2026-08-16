@@ -2,11 +2,13 @@
 
 namespace App\Presentation\Controllers;
 
+use App\Domain\Services\ServingProposalServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Domain\Services\TopPerformerServiceInterface;
 use App\Domain\Services\UserRatingServiceInterface;
 use App\Presentation\Requests\AddPaidServingRequest;
 use App\Presentation\Requests\CreateCommentRequest;
+use App\Presentation\Requests\GetProposedServingsRequest;
 use App\Presentation\Requests\GetServingsRequest;
 use App\Presentation\Requests\GetTopPerformersRequest;
 use App\Presentation\Requests\NearbyServingsRequest;
@@ -20,7 +22,8 @@ class ServingController
     public function __construct(
         private ServingServiceInterface $servingService,
         private UserRatingServiceInterface $userRatingService,
-        private TopPerformerServiceInterface $topPerformerService
+        private TopPerformerServiceInterface $topPerformerService,
+        private ServingProposalServiceInterface $servingProposalService
     ) {}
 
     public function addPaidServing(AddPaidServingRequest $request)
@@ -121,7 +124,7 @@ class ServingController
 
     public function getServings(GetServingsRequest $request)
     {
-        $excludeUserId = auth()->id();
+        $excludeUserId = auth('sanctum')->id();
         $validated = $request->validated();
 
         $result = $this->servingService->getServings(
@@ -132,6 +135,19 @@ class ServingController
             $validated['skip'] ?? null,
             $validated['take'] ?? null,
             $validated['name'] ?? null
+        );
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
+    public function getProposed(GetProposedServingsRequest $request)
+    {
+        $validated = $request->validated();
+
+        $result = $this->servingProposalService->getProposedServings(
+            auth()->id(),
+            $validated['skip'] ?? 0,
+            $validated['take'] ?? 10,
         );
 
         return response()->json($result, $result['success'] ? 200 : 500);
