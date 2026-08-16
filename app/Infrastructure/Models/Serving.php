@@ -45,6 +45,8 @@ class Serving extends Model
         'status',
     ];
 
+    protected $appends = ['display_type'];
+
     /**
      * Category relation
      */
@@ -158,6 +160,28 @@ class Serving extends Model
     public function isHourPriced(): bool
     {
         return $this->unit && $this->unit->name === PaymentUnit::NAME_HOUR;
+    }
+
+    /**
+     * Type name exposed by the API. A paid serving priced in hours is
+     * presented as "exchanged".
+     */
+    public function displayType(): ?string
+    {
+        if ($this->isPaid() && $this->isHourPriced()) {
+            return 'exchanged';
+        }
+
+        return $this->servingType?->name;
+    }
+
+    public function getDisplayTypeAttribute(): ?string
+    {
+        if (! $this->relationLoaded('servingType') || ! $this->relationLoaded('unit')) {
+            return null;
+        }
+
+        return $this->displayType();
     }
 
     public function isRequestable(): bool

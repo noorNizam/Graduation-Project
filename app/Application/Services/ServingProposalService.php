@@ -343,7 +343,7 @@ class ServingProposalService implements ServingProposalServiceInterface
             'user_id' => $serving->user_id,
             'category_name' => $serving->category->name ?? null,
             'unit_name' => $serving->unit->name ?? null,
-            'serving_type_name' => $serving->servingType->name ?? null,
+            'serving_type_name' => $serving->displayType(),
             'requested' => false,
             'isOwner' => false,
             'score' => $score === null ? null : round($score, 4),

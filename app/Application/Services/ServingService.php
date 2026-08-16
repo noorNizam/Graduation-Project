@@ -239,7 +239,7 @@ class ServingService implements ServingServiceInterface
                 'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
             ];
         });
 
@@ -436,7 +436,7 @@ class ServingService implements ServingServiceInterface
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
                 'user_id' => $serving->user_id,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
                 'requested' => $requested,
                 'isOwner' => $userId !== null && $serving->user_id === $userId,
                 'canBeRated' => $canBeRated,
@@ -500,7 +500,7 @@ class ServingService implements ServingServiceInterface
                 'user_email' => $serving->user->email ?? null,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
                 'requested' => in_array($serving->id, $requestedServingIds),
                 'isOwner' => $serving->user_id === $userId,
             ];
@@ -591,7 +591,7 @@ class ServingService implements ServingServiceInterface
                 'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
                 'requested' => in_array($serving->id, $requestedServingIds),
                 'isOwner' => $serving->user_id === $excludeUserId,
             ];
@@ -639,7 +639,7 @@ class ServingService implements ServingServiceInterface
                 'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
                 'requested' => false,
                 'isOwner' => true,
             ];
@@ -872,7 +872,7 @@ class ServingService implements ServingServiceInterface
                 'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
             ];
         });
 
