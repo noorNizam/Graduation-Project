@@ -57,6 +57,11 @@ use App\Infrastructure\Repositories\WalletRepository;
 use App\Infrastructure\Repositories\WorkGalleryItemFileRepository;
 use App\Infrastructure\Repositories\WorkGalleryItemRepository;
 use Illuminate\Support\ServiceProvider;
+use App\Domain\Services\IdentityVerificationServiceInterface;
+use App\Application\Services\IdentityVerificationService;
+use App\Domain\Repositories\IdentityVerificationRepositoryInterface;
+use App\Infrastructure\Repositories\IdentityVerificationRepository;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -205,6 +210,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             WorkGalleryItemServiceInterface::class,
             WorkGalleryItemService::class
+        );
+        //Authentication
+        $this->app->bind(
+            IdentityVerificationRepositoryInterface::class,
+            IdentityVerificationRepository::class
+        );
+        
+        $this->app->bind(
+            IdentityVerificationServiceInterface::class,
+            IdentityVerificationService::class
         );
     }
 

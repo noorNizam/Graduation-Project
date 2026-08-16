@@ -16,6 +16,7 @@ use App\Presentation\Controllers\UserManagementController;
 use App\Presentation\Controllers\UserNotificationController;
 use App\Presentation\Controllers\WalletController;
 use App\Presentation\Controllers\WorkGalleryItemController;
+use App\Presentation\Controllers\IdentityVerificationController;
 use Illuminate\Support\Facades\Route;
 
 // TroubleshootingController
@@ -139,6 +140,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications/unread-count', [UserNotificationController::class, 'unreadCount']);
     Route::post('/update-fcm-token', [UserNotificationController::class, 'updateFcmToken']);
 });
+// ==================== Authenticated ====================
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/identity/verify', [IdentityVerificationController::class, 'start']);
+    Route::get('/identity/status', [IdentityVerificationController::class, 'status']);
+});
+
+Route::get('/identity/callback', [IdentityVerificationController::class, 'callback'])->name('identity.callback');
+Route::post('/identity/webhook', [IdentityVerificationController::class, 'webhook'])->name('identity.webhook');
 
 // Admin complaint & penalty routes
 Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(function () {

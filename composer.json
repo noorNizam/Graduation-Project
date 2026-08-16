@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "awaisjameel/didit-laravel-client": "^2.0",
         "laravel-notification-channels/fcm": "^5.1",
         "laravel/framework": "^12.0",
         "laravel/reverb": "*",
