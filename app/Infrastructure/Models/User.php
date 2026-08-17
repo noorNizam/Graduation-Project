@@ -49,7 +49,7 @@ class User extends Authenticatable
         'role',
         'is_active',
         'fcm_token',
-        'is_identity_verified', 
+        'is_identity_verified',
         'identity_verified_at',
     ];
 
@@ -63,7 +63,7 @@ class User extends Authenticatable
         'birth_date' => 'date',
         'is_active' => 'boolean',
         'email_verified_at' => 'datetime',
-        'is_identity_verified' => 'boolean',    
+        'is_identity_verified' => 'boolean',
         'identity_verified_at' => 'datetime',
     ];
 

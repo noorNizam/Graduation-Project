@@ -28,3 +28,7 @@ README.md
 /.opencode/
 /.env
 /firebase/
+
+# Credentials / secrets (never commit)
+/app/Firebase.rar
+*.rar

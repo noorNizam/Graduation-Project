@@ -2,12 +2,14 @@
 
 namespace App\Application\Services;
 
-use App\Domain\Services\IdentityVerificationServiceInterface;
 use App\Domain\Repositories\IdentityVerificationRepositoryInterface;
+use App\Domain\Services\IdentityVerificationServiceInterface;
 use App\Infrastructure\Models\User;
-use AwaisJameel\DiditLaravelClient\Facades\DiditLaravelClient;
 use App\Traits\HandlesDatabaseTransactions;
+use AwaisJameel\DiditLaravelClient\Exceptions\DiditException;
+use AwaisJameel\DiditLaravelClient\Facades\DiditLaravelClient;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class IdentityVerificationService implements IdentityVerificationServiceInterface
 {
@@ -20,7 +22,7 @@ class IdentityVerificationService implements IdentityVerificationServiceInterfac
     public function startVerification(int $userId): array
     {
         $user = User::find($userId);
-        if (!$user) {
+        if (! $user) {
             return ['success' => false, 'message' => 'User not found'];
         }
 
@@ -28,27 +30,46 @@ class IdentityVerificationService implements IdentityVerificationServiceInterfac
             return ['success' => false, 'message' => 'Already verified'];
         }
 
-        $session = DiditLaravelClient::createSession(
-            callbackUrl: route('identity.callback'),
-            vendorData: (string) $userId,
-            options: ['workflow_id' => config('didit.workflow_id')]
-        );
+        $existing = $this->repository->findByUserId($userId);
+        if ($existing && $existing->status === 'pending' && $existing->verification_url) {
+            return ['success' => true, 'verification_url' => $existing->verification_url];
+        }
+
+        $vendorToken = Str::random(32);
+
+        try {
+            $session = DiditLaravelClient::createSession(
+                callbackUrl: route('identity.callback'),
+                vendorData: $vendorToken,
+                options: ['workflow_id' => config('didit-laravel-client.workflow_id')]
+            );
+        } catch (DiditException $e) {
+            Log::error('Didit session creation failed', ['message' => $e->getMessage()]);
+
+            return ['success' => false, 'message' => 'Failed to create verification session with Didit'];
+        } catch (\Throwable $e) {
+            Log::error('Didit session creation failed', ['message' => $e->getMessage()]);
+
+            return ['success' => false, 'message' => 'Failed to create verification session'];
+        }
 
         $verificationUrl = $session['url'] ?? $session['url_session'] ?? $session['verification_url'] ?? null;
         $sessionId = $session['session_id'] ?? $session['id'] ?? null;
 
-        if (!$verificationUrl || !$sessionId) {
-            Log::error('Didit Session Creation Failed:', ['response' => $session]);
+        if (! $verificationUrl || ! $sessionId) {
+            Log::error('Didit session creation returned no URL or session id', ['response' => $session]);
+
             return [
                 'success' => false,
                 'message' => 'Failed to retrieve verification URL or session ID from Didit',
-                'data' => $session
             ];
         }
 
         $this->repository->create([
             'user_id' => $userId,
             'session_id' => $sessionId,
+            'vendor_token' => $vendorToken,
+            'verification_url' => $verificationUrl,
             'status' => 'pending',
         ]);
 
@@ -60,68 +81,92 @@ class IdentityVerificationService implements IdentityVerificationServiceInterfac
 
     public function handleCallback(array $payload): array
     {
-        Log::info('Didit Full Webhook Payload Received:', $payload);
+        $sessionId = $payload['session_id']
+            ?? $payload['verificationSessionId']
+            ?? ($payload['decision']['session_id'] ?? null);
+        $vendorToken = $payload['vendor_data'] ?? ($payload['decision']['vendor_data'] ?? null);
 
-        $decisionData = $payload['decision'] ?? $payload['data'] ?? $payload;
-
-        $sessionId = $payload['session_id'] ?? $payload['verificationSessionId'] ?? $decisionData['session_id'] ?? null;
-        $rawUserId = $payload['vendor_data'] ?? $decisionData['vendor_data'] ?? null;
+        Log::info('Didit webhook received', [
+            'session_id' => $sessionId,
+            'status' => $payload['status'] ?? ($payload['decision']['status'] ?? null),
+        ]);
 
         $record = null;
         if ($sessionId) {
             $record = $this->repository->findBySessionId($sessionId);
         }
-        
-        if (!$record && $rawUserId) {
-            $userId = (int) preg_replace('/[^0-9]/', '', (string) $rawUserId);
-            $record = $this->getLatestRecordForUser($userId);
+
+        if (! $record && $vendorToken) {
+            $record = $this->repository->findByVendorToken((string) $vendorToken);
         }
 
-        if (!$record) {
-            Log::error('Didit Webhook Error: Verification record not found in DB', ['payload' => $payload]);
+        if (! $record) {
+            Log::warning('Didit webhook: verification record not found', [
+                'session_id' => $sessionId,
+            ]);
+
             return ['success' => false, 'message' => 'Record not found'];
         }
 
- 
-        $jsonString = strtolower(json_encode($payload));
+        $finalStatus = $this->mapDiditStatus($payload);
 
-        $isApproved = str_contains($jsonString, 'approved') ||
-                      str_contains($jsonString, 'completed') ||
-                      str_contains($jsonString, 'successful') ||
-                      str_contains($jsonString, 'passed');
-
-        $isResubmission = str_contains($jsonString, 'resubmit') ||
-                          str_contains($jsonString, 'requires_input') ||
-                          str_contains($jsonString, 'expired');
-
-
-        if ($isApproved) {
-            $finalStatus = 'approved';
-        } elseif ($isResubmission) {
-            $finalStatus = 'resubmission_requested';
-        } else {
-            $isDeclined = str_contains($jsonString, 'declin') || 
-                          str_contains($jsonString, 'reject') || 
-                          str_contains($jsonString, 'fail');
-            
-            $finalStatus = $isDeclined ? 'declined' : 'approved';
+        if ($finalStatus === null) {
+            return ['success' => true, 'message' => 'Webhook acknowledged, no status change'];
         }
 
         $targetUserId = $record->user_id;
-        $this->repository->updateStatus($targetUserId, $finalStatus, $payload);
-        $this->updateUserVerificationStatus($targetUserId, $finalStatus === 'approved');
 
-        Log::info("Didit Webhook Processed for User {$targetUserId}: Status updated to {$finalStatus}");
+        $result = $this->executeWithTransaction(function () use ($targetUserId, $finalStatus, $payload) {
+            $updated = $this->repository->updateStatus($targetUserId, $finalStatus, $payload);
+            $this->updateUserVerificationStatus($targetUserId, $finalStatus === 'approved');
+
+            return $updated;
+        });
+
+        if (! $result['success'] || $result['data'] === false) {
+            Log::error('Didit webhook: failed to persist verification status', [
+                'user_id' => $targetUserId,
+                'message' => $result['message'] ?? null,
+            ]);
+
+            return ['success' => false, 'message' => 'Failed to persist verification status'];
+        }
+
+        Log::info("Didit webhook processed for user {$targetUserId}: status updated to {$finalStatus}");
 
         return ['success' => true, 'message' => 'Status updated successfully'];
     }
 
-    private function getLatestRecordForUser(int $userId)
+    public function getStatus(int $userId): array
     {
-        return \DB::table('identity_verifications')
-            ->where('user_id', $userId)
-            ->orderBy('id', 'desc')
-            ->first() ?? $this->repository->findByUserId($userId);
+        $user = User::findOrFail($userId);
+        $record = $this->repository->findByUserId($userId);
+
+        return [
+            'success' => true,
+            'data' => [
+                'status' => $record->status ?? 'none',
+                'session_id' => $record->session_id ?? null,
+                'verified_at' => $record->verified_at ?? null,
+                'is_identity_verified' => $user->is_identity_verified,
+                'identity_verified_at' => $user->identity_verified_at,
+            ],
+        ];
+    }
+
+    private function mapDiditStatus(array $payload): ?string
+    {
+        $status = $payload['status']
+            ?? $payload['decision']['status']
+            ?? $payload['data']['status']
+            ?? null;
+
+        return match (strtolower((string) $status)) {
+            'approved' => 'approved',
+            'declined' => 'declined',
+            'resubmitted' => 'resubmission_requested',
+            default => null,
+        };
     }
 
     private function updateUserVerificationStatus(int $userId, bool $isVerified): void

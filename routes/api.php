@@ -3,6 +3,8 @@
 use App\Presentation\Controllers\AdminComplaintController;
 use App\Presentation\Controllers\AuthController;
 use App\Presentation\Controllers\ChatController;
+use App\Presentation\Controllers\HealthCheckController;
+use App\Presentation\Controllers\IdentityVerificationController;
 use App\Presentation\Controllers\PaymentUnitController;
 use App\Presentation\Controllers\PenaltyController;
 use App\Presentation\Controllers\SchedulerLogController;
@@ -17,13 +19,16 @@ use App\Presentation\Controllers\UserManagementController;
 use App\Presentation\Controllers\UserNotificationController;
 use App\Presentation\Controllers\WalletController;
 use App\Presentation\Controllers\WorkGalleryItemController;
-use App\Presentation\Controllers\IdentityVerificationController;
 use Illuminate\Support\Facades\Route;
 
 // TroubleshootingController
 Route::get('/test-monitor', [TroubleshootingController::class, 'testMonitor']);
 Route::get('/test-error', [TroubleshootingController::class, 'testError']);
 Route::get('/test-index', [TroubleshootingController::class, 'testIndex']);
+Route::get('/test-didit', [TroubleshootingController::class, 'testDidit']);
+
+// HealthCheckController
+Route::get('/health', [HealthCheckController::class, 'health']);
 
 // SchedulerLogController
 Route::get('/scheduler-logs', [SchedulerLogController::class, 'index']);

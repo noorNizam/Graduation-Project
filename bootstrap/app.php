@@ -16,11 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ['middleware' => ['api', 'auth:sanctum'], 'prefix' => 'api'],
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // استثناء مسار الـ Webhook من حماية CSRF لكي يستطيع سيرفر Didit إرسال البيانات
-        $middleware->validateCsrfTokens(except: [
-            'api/identity/webhook',
-        ]);
-
         // as AOP implementation we register the request monitoring middleware
         // for all incoming requests
         $middleware->web(append: [
