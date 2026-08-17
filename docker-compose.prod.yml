@@ -41,6 +41,7 @@ services:
       REVERB_HOST: "${REVERB_HOST:-localhost}"
       REVERB_PORT: "${REVERB_PORT:-8080}"
       REVERB_SCHEME: "${REVERB_SCHEME:-http}"
+      CHAT_ENCRYPTION_KEY: "${CHAT_ENCRYPTION_KEY}"
     depends_on:
       db:
         condition: service_healthy
@@ -86,6 +87,7 @@ services:
       REVERB_HOST: "${REVERB_HOST:-localhost}"
       REVERB_PORT: "${REVERB_PORT:-8080}"
       REVERB_SCHEME: "${REVERB_SCHEME:-http}"
+      CHAT_ENCRYPTION_KEY: "${CHAT_ENCRYPTION_KEY}"
     command: php artisan queue:listen --tries=3 --timeout=90
     depends_on:
       db:
@@ -123,6 +125,7 @@ services:
       REVERB_HOST: "${REVERB_HOST:-localhost}"
       REVERB_PORT: "${REVERB_PORT:-8080}"
       REVERB_SCHEME: "${REVERB_SCHEME:-http}"
+      CHAT_ENCRYPTION_KEY: "${CHAT_ENCRYPTION_KEY}"
     command: php artisan schedule:work
     depends_on:
       db:
@@ -154,6 +157,7 @@ services:
       REVERB_HOST: "${REVERB_HOST:-0.0.0.0}"
       REVERB_PORT: "${REVERB_PORT:-8080}"
       REVERB_SCHEME: "${REVERB_SCHEME:-http}"
+      CHAT_ENCRYPTION_KEY: "${CHAT_ENCRYPTION_KEY}"
     command: php artisan reverb:start --port=8080 --host=0.0.0.0
     depends_on:
       db:
