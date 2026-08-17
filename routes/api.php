@@ -3,6 +3,8 @@
 use App\Presentation\Controllers\AdminComplaintController;
 use App\Presentation\Controllers\AuthController;
 use App\Presentation\Controllers\ChatController;
+use App\Presentation\Controllers\HealthCheckController;
+use App\Presentation\Controllers\IdentityVerificationController;
 use App\Presentation\Controllers\PaymentUnitController;
 use App\Presentation\Controllers\PenaltyController;
 use App\Presentation\Controllers\SchedulerLogController;
@@ -23,6 +25,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/test-monitor', [TroubleshootingController::class, 'testMonitor']);
 Route::get('/test-error', [TroubleshootingController::class, 'testError']);
 Route::get('/test-index', [TroubleshootingController::class, 'testIndex']);
+Route::get('/test-didit', [TroubleshootingController::class, 'testDidit']);
+
+// HealthCheckController
+Route::get('/health', [HealthCheckController::class, 'health']);
 
 // SchedulerLogController
 Route::get('/scheduler-logs', [SchedulerLogController::class, 'index']);
@@ -149,6 +155,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications/unread-count', [UserNotificationController::class, 'unreadCount']);
     Route::post('/update-fcm-token', [UserNotificationController::class, 'updateFcmToken']);
 });
+// ==================== Authenticated ====================
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/identity/verify', [IdentityVerificationController::class, 'start']);
+    Route::get('/identity/status', [IdentityVerificationController::class, 'status']);
+});
+
+Route::get('/identity/callback', [IdentityVerificationController::class, 'callback'])->name('identity.callback');
+Route::post('/identity/webhook', [IdentityVerificationController::class, 'webhook'])->name('identity.webhook');
 
 // Admin complaint & penalty routes
 Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(function () {

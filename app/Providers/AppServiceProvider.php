@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Application\Services\ChatService;
 use App\Application\Services\ComplaintService;
 use App\Application\Services\EmailVerificationService;
+use App\Application\Services\IdentityVerificationService;
 use App\Application\Services\NotificationService;
 use App\Application\Services\PaymentUnitService;
 use App\Application\Services\PenaltyService;
@@ -22,6 +23,7 @@ use App\Application\Services\WorkGalleryItemService;
 use App\Domain\Repositories\ChatRepositoryInterface;
 use App\Domain\Repositories\ComplaintRepositoryInterface;
 use App\Domain\Repositories\EmailVerificationAttemptRepositoryInterface;
+use App\Domain\Repositories\IdentityVerificationRepositoryInterface;
 use App\Domain\Repositories\NotificationRepositoryInterface;
 use App\Domain\Repositories\PaymentUnitRepositoryInterface;
 use App\Domain\Repositories\PenaltyRepositoryInterface;
@@ -39,6 +41,7 @@ use App\Domain\Repositories\WorkGalleryItemRepositoryInterface;
 use App\Domain\Services\ChatServiceInterface;
 use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
+use App\Domain\Services\IdentityVerificationServiceInterface;
 use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\PaymentUnitServiceInterface;
 use App\Domain\Services\PenaltyServiceInterface;
@@ -56,6 +59,7 @@ use App\Domain\Services\WorkGalleryItemServiceInterface;
 use App\Infrastructure\Repositories\ChatRepository;
 use App\Infrastructure\Repositories\ComplaintRepository;
 use App\Infrastructure\Repositories\EmailVerificationAttemptRepository;
+use App\Infrastructure\Repositories\IdentityVerificationRepository;
 use App\Infrastructure\Repositories\NotificationRepository;
 use App\Infrastructure\Repositories\PaymentUnitRepository;
 use App\Infrastructure\Repositories\PenaltyRepository;
@@ -259,6 +263,16 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             WorkGalleryItemServiceInterface::class,
             WorkGalleryItemService::class
+        );
+        // Authentication
+        $this->app->bind(
+            IdentityVerificationRepositoryInterface::class,
+            IdentityVerificationRepository::class
+        );
+
+        $this->app->bind(
+            IdentityVerificationServiceInterface::class,
+            IdentityVerificationService::class
         );
     }
 

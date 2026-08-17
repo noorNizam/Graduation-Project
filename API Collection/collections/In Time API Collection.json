@@ -94,6 +94,30 @@
 					}
 				},
 				{
+					"name": "Test Didit",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-didit",
+							"host": ["{{base_url}}"],
+							"path": ["test-didit"]
+						}
+					}
+				},
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					}
+				},
+				{
 					"name": "Scheduler Logs",
 					"request": {
 						"method": "GET",
@@ -1746,6 +1770,82 @@
 							"raw": "{{base_url}}/update-fcm-token",
 							"host": ["{{base_url}}"],
 							"path": ["update-fcm-token"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Identity Verification",
+			"item": [
+				{
+					"name": "Start Identity Verification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/identity/verify",
+							"host": ["{{base_url}}"],
+							"path": ["identity", "verify"]
+						}
+					}
+				},
+				{
+					"name": "Get Identity Verification Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/identity/status",
+							"host": ["{{base_url}}"],
+							"path": ["identity", "status"]
+						}
+					}
+				},
+				{
+					"name": "Identity Verification Callback",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/identity/callback",
+							"host": ["{{base_url}}"],
+							"path": ["identity", "callback"]
+						}
+					}
+				},
+				{
+					"name": "Identity Verification Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"didit\": \"webhook_payload\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/identity/webhook",
+							"host": ["{{base_url}}"],
+							"path": ["identity", "webhook"]
 						}
 					}
 				}
