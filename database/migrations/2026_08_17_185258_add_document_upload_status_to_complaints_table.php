@@ -27,11 +27,19 @@ class ComplaintModel extends Model
         'admin_note',
         'attachment_path',
         'attachment_name',
+        // 🔥 أعمدة جديدة
+        'documents_requested_from',
+        'documents_due_at',
+        'complainant_documents_uploaded',
+        'accused_documents_uploaded',
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'documents_due_at' => 'datetime',
+        'complainant_documents_uploaded' => 'boolean',
+        'accused_documents_uploaded' => 'boolean',
     ];
 
     protected $appends = ['attachment_url'];
@@ -89,7 +97,22 @@ class ComplaintModel extends Model
         if ($this->attachment_path) {
             return asset('storage/'.$this->attachment_path);
         }
-
         return null;
+    }
+
+    // 🔥 دوال للتحقق من حالة الوثائق
+    public function areBothDocumentsUploaded(): bool
+    {
+        return $this->complainant_documents_uploaded && $this->accused_documents_uploaded;
+    }
+
+    public function isComplainantOnlyUploaded(): bool
+    {
+        return $this->complainant_documents_uploaded && !$this->accused_documents_uploaded;
+    }
+
+    public function isAccusedOnlyUploaded(): bool
+    {
+        return !$this->complainant_documents_uploaded && $this->accused_documents_uploaded;
     }
 }

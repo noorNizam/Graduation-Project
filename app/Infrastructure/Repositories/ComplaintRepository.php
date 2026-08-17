@@ -57,15 +57,25 @@ class ComplaintRepository implements ComplaintRepositoryInterface
             ->paginate($perPage);
     }
 
-    public function updateStatus(int $id, string $status, ?string $adminNote = null): ComplaintModel
+    public function updateStatus(int $id, string $status, ?string $adminNote = null, ?string $documentsRequestedFrom = null, ?string $documentsDueAt = null): ComplaintModel
     {
         $complaint = ComplaintModel::findOrFail($id);
-
-        $complaint->update([
+    
+        $data = [
             'status' => $status,
             'admin_note' => $adminNote,
-        ]);
-
+        ];
+    
+        if ($documentsRequestedFrom !== null) {
+            $data['documents_requested_from'] = $documentsRequestedFrom;
+        }
+    
+        if ($documentsDueAt !== null) {
+            $data['documents_due_at'] = $documentsDueAt;
+        }
+    
+        $complaint->update($data);
+    
         return $complaint->fresh();
     }
 

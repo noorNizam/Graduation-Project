@@ -144,6 +144,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/notifications/read-all', [UserNotificationController::class, 'markAllAsRead']);
     Route::get('/notifications/unread-count', [UserNotificationController::class, 'unreadCount']);
     Route::post('/update-fcm-token', [UserNotificationController::class, 'updateFcmToken']);
+    Route::post('/complaints/{id}/upload-documents', [UserComplaintController::class, 'uploadDocuments']);
 });
 // ==================== Authenticated ====================
 

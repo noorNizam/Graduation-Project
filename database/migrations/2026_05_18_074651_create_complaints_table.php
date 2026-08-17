@@ -29,6 +29,7 @@ return new class extends Migration
 
             $table->enum('status', [
                 'pending',
+                'awaiting_documents',
                 'under_review',
                 'resolved',
                 'rejected',
