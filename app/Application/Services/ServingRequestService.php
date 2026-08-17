@@ -10,7 +10,7 @@ use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\ServingRequestServiceInterface;
 use App\Infrastructure\Models\ServingRequest;
 use App\Traits\HandlesDatabaseTransactions;
-
+use App\Application\Services\RewardService;
 class ServingRequestService implements ServingRequestServiceInterface
 {
     use HandlesDatabaseTransactions;
@@ -149,6 +149,11 @@ class ServingRequestService implements ServingRequestServiceInterface
         if (! $transactionResult['success']) {
             return $transactionResult;
         }
+        $user = \App\Infrastructure\Models\User::find($servingRequest->requester_id);
+        if ($user) {
+        app(RewardService::class)->incrementServiceCount($user->id);
+        app(RewardService::class)->checkAndApplyRewards($user->id);
+}
 
         $this->notificationService->send(
             $servingRequest->requester_id,
@@ -166,6 +171,7 @@ class ServingRequestService implements ServingRequestServiceInterface
             'data' => $transactionResult['data'],
             'message' => 'Request accepted successfully',
         ];
+        
     }
 
     public function rejectRequest(int $requestId, int $ownerId): array

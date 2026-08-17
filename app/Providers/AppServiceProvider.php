@@ -29,6 +29,8 @@ use App\Domain\Repositories\UserRatingRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
 use App\Domain\Repositories\WorkGalleryItemFileRepositoryInterface;
 use App\Domain\Repositories\WorkGalleryItemRepositoryInterface;
+use App\Domain\Repositories\RewardRepositoryInterface;
+use App\Infrastructure\Repositories\RewardRepository;
 use App\Domain\Services\ChatServiceInterface;
 use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\EmailVerificationServiceInterface;
@@ -61,7 +63,8 @@ use App\Domain\Services\IdentityVerificationServiceInterface;
 use App\Application\Services\IdentityVerificationService;
 use App\Domain\Repositories\IdentityVerificationRepositoryInterface;
 use App\Infrastructure\Repositories\IdentityVerificationRepository;
-
+use App\Domain\Services\RewardServiceInterface;
+use App\Application\Services\RewardService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -221,6 +224,15 @@ class AppServiceProvider extends ServiceProvider
             IdentityVerificationServiceInterface::class,
             IdentityVerificationService::class
         );
+        $this->app->bind(
+            RewardServiceInterface::class,
+            RewardService::class
+        );
+        $this->app->bind(
+            RewardRepositoryInterface::class,
+            RewardRepository::class
+        );
+        
     }
 
     public function boot(): void
