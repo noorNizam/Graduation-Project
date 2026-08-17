@@ -24,7 +24,7 @@ class NewMessageEvent implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         if ($this->chatType === 'group') {
-            return [new PresenceChannel("presence-chat.{$this->chatId}")];
+            return [new PresenceChannel("chat.{$this->chatId}")];
         }
 
         return [new PrivateChannel("chat.{$this->chatId}")];
