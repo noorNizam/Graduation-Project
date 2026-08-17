@@ -28,6 +28,7 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <env name="CHAT_ENCRYPTION_KEY" value="dGVzdC1jaGF0LWVuY3J5cHRpb24ta2V5LTMyYnl0ZXM="/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
