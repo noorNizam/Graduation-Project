@@ -74,6 +74,8 @@ use App\Infrastructure\Repositories\UserSearchHistoryRepository;
 use App\Infrastructure\Repositories\WalletRepository;
 use App\Infrastructure\Repositories\WorkGalleryItemFileRepository;
 use App\Infrastructure\Repositories\WorkGalleryItemRepository;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -278,6 +280,14 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        RateLimiter::for('api', function ($request) {
+            $user = $request->user() ?? auth('sanctum')->user();
+
+            return $user
+                ? Limit::perMinute(120)->by($user->id)
+                : Limit::perMinute(30)->by($request->ip());
+        });
+
+        RateLimiter::for('auth', fn ($request) => Limit::perMinute(5)->by($request->ip()));
     }
 }
