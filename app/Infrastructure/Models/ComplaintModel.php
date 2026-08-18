@@ -7,11 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ComplaintModel extends Model
 {
-    // 🔥 ثوابت الحالات
+    // Status constants
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_AWAITING_DOCUMENTS = 'awaiting_documents';
+
     public const STATUS_UNDER_REVIEW = 'under_review';
+
     public const STATUS_RESOLVED = 'resolved';
+
     public const STATUS_REJECTED = 'rejected';
 
     protected $table = 'complaints';
@@ -27,7 +31,7 @@ class ComplaintModel extends Model
         'admin_note',
         'attachment_path',
         'attachment_name',
-        // 🔥 أعمدة جديدة (إذا أضفتيها في الميغريشن)
+        // Columns for the documents flow
         'documents_requested_from',
         'documents_due_at',
         'complainant_documents_uploaded',
@@ -54,7 +58,7 @@ class ComplaintModel extends Model
         return $this->belongsTo(User::class, 'accused_user_id');
     }
 
-    // ===================== دوال الحالات =====================
+    // Status helpers
     public function isPending(): bool
     {
         return $this->status === self::STATUS_PENDING;
@@ -91,7 +95,7 @@ class ComplaintModel extends Model
         ]);
     }
 
-    // ===================== دوال الوثائق =====================
+    // Documents helpers
     public function areBothDocumentsUploaded(): bool
     {
         return $this->complainant_documents_uploaded && $this->accused_documents_uploaded;
@@ -99,12 +103,12 @@ class ComplaintModel extends Model
 
     public function isComplainantOnlyUploaded(): bool
     {
-        return $this->complainant_documents_uploaded && !$this->accused_documents_uploaded;
+        return $this->complainant_documents_uploaded && ! $this->accused_documents_uploaded;
     }
 
     public function isAccusedOnlyUploaded(): bool
     {
-        return !$this->complainant_documents_uploaded && $this->accused_documents_uploaded;
+        return ! $this->complainant_documents_uploaded && $this->accused_documents_uploaded;
     }
 
     public function getAttachmentUrlAttribute(): ?string

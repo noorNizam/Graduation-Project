@@ -8,10 +8,11 @@ use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\PenaltyServiceInterface;
 use App\Infrastructure\Models\ComplaintModel;
 use App\Infrastructure\Models\User;
+use App\Infrastructure\Models\WalletModel;
 use App\Traits\HandlesDatabaseTransactions;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 class ComplaintService implements ComplaintServiceInterface
 {
@@ -34,6 +35,7 @@ class ComplaintService implements ComplaintServiceInterface
                 $data['attachment_path'] = $path;
                 $data['attachment_name'] = $attachment->getClientOriginalName();
             }
+
             return $this->complaintRepository->create($data);
         });
 
@@ -43,7 +45,7 @@ class ComplaintService implements ComplaintServiceInterface
 
         $complaint = $result['data'];
 
-        // إشعار للمشتكى عليه
+        // Notify the accused party
         if (! empty($complaint->accused_user_id)) {
             $this->notificationService->send(
                 $complaint->accused_user_id,
@@ -54,7 +56,7 @@ class ComplaintService implements ComplaintServiceInterface
             );
         }
 
-        // إشعار للمديرين عند وصول شكوى جديدة
+        // Notify admins about the new complaint
         $admins = User::where('role', 'admin')->get();
         foreach ($admins as $admin) {
             $this->notificationService->send(
@@ -80,12 +82,14 @@ class ComplaintService implements ComplaintServiceInterface
         if (! $complaint) {
             return ['success' => false, 'message' => 'Complaint not found'];
         }
+
         return ['success' => true, 'data' => $complaint];
     }
 
     public function getAllComplaints(array $filters = [], int $perPage = 15): array
     {
         $complaints = $this->complaintRepository->findAll($filters, $perPage);
+
         return [
             'success' => true,
             'data' => $complaints->items(),
@@ -101,6 +105,7 @@ class ComplaintService implements ComplaintServiceInterface
     public function getUserComplaints(int $userId, int $perPage = 15): array
     {
         $complaints = $this->complaintRepository->findByComplainant($userId, $perPage);
+
         return [
             'success' => true,
             'data' => $complaints->items(),
@@ -116,6 +121,7 @@ class ComplaintService implements ComplaintServiceInterface
     public function getComplaintsAgainstUser(int $userId, int $perPage = 15): array
     {
         $complaints = $this->complaintRepository->findByAccusedUser($userId, $perPage);
+
         return [
             'success' => true,
             'data' => $complaints->items(),
@@ -133,6 +139,11 @@ class ComplaintService implements ComplaintServiceInterface
         return $this->complaintRepository->findById($id);
     }
 
+    public function getExpiredAwaitingDocuments(): array
+    {
+        return $this->complaintRepository->findExpiredAwaitingDocuments();
+    }
+
     // ===================== UPDATE =====================
     public function updateComplaintStatus(
         int $id,
@@ -147,14 +158,22 @@ class ComplaintService implements ComplaintServiceInterface
         }
 
         $result = $this->executeWithTransaction(function () use ($id, $status, $adminNote, $documentsRequestedFrom, $documentsDueAt) {
-            return $this->complaintRepository->updateStatus($id, $status, $adminNote, $documentsRequestedFrom, $documentsDueAt);
+            return $this->complaintRepository->updateStatus(
+                $id,
+                $status,
+                $adminNote,
+                $documentsRequestedFrom,
+                // Only persist an explicit deadline. Without one, the complaint
+                // stays awaiting_documents until the admin changes it manually.
+                $documentsDueAt
+            );
         });
 
         if (! $result['success']) {
             return $result;
         }
 
-        // إشعار للمشتكي (تغيير الحالة)
+        // Notify the complainant about the status change
         $statusLabels = [
             'under_review' => 'قيد المراجعة',
             'rejected' => 'مرفوضة',
@@ -173,16 +192,18 @@ class ComplaintService implements ComplaintServiceInterface
             );
         }
 
-        // إشعار للمشتكى عليه أيضاً
-        $this->notificationService->send(
-            $complaint->accused_user_id,
-            'complaint_status_changed',
-            'تحديث حالة الشكوى',
-            "تم تحديث حالة الشكوى المقدمة ضدك إلى {$label}",
-            ['complaint_id' => $id, 'status' => $status]
-        );
+        // Notify the accused party as well
+        if (! empty($complaint->accused_user_id)) {
+            $this->notificationService->send(
+                $complaint->accused_user_id,
+                'complaint_status_changed',
+                'تحديث حالة الشكوى',
+                "تم تحديث حالة الشكوى المقدمة ضدك إلى {$label}",
+                ['complaint_id' => $id, 'status' => $status]
+            );
+        }
 
-        // إذا كانت الحالة awaiting_documents → نرسل طلب وثائق
+        // If awaiting documents, send the document requests
         if ($status === 'awaiting_documents') {
             $this->sendDocumentRequests($complaint, $documentsRequestedFrom, $documentsDueAt);
         }
@@ -209,71 +230,111 @@ class ComplaintService implements ComplaintServiceInterface
             $recipients = [$complaint->complainant_id, $complaint->accused_user_id];
         }
 
-        $dueDate = $dueAt ? Carbon::parse($dueAt)->format('Y/m/d') : '7 أيام';
+        $dueDate = $dueAt ? Carbon::parse($dueAt)->format('Y/m/d') : null;
+        $message = $dueDate
+            ? "يرجى تقديم وثائقك للرد على الشكوى خلال {$dueDate}"
+            : 'يرجى تقديم وثائقك للرد على الشكوى في أقرب وقت';
 
         foreach ($recipients as $userId) {
+            if (! $userId) {
+                continue;
+            }
+
             $this->notificationService->send(
                 $userId,
                 'documents_requested',
                 'طلب تقديم وثائق إضافية',
-                "يرجى تقديم وثائقك للرد على الشكوى خلال {$dueDate}",
+                $message,
                 ['complaint_id' => $complaint->id, 'due_at' => $dueAt]
             );
         }
     }
 
     /**
-     * التحقق من حالة الوثائق واتخاذ القرار
-     * تُستدعى بعد رفع أي طرف وثائقه
+     * Check the documents status and apply the decision.
+     * Called after either party uploads their documents.
      */
     public function checkDocumentStatusAndApplyDecision(ComplaintModel $complaint): array
     {
-        if (!$complaint->isAwaitingDocuments()) {
+        if (! $complaint->isAwaitingDocuments()) {
             return ['success' => false, 'message' => 'Complaint is not awaiting documents'];
         }
 
-        $isComplainantUploaded = $complaint->complainant_documents_uploaded;
-        $isAccusedUploaded = $complaint->accused_documents_uploaded;
+        $isComplainantUploaded = (bool) $complaint->complainant_documents_uploaded;
+        $isAccusedUploaded = (bool) $complaint->accused_documents_uploaded;
 
-        // الحالة 1: المشتكي رفع + المشتكى عليه ما رفع → عقوبة
-        if ($isComplainantUploaded && !$isAccusedUploaded) {
-            return $this->applyPenaltyAndResolve($complaint);
-        }
-
-        // الحالة 2: المشتكى عليه رفع + المشتكي ما رفع → رفض
-        if (!$isComplainantUploaded && $isAccusedUploaded) {
-            return $this->rejectComplaint($complaint);
-        }
-
-        // الحالة 3: الطرفين رفعوا → مراجعة
+        // Both parties uploaded -> review
         if ($isComplainantUploaded && $isAccusedUploaded) {
             return $this->moveToUnderReview($complaint);
         }
 
-        // الحالة 4: ولا واحد رفع → انتظار
-        return [
-            'success' => true,
-            'message' => 'Waiting for both parties to upload documents',
-        ];
+        // Neither party uploaded yet -> keep waiting
+        if (! $isComplainantUploaded && ! $isAccusedUploaded) {
+            return [
+                'success' => true,
+                'message' => 'Waiting for both parties to upload documents',
+            ];
+        }
+
+        // One side uploaded: only decide when the admin set a deadline AND it
+        // has passed. Without a deadline, the complaint stays open until the
+        // admin changes its status manually.
+        $deadline = $complaint->documents_due_at;
+        if (! $deadline) {
+            return [
+                'success' => true,
+                'message' => 'Waiting for the other party to upload documents',
+            ];
+        }
+
+        if (Carbon::now()->lessThan($deadline)) {
+            return [
+                'success' => true,
+                'message' => 'Waiting for the other party to upload documents before the deadline',
+            ];
+        }
+
+        // Complainant uploaded, accused did not -> penalty
+        if ($isComplainantUploaded) {
+            return $this->applyPenaltyAndResolve($complaint);
+        }
+
+        // Accused uploaded, complainant did not -> reject
+        return $this->rejectComplaint($complaint);
     }
 
     // ===================== DECISIONS =====================
     private function applyPenaltyAndResolve(ComplaintModel $complaint): array
     {
-        $this->executeWithTransaction(function () use ($complaint) {
-            $complaint->status = 'resolved';
-            $complaint->admin_note = 'المشتكى عليه لم يقدم وثائقه، تم تطبيق العقوبة';
-            $complaint->save();
-
-            $this->penaltyService->applyPenalty(
+        $result = $this->executeWithTransaction(function () use ($complaint) {
+            // applyPenalty commits its own nested transaction (savepoint), so a
+            // failure there must abort the outer transaction explicitly.
+            $penaltyResult = $this->penaltyService->applyPenalty(
                 $complaint->accused_user_id,
                 'deduct_hours',
                 $complaint->id,
                 'لم يقدم وثائقه للدفاع عن نفسه'
             );
+            if (! $penaltyResult['success']) {
+                throw new \RuntimeException($penaltyResult['message'] ?? 'Penalty could not be applied');
+            }
+
+            $wallet = WalletModel::where('user_id', $complaint->accused_user_id)->first();
+            if ($wallet) {
+                $wallet->balance = max(0, $wallet->balance - 1);
+                $wallet->save();
+            }
+
+            $complaint->status = 'resolved';
+            $complaint->admin_note = 'المشتكى عليه لم يقدم وثائقه، تم تطبيق العقوبة';
+            $complaint->save();
         });
 
-        // إشعار للمشتكي
+        if (! $result['success']) {
+            return $result;
+        }
+
+        // Notify the complainant
         $this->notificationService->send(
             $complaint->complainant_id,
             'complaint_resolved',
@@ -282,7 +343,7 @@ class ComplaintService implements ComplaintServiceInterface
             ['complaint_id' => $complaint->id]
         );
 
-        // إشعار للمشتكى عليه
+        // Notify the accused party
         $this->notificationService->send(
             $complaint->accused_user_id,
             'penalty_applied',
@@ -291,13 +352,13 @@ class ComplaintService implements ComplaintServiceInterface
             ['complaint_id' => $complaint->id]
         );
 
-        // 🔥 إشعار للمديرين بقرار الحل
-        $this->notifyAdmins('تم حل الشكوى رقم ' . $complaint->id . ' لصالح المشتكي', $complaint->id);
+        // Notify admins about the resolution
+        $this->notifyAdmins('تم حل الشكوى رقم '.$complaint->id.' لصالح المشتكي', $complaint->id);
 
         return [
             'success' => true,
             'message' => 'Penalty applied and complaint resolved',
-            'data' => $complaint
+            'data' => $complaint,
         ];
     }
 
@@ -325,13 +386,13 @@ class ComplaintService implements ComplaintServiceInterface
             ['complaint_id' => $complaint->id]
         );
 
-        // 🔥 إشعار للمديرين بقرار الرفض
-        $this->notifyAdmins('تم رفض الشكوى رقم ' . $complaint->id . ' بسبب عدم تقديم المشتكي وثائقه', $complaint->id);
+        // Notify admins about the rejection
+        $this->notifyAdmins('تم رفض الشكوى رقم '.$complaint->id.' بسبب عدم تقديم المشتكي وثائقه', $complaint->id);
 
         return [
             'success' => true,
             'message' => 'Complaint rejected',
-            'data' => $complaint
+            'data' => $complaint,
         ];
     }
 
@@ -343,13 +404,13 @@ class ComplaintService implements ComplaintServiceInterface
             $complaint->save();
         });
 
-        // 🔥 إشعار للمديرين أن الوثائق رفعت من الطرفين
-        $this->notifyAdmins('تم رفع الوثائق من الطرفين في الشكوى رقم ' . $complaint->id . '، جاهزة للمراجعة', $complaint->id);
+        // Notify admins that both parties uploaded documents
+        $this->notifyAdmins('تم رفع الوثائق من الطرفين في الشكوى رقم '.$complaint->id.'، جاهزة للمراجعة', $complaint->id);
 
         return [
             'success' => true,
             'message' => 'Both parties uploaded documents, moving to under review',
-            'data' => $complaint
+            'data' => $complaint,
         ];
     }
 
@@ -361,7 +422,7 @@ class ComplaintService implements ComplaintServiceInterface
             $this->notificationService->send(
                 $admin->id,
                 'documents_uploaded',
-                '📄 تحديث بخصوص الشكوى',
+                'تحديث بخصوص الشكوى',
                 $message,
                 ['complaint_id' => $complaintId]
             );
@@ -394,6 +455,7 @@ class ComplaintService implements ComplaintServiceInterface
     public function getComplaintsCountByStatus(string $status): array
     {
         $count = $this->complaintRepository->countByStatus($status);
+
         return ['success' => true, 'data' => ['count' => $count]];
     }
 

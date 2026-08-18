@@ -7,7 +7,6 @@ use App\Domain\Services\PenaltyServiceInterface;
 use App\Infrastructure\Models\ComplaintModel;
 use App\Presentation\Requests\StoreComplaintRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class UserComplaintController
 {
@@ -53,12 +52,12 @@ class UserComplaintController
     }
 
     /**
-     * رفع وثائق إضافية (للمشتكي أو المشتكى عليه)
+     * Upload additional documents (by the complainant or the accused)
      */
     public function uploadDocuments(Request $request, int $id)
     {
         $complaint = ComplaintModel::find($id);
-        if (!$complaint) {
+        if (! $complaint) {
             return response()->json(['success' => false, 'message' => 'Complaint not found'], 404);
         }
 
@@ -68,19 +67,19 @@ class UserComplaintController
         }
 
         // التحقق من الحالة
-        if (!$complaint->isAwaitingDocuments()) {
+        if (! $complaint->isAwaitingDocuments()) {
             return response()->json(['success' => false, 'message' => 'Complaint is not awaiting documents'], 422);
         }
 
         $request->validate([
-            'documents' => 'required|array',
-            'documents.*' => 'file|max:5120', // 5MB لكل ملف
+            'documents' => 'required|array|min:1',
+            'documents.*' => 'file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120', // 5MB per file
         ]);
 
         // حفظ الوثائق
         $paths = [];
         foreach ($request->file('documents') as $file) {
-            $path = $file->store('complaints/documents/' . $complaint->id, 'public');
+            $path = $file->store('complaints/documents/'.$complaint->id, 'public');
             $paths[] = $path;
         }
 
@@ -100,8 +99,8 @@ class UserComplaintController
             'message' => 'Documents uploaded successfully',
             'data' => [
                 'paths' => $paths,
-                'decision' => $result
-            ]
+                'decision' => $result,
+            ],
         ]);
     }
 

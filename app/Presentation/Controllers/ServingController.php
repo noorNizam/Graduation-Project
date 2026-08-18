@@ -2,11 +2,13 @@
 
 namespace App\Presentation\Controllers;
 
+use App\Domain\Enums\NotificationType;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\ServingProposalServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Domain\Services\TopPerformerServiceInterface;
 use App\Domain\Services\UserRatingServiceInterface;
-use App\Domain\Services\NotificationServiceInterface;
+use App\Infrastructure\Models\User;
 use App\Presentation\Requests\AddPaidServingRequest;
 use App\Presentation\Requests\CreateCommentRequest;
 use App\Presentation\Requests\GetProposedServingsRequest;
@@ -17,8 +19,6 @@ use App\Presentation\Requests\RateServingRequest;
 use App\Presentation\Requests\ReactCommentRequest;
 use App\Presentation\Requests\UpdateAvailabilitySlotsRequest;
 use App\Presentation\Requests\UpdatePaidServingRequest;
-use App\Infrastructure\Models\User;
-use App\Domain\Enums\NotificationType;
 
 class ServingController
 {
@@ -73,7 +73,7 @@ class ServingController
 
         $result = $this->servingService->createVoluntaryServing($data, $image);
 
-        // 🔥 إشعار للمديرين عند إنشاء خدمة تطوعية جديدة
+        // Notify admins when a new voluntary serving is created
         if ($result['success']) {
             $admins = User::where('role', 'admin')->get();
             foreach ($admins as $admin) {
