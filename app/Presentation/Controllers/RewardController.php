@@ -13,6 +13,7 @@ class RewardController
     public function myRewards()
     {
         $result = $this->rewardService->getUserRewards(auth()->id());
+
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 }

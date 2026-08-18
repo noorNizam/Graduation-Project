@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             // عدد الخدمات المطلوبة (عمر المستخدم)
             $table->integer('services_requested_count')->default(0)->after('is_active');
-            
+
             // العدادات الأسبوعية والشهرية
             $table->integer('weekly_service_count')->default(0)->after('services_requested_count');
             $table->timestamp('weekly_reset_at')->nullable()->after('weekly_service_count');
@@ -28,7 +28,7 @@ return new class extends Migration
                 'weekly_service_count',
                 'weekly_reset_at',
                 'monthly_service_count',
-                'monthly_reset_at'
+                'monthly_reset_at',
             ]);
         });
     }

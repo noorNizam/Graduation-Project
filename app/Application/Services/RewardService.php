@@ -3,14 +3,14 @@
 namespace App\Application\Services;
 
 use App\Domain\Services\RewardServiceInterface;
+use App\Infrastructure\Models\RewardModel;
 use App\Infrastructure\Models\User;
 use App\Infrastructure\Models\WalletModel;
-use App\Infrastructure\Models\RewardModel;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class RewardService implements RewardServiceInterface
 {
-
     private function getLifetimeLevels(): array
     {
         return [
@@ -26,72 +26,72 @@ class RewardService implements RewardServiceInterface
         return ['threshold' => 3, 'hours' => 1];
     }
 
-
     private function getMonthlyReward(): array
     {
         return ['threshold' => 10, 'hours' => 3];
     }
 
-    
     public function incrementServiceCount(int $userId): void
     {
-        $user = User::find($userId);
-        if (!$user) return;
+        DB::transaction(function () use ($userId) {
+            $user = User::whereKey($userId)->lockForUpdate()->first();
+            if (! $user) {
+                return;
+            }
 
+            $user->increment('services_requested_count');
 
-        $user->increment('services_requested_count');
+            if (! $user->weekly_reset_at || $user->weekly_reset_at->startOfWeek()->ne(Carbon::now()->startOfWeek())) {
+                $user->weekly_service_count = 1;
+                $user->weekly_reset_at = Carbon::now();
+            } else {
+                $user->increment('weekly_service_count');
+            }
 
+            if (! $user->monthly_reset_at || $user->monthly_reset_at->format('Y-m') != Carbon::now()->format('Y-m')) {
+                $user->monthly_service_count = 1;
+                $user->monthly_reset_at = Carbon::now();
+            } else {
+                $user->increment('monthly_service_count');
+            }
 
-        if (!$user->weekly_reset_at || $user->weekly_reset_at->startOfWeek()->ne(Carbon::now()->startOfWeek())) {
-            $user->weekly_service_count = 0;
-            $user->weekly_reset_at = Carbon::now();
-        }
-        $user->increment('weekly_service_count');
-
-
-        if (!$user->monthly_reset_at || $user->monthly_reset_at->month != Carbon::now()->month) {
-            $user->monthly_service_count = 0;
-            $user->monthly_reset_at = Carbon::now();
-        }
-        $user->increment('monthly_service_count');
-
-        $user->save();
+            $user->save();
+        });
     }
 
     public function checkAndApplyRewards(int $userId): array
     {
-        $user = User::find($userId);
-        if (!$user) {
-            return ['success' => false, 'message' => 'User not found'];
-        }
+        return DB::transaction(function () use ($userId) {
+            $user = User::whereKey($userId)->lockForUpdate()->first();
+            if (! $user) {
+                return ['success' => false, 'message' => 'User not found'];
+            }
 
-        $applied = [];
+            $applied = [];
 
+            $lifetimeRewards = $this->applyLifetimeRewards($user);
+            if ($lifetimeRewards) {
+                $applied = array_merge($applied, $lifetimeRewards);
+            }
 
-        $lifetimeRewards = $this->applyLifetimeRewards($user);
-        if ($lifetimeRewards) {
-            $applied = array_merge($applied, $lifetimeRewards);
-        }
+            $weekly = $this->applyWeeklyReward($user);
+            if ($weekly) {
+                $applied[] = $weekly;
+            }
 
+            $monthly = $this->applyMonthlyReward($user);
+            if ($monthly) {
+                $applied[] = $monthly;
+            }
 
-        $weekly = $this->applyWeeklyReward($user);
-        if ($weekly) {
-            $applied[] = $weekly;
-        }
-
-
-        $monthly = $this->applyMonthlyReward($user);
-        if ($monthly) {
-            $applied[] = $monthly;
-        }
-
-        return [
-            'success' => true,
-            'message' => count($applied) > 0 
-                ? "Reward has added " . implode(', ', $applied) 
-                : 'there is no new reward',
-            'data' => $applied
-        ];
+            return [
+                'success' => true,
+                'message' => count($applied) > 0
+                    ? 'Reward has been added '.implode(', ', $applied)
+                    : 'There is no new reward',
+                'data' => $applied,
+            ];
+        });
     }
 
     private function applyLifetimeRewards(User $user): array
@@ -106,7 +106,7 @@ class RewardService implements RewardServiceInterface
                     ->where('threshold', $threshold)
                     ->first();
 
-                if (!$existing) {
+                if (! $existing) {
                     $this->addReward($user->id, $hours, 'lifetime', $threshold);
                     $applied[] = "{$threshold} service (+{$hours} hour)";
                 }
@@ -126,9 +126,10 @@ class RewardService implements RewardServiceInterface
                 ->where('created_at', '>=', Carbon::now()->startOfWeek())
                 ->first();
 
-            if (!$existing) {
+            if (! $existing) {
                 $this->addReward($user->id, $reward['hours'], 'weekly', $reward['threshold']);
-                return "weakly (+{$reward['hours']} hour)";
+
+                return "weekly (+{$reward['hours']} hour)";
             }
         }
 
@@ -145,8 +146,9 @@ class RewardService implements RewardServiceInterface
                 ->where('created_at', '>=', Carbon::now()->startOfMonth())
                 ->first();
 
-            if (!$existing) {
+            if (! $existing) {
                 $this->addReward($user->id, $reward['hours'], 'monthly', $reward['threshold']);
+
                 return "monthly (+{$reward['hours']} hour)";
             }
         }
@@ -154,15 +156,15 @@ class RewardService implements RewardServiceInterface
         return null;
     }
 
- 
     private function addReward(int $userId, int $hours, string $type, int $threshold): void
     {
-
         $wallet = WalletModel::where('user_id', $userId)->first();
-        if ($wallet) {
-            $wallet->balance += $hours;
-            $wallet->save();
+        if (! $wallet) {
+            return;
         }
+
+        $wallet->balance += $hours;
+        $wallet->save();
 
         RewardModel::create([
             'user_id' => $userId,
@@ -175,15 +177,14 @@ class RewardService implements RewardServiceInterface
 
     private function getReason(string $type, int $threshold, int $hours): string
     {
-        return match($type) {
-            'lifetime' => "life time reward for {$threshold} service (+{$hours} hour)",
-            'weekly' => "Weakly reward for{$threshold}Service (+{$hours} hour)",
-            'monthly' => "Monthly reward for {$threshold} services at month (+{$hours} hour)",
+        return match ($type) {
+            'lifetime' => "Lifetime reward for {$threshold} services (+{$hours} hour)",
+            'weekly' => "Weekly reward for {$threshold} services (+{$hours} hour)",
+            'monthly' => "Monthly reward for {$threshold} services this month (+{$hours} hour)",
             default => "reward (+{$hours} hour)",
         };
     }
 
-   
     public function getUserRewards(int $userId): array
     {
         $rewards = RewardModel::where('user_id', $userId)

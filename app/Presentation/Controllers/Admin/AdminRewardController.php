@@ -4,6 +4,8 @@ namespace App\Presentation\Controllers\Admin;
 
 use App\Domain\Services\RewardServiceInterface;
 use App\Infrastructure\Models\RewardModel;
+use App\Infrastructure\Models\WalletModel;
+use Illuminate\Support\Facades\DB;
 
 class AdminRewardController
 {
@@ -11,7 +13,7 @@ class AdminRewardController
         private RewardServiceInterface $rewardService
     ) {}
 
-    // عرض كل المكافآت (مع فلترة)
+    // List all rewards (paginated)
     public function index()
     {
         $rewards = RewardModel::with('user')
@@ -26,18 +28,19 @@ class AdminRewardController
                 'per_page' => $rewards->perPage(),
                 'total' => $rewards->total(),
                 'last_page' => $rewards->lastPage(),
-            ]
+            ],
         ]);
     }
 
-    // عرض مكافآت مستخدم معين
+    // Show a specific user's rewards
     public function getUserRewards(int $userId)
     {
         $result = $this->rewardService->getUserRewards($userId);
+
         return response()->json($result, $result['success'] ? 200 : 404);
     }
 
-    // عرض إحصائيات المكافآت
+    // Reward statistics
     public function statistics()
     {
         $totalRewards = RewardModel::count();
@@ -62,26 +65,28 @@ class AdminRewardController
                 'total_hours_added' => $totalHoursAdded,
                 'top_users' => $topUsers,
                 'by_type' => $byType,
-            ]
+            ],
         ]);
     }
 
-    // إلغاء مكافأة (يدوياً)
+    // Delete a reward (manual removal)
     public function destroy(int $id)
     {
         $reward = RewardModel::find($id);
-        if (!$reward) {
+        if (! $reward) {
             return response()->json(['success' => false, 'message' => 'Reward not found'], 404);
         }
 
-        // ترجيع الساعات من المحفظة
-        $wallet = \App\Infrastructure\Models\WalletModel::where('user_id', $reward->user_id)->first();
-        if ($wallet && $reward->hours_added > 0) {
-            $wallet->balance -= $reward->hours_added;
-            $wallet->save();
-        }
+        // Refund the hours to the wallet
+        DB::transaction(function () use ($reward) {
+            $wallet = WalletModel::where('user_id', $reward->user_id)->first();
+            if ($wallet && $reward->hours_added > 0) {
+                $wallet->balance = max(0, $wallet->balance - $reward->hours_added);
+                $wallet->save();
+            }
 
-        $reward->delete();
+            $reward->delete();
+        });
 
         return response()->json(['success' => true, 'message' => 'Reward deleted successfully']);
     }
