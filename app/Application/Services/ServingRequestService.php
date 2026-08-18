@@ -7,9 +7,12 @@ use App\Domain\Repositories\ServingRequestRepositoryInterface;
 use App\Domain\Repositories\WalletRepositoryInterface;
 use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\NotificationServiceInterface;
+use App\Domain\Services\RewardServiceInterface;
 use App\Domain\Services\ServingRequestServiceInterface;
 use App\Infrastructure\Models\ServingRequest;
+use App\Infrastructure\Models\User;
 use App\Traits\HandlesDatabaseTransactions;
+use Illuminate\Support\Facades\Log;
 
 class ServingRequestService implements ServingRequestServiceInterface
 {
@@ -148,6 +151,19 @@ class ServingRequestService implements ServingRequestServiceInterface
 
         if (! $transactionResult['success']) {
             return $transactionResult;
+        }
+
+        try {
+            $user = User::find($servingRequest->requester_id);
+            if ($user) {
+                app(RewardServiceInterface::class)->incrementServiceCount($user->id);
+                app(RewardServiceInterface::class)->checkAndApplyRewards($user->id);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to apply rewards for user '.$servingRequest->requester_id, [
+                'request_id' => $servingRequest->id,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         $this->notificationService->send(

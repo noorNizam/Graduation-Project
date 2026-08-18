@@ -1776,6 +1776,28 @@
 			]
 		},
 		{
+			"name": "Rewards",
+			"item": [
+				{
+					"name": "Get My Rewards",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/my-rewards",
+							"host": ["{{base_url}}"],
+							"path": ["my-rewards"]
+						}
+					}
+				}
+			]
+		},
+		{
 			"name": "Identity Verification",
 			"item": [
 				{
@@ -2113,6 +2135,85 @@
 									"raw": "{{base_url}}/admin/servings/{{serving_id}}/reject",
 									"host": ["{{base_url}}"],
 									"path": ["admin", "servings", "{{serving_id}}", "reject"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Reward Management",
+					"item": [
+						{
+							"name": "List All Rewards",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/rewards",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "rewards"]
+								}
+							}
+						},
+						{
+							"name": "Get User Rewards",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/rewards/users/{{user_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "rewards", "users", "{{user_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Get Reward Statistics",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/rewards/statistics",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "rewards", "statistics"]
+								}
+							}
+						},
+						{
+							"name": "Delete Reward",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/rewards/:id",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "rewards", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1"
+										}
+									]
 								}
 							}
 						}

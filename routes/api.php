@@ -34,7 +34,7 @@ Route::get('/health', [HealthCheckController::class, 'health']);
 Route::get('/scheduler-logs', [SchedulerLogController::class, 'index']);
 
 // AuthController
-Route::prefix('auth')->group(function () {
+Route::middleware('throttle:auth')->prefix('auth')->group(function () {
     Route::post('/send-otp', [AuthController::class, 'sendVerificationOtp']);
     Route::post('/register-customer', [AuthController::class, 'registerCustomer']);
     Route::post('/login', [AuthController::class, 'login']);
@@ -149,6 +149,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-penalties', [UserComplaintController::class, 'myPenalties']);
     Route::post('/complaints/{id}/upload-documents', [UserComplaintController::class, 'uploadDocuments']);
 });
+// user rewards
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/my-rewards', [\App\Presentation\Controllers\RewardController::class, 'myRewards']);
+});
+// notifications
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-notifications', [UserNotificationController::class, 'index']);
     Route::put('/notifications/{id}/read', [UserNotificationController::class, 'markAsRead']);
@@ -182,6 +187,11 @@ Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(func
     Route::get('/servings/pending', [ServingController::class, 'getPendingServings']);
     Route::put('/servings/{id}/approve', [ServingController::class, 'approveServing']);
     Route::put('/servings/{id}/reject', [ServingController::class, 'rejectServing']);
+    // rewards for admin
+    Route::get('/rewards', [\App\Presentation\Controllers\Admin\AdminRewardController::class, 'index']);
+    Route::get('/rewards/users/{userId}', [\App\Presentation\Controllers\Admin\AdminRewardController::class, 'getUserRewards']);
+    Route::get('/rewards/statistics', [\App\Presentation\Controllers\Admin\AdminRewardController::class, 'statistics']);
+    Route::delete('/rewards/{id}', [\App\Presentation\Controllers\Admin\AdminRewardController::class, 'destroy']);
 });
 
 // WorkGalleryItemController

@@ -9,6 +9,7 @@ use App\Application\Services\IdentityVerificationService;
 use App\Application\Services\NotificationService;
 use App\Application\Services\PaymentUnitService;
 use App\Application\Services\PenaltyService;
+use App\Application\Services\RewardService;
 use App\Application\Services\SchedulerLogService;
 use App\Application\Services\ServingCategoryService;
 use App\Application\Services\ServingProposalService;
@@ -28,6 +29,7 @@ use App\Domain\Repositories\NotificationRepositoryInterface;
 use App\Domain\Repositories\PaymentUnitRepositoryInterface;
 use App\Domain\Repositories\PenaltyRepositoryInterface;
 use App\Domain\Repositories\QuerySynonymRepositoryInterface;
+use App\Domain\Repositories\RewardRepositoryInterface;
 use App\Domain\Repositories\SchedulerLogRepositoryInterface;
 use App\Domain\Repositories\ServingCategoryRepositoryInterface;
 use App\Domain\Repositories\ServingRepositoryInterface;
@@ -45,6 +47,7 @@ use App\Domain\Services\IdentityVerificationServiceInterface;
 use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\PaymentUnitServiceInterface;
 use App\Domain\Services\PenaltyServiceInterface;
+use App\Domain\Services\RewardServiceInterface;
 use App\Domain\Services\SchedulerLogServiceInterface;
 use App\Domain\Services\ServingCategoryServiceInterface;
 use App\Domain\Services\ServingProposalServiceInterface;
@@ -64,6 +67,7 @@ use App\Infrastructure\Repositories\NotificationRepository;
 use App\Infrastructure\Repositories\PaymentUnitRepository;
 use App\Infrastructure\Repositories\PenaltyRepository;
 use App\Infrastructure\Repositories\QuerySynonymRepository;
+use App\Infrastructure\Repositories\RewardRepository;
 use App\Infrastructure\Repositories\SchedulerLogRepository;
 use App\Infrastructure\Repositories\ServingCategoryRepository;
 use App\Infrastructure\Repositories\ServingRepository;
@@ -74,6 +78,8 @@ use App\Infrastructure\Repositories\UserSearchHistoryRepository;
 use App\Infrastructure\Repositories\WalletRepository;
 use App\Infrastructure\Repositories\WorkGalleryItemFileRepository;
 use App\Infrastructure\Repositories\WorkGalleryItemRepository;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -274,10 +280,27 @@ class AppServiceProvider extends ServiceProvider
             IdentityVerificationServiceInterface::class,
             IdentityVerificationService::class
         );
+        $this->app->bind(
+            RewardServiceInterface::class,
+            RewardService::class
+        );
+        $this->app->bind(
+            RewardRepositoryInterface::class,
+            RewardRepository::class
+        );
+
     }
 
     public function boot(): void
     {
-        //
+        RateLimiter::for('api', function ($request) {
+            $user = $request->user() ?? auth('sanctum')->user();
+
+            return $user
+                ? Limit::perMinute(120)->by($user->id)
+                : Limit::perMinute(30)->by($request->ip());
+        });
+
+        RateLimiter::for('auth', fn ($request) => Limit::perMinute(5)->by($request->ip()));
     }
 }

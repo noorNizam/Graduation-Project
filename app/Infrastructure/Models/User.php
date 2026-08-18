@@ -65,6 +65,11 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'is_identity_verified' => 'boolean',
         'identity_verified_at' => 'datetime',
+        'services_requested_count' => 'integer',
+        'weekly_service_count' => 'integer',
+        'weekly_reset_at' => 'datetime',
+        'monthly_service_count' => 'integer',
+        'monthly_reset_at' => 'datetime',
     ];
 
     /**
