@@ -34,7 +34,7 @@ Route::get('/health', [HealthCheckController::class, 'health']);
 Route::get('/scheduler-logs', [SchedulerLogController::class, 'index']);
 
 // AuthController
-Route::prefix('auth')->group(function () {
+Route::middleware('throttle:auth')->prefix('auth')->group(function () {
     Route::post('/send-otp', [AuthController::class, 'sendVerificationOtp']);
     Route::post('/register-customer', [AuthController::class, 'registerCustomer']);
     Route::post('/login', [AuthController::class, 'login']);
