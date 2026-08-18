@@ -1668,6 +1668,40 @@
 							"path": ["my-penalties"]
 						}
 					}
+				},
+				{
+					"name": "Upload Complaint Documents",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "documents[]",
+									"value": "",
+									"type": "file",
+									"description": "Upload documents (pdf/jpg/jpeg/png/doc/docx, max 5MB each)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/complaints/:id/upload-documents",
+							"host": ["{{base_url}}"],
+							"path": ["complaints", ":id", "upload-documents"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
 				}
 			]
 		},

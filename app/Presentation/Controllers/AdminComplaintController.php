@@ -39,7 +39,9 @@ class AdminComplaintController
         $result = $this->complaintService->updateComplaintStatus(
             $id,
             $validated['status'],
-            $validated['admin_note'] ?? null
+            $validated['admin_note'] ?? null,
+            $validated['documents_requested_from'] ?? null,
+            $validated['documents_due_at'] ?? null
         );
 
         if ($validated['status'] === 'resolved') {

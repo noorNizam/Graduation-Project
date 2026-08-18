@@ -4,6 +4,7 @@ namespace App\Infrastructure\Repositories;
 
 use App\Domain\Repositories\ComplaintRepositoryInterface;
 use App\Infrastructure\Models\ComplaintModel;
+use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ComplaintRepository implements ComplaintRepositoryInterface
@@ -57,16 +58,42 @@ class ComplaintRepository implements ComplaintRepositoryInterface
             ->paginate($perPage);
     }
 
-    public function updateStatus(int $id, string $status, ?string $adminNote = null): ComplaintModel
+    public function updateStatus(int $id, string $status, ?string $adminNote = null, ?string $documentsRequestedFrom = null, ?string $documentsDueAt = null): ComplaintModel
     {
         $complaint = ComplaintModel::findOrFail($id);
 
-        $complaint->update([
+        $data = [
             'status' => $status,
             'admin_note' => $adminNote,
-        ]);
+        ];
+
+        // Only touch the documents flow columns while requesting documents,
+        // and only when explicitly provided, so unrelated status updates
+        // cannot wipe an active deadline.
+        if ($status === 'awaiting_documents' && $documentsRequestedFrom !== null) {
+            $data['documents_requested_from'] = $documentsRequestedFrom;
+        }
+        if ($status === 'awaiting_documents' && $documentsDueAt !== null) {
+            $data['documents_due_at'] = $documentsDueAt;
+        }
+
+        $complaint->update($data);
 
         return $complaint->fresh();
+    }
+
+    public function findExpiredAwaitingDocuments(): array
+    {
+        return ComplaintModel::where('status', 'awaiting_documents')
+            ->whereNotNull('documents_due_at')
+            ->where('documents_due_at', '<=', Carbon::now())
+            ->where(function ($query) {
+                $query->where('complainant_documents_uploaded', true)
+                    ->orWhere('accused_documents_uploaded', true);
+            })
+            ->orderBy('updated_at', 'asc')
+            ->get()
+            ->all();
     }
 
     public function delete(int $id): bool

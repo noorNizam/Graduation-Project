@@ -147,6 +147,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/complaints/{id}', [UserComplaintController::class, 'show']);
     Route::get('/my-wallet', [UserComplaintController::class, 'getWalletBalance']);
     Route::get('/my-penalties', [UserComplaintController::class, 'myPenalties']);
+    Route::post('/complaints/{id}/upload-documents', [UserComplaintController::class, 'uploadDocuments']);
 });
 // user rewards
 Route::middleware('auth:sanctum')->group(function () {

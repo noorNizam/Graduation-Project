@@ -16,7 +16,7 @@ interface ComplaintServiceInterface
 
     public function getComplaintsAgainstUser(int $userId, int $perPage = 15): array;
 
-    public function updateComplaintStatus(int $id, string $status, ?string $adminNote = null): array;
+    public function updateComplaintStatus(int $id, string $status, ?string $adminNote = null, ?string $documentsRequestedFrom = null, ?string $documentsDueAt = null): array;
 
     public function deleteComplaint(int $id): array;
 
@@ -25,4 +25,12 @@ interface ComplaintServiceInterface
     public function getStatistics(): array;
 
     public function getComplaintModel(int $id): ?ComplaintModel;
+
+    /**
+     * Awaiting-documents complaints whose explicit deadline (documents_due_at)
+     * has passed and where at least one party has uploaded their documents.
+     *
+     * @return ComplaintModel[]
+     */
+    public function getExpiredAwaitingDocuments(): array;
 }

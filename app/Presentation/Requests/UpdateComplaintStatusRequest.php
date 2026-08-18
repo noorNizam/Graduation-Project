@@ -14,9 +14,11 @@ class UpdateComplaintStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|in:pending,under_review,resolved,rejected',
+            'status' => 'required|in:pending,awaiting_documents,under_review,resolved,rejected',
             'admin_note' => 'nullable|string|max:500',
             'escrow_action' => 'nullable|string|in:release_to_owner,refund_to_requester',
+            'documents_requested_from' => 'nullable|string|in:complainant,accused,both',
+            'documents_due_at' => 'nullable|date|after:today',
         ];
     }
 

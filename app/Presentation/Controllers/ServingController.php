@@ -2,10 +2,13 @@
 
 namespace App\Presentation\Controllers;
 
+use App\Domain\Enums\NotificationType;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\ServingProposalServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Domain\Services\TopPerformerServiceInterface;
 use App\Domain\Services\UserRatingServiceInterface;
+use App\Infrastructure\Models\User;
 use App\Presentation\Requests\AddPaidServingRequest;
 use App\Presentation\Requests\CreateCommentRequest;
 use App\Presentation\Requests\GetProposedServingsRequest;
@@ -23,7 +26,8 @@ class ServingController
         private ServingServiceInterface $servingService,
         private UserRatingServiceInterface $userRatingService,
         private TopPerformerServiceInterface $topPerformerService,
-        private ServingProposalServiceInterface $servingProposalService
+        private ServingProposalServiceInterface $servingProposalService,
+        private NotificationServiceInterface $notificationService
     ) {}
 
     public function addPaidServing(AddPaidServingRequest $request)
@@ -63,12 +67,25 @@ class ServingController
     public function addVoluntaryServing(AddPaidServingRequest $request)
     {
         $data = $request->validated();
-
         $data['user_id'] = auth()->id();
 
         $image = $request->file('image');
 
         $result = $this->servingService->createVoluntaryServing($data, $image);
+
+        // Notify admins when a new voluntary serving is created
+        if ($result['success']) {
+            $admins = User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                $this->notificationService->send(
+                    $admin->id,
+                    NotificationType::NEW_VOLUNTARY_SERVING,
+                    'خدمة تطوعية جديدة بحاجة موافقة',
+                    "خدمة تطوعية جديدة: {$result['data']->title}",
+                    ['serving_id' => $result['data']->id]
+                );
+            }
+        }
 
         return response()->json($result, $result['success'] ? 201 : 500);
     }
