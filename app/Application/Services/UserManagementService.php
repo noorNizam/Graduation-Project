@@ -222,7 +222,7 @@ class UserManagementService implements UserManagementServiceInterface
             'profile_picture' => $user->profile_picture ? asset($user->profile_picture) : null,
             'role' => $user->role,
             'is_active' => $user->is_active,
-            'is_identity_verified' => $user->is_identity_verified, 
+            'is_identity_verified' => $user->is_identity_verified,
             'identity_verified_at' => $user->identity_verified_at,
             'created_at' => $user->created_at,
             'updated_at' => $user->updated_at,

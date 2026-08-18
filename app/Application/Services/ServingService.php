@@ -9,6 +9,7 @@ use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\ServingServiceInterface;
 use App\Infrastructure\Models\ServingRequest;
 use App\Jobs\DeleteServingImageJob;
+use App\Jobs\LogSearchHistoryJob;
 use App\Traits\HandlesDatabaseTransactions;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -238,7 +239,7 @@ class ServingService implements ServingServiceInterface
                 'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
             ];
         });
 
@@ -435,7 +436,7 @@ class ServingService implements ServingServiceInterface
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
                 'user_id' => $serving->user_id,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
                 'requested' => $requested,
                 'isOwner' => $userId !== null && $serving->user_id === $userId,
                 'canBeRated' => $canBeRated,
@@ -499,7 +500,7 @@ class ServingService implements ServingServiceInterface
                 'user_email' => $serving->user->email ?? null,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
                 'requested' => in_array($serving->id, $requestedServingIds),
                 'isOwner' => $serving->user_id === $userId,
             ];
@@ -537,6 +538,15 @@ class ServingService implements ServingServiceInterface
 
         if ($name !== null) {
             $query->where('title', 'LIKE', "%{$name}%");
+        }
+
+        if ($excludeUserId !== null && $name !== null) {
+            try {
+                LogSearchHistoryJob::dispatch($excludeUserId, $name);
+            } catch (\Throwable $e) {
+                // Log and continue; do not fail the search request because of logging problems
+                \Illuminate\Support\Facades\Log::error('Failed to dispatch LogSearchHistoryJob job: '.$e->getMessage());
+            }
         }
 
         // Apply pagination
@@ -581,7 +591,7 @@ class ServingService implements ServingServiceInterface
                 'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
                 'requested' => in_array($serving->id, $requestedServingIds),
                 'isOwner' => $serving->user_id === $excludeUserId,
             ];
@@ -629,7 +639,7 @@ class ServingService implements ServingServiceInterface
                 'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
                 'requested' => false,
                 'isOwner' => true,
             ];
@@ -785,6 +795,46 @@ class ServingService implements ServingServiceInterface
         ];
     }
 
+    public function activateServing(int $servingId, int $userId): array
+    {
+        $serving = $this->repository->findById($servingId);
+
+        if (! $serving) {
+            return [
+                'success' => false,
+                'message' => 'Serving not found',
+            ];
+        }
+
+        if ($serving->user_id !== $userId) {
+            return [
+                'success' => false,
+                'message' => 'Forbidden',
+            ];
+        }
+
+        if ($serving->status !== \App\Infrastructure\Models\Serving::STATUS_INACTIVE) {
+            return [
+                'success' => false,
+                'message' => 'Only inactive servings can be activated',
+            ];
+        }
+
+        $transactionResult = $this->executeWithTransaction(function () use ($servingId) {
+            return $this->repository->updateStatus($servingId, \App\Infrastructure\Models\Serving::STATUS_ACTIVE);
+        });
+
+        if (! $transactionResult['success']) {
+            return $transactionResult;
+        }
+
+        return [
+            'success' => true,
+            'data' => $transactionResult['data'],
+            'message' => 'Serving activated',
+        ];
+    }
+
     private function rejectPendingRequestsForServing(int $servingId): void
     {
         $pending = $this->requestRepository->findByServingId($servingId, ServingRequest::STATUS_PENDING);
@@ -822,7 +872,7 @@ class ServingService implements ServingServiceInterface
                 'user_id' => $serving->user_id,
                 'category_name' => $serving->category->name ?? null,
                 'unit_name' => $serving->unit->name ?? null,
-                'serving_type_name' => $serving->servingType->name ?? null,
+                'serving_type_name' => $serving->displayType(),
             ];
         });
 

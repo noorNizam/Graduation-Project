@@ -43,5 +43,7 @@ interface ServingServiceInterface
 
     public function deactivateServing(int $servingId, int $userId): array;
 
+    public function activateServing(int $servingId, int $userId): array;
+
     public function getDeactivatedServings(int $userId): array;
 }

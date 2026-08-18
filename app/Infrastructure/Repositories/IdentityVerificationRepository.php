@@ -26,29 +26,35 @@ class IdentityVerificationRepository implements IdentityVerificationRepositoryIn
             ->first();
     }
 
+    public function findByVendorToken(string $vendorToken): ?IdentityVerificationModel
+    {
+        return IdentityVerificationModel::where('vendor_token', $vendorToken)
+            ->latest('id')
+            ->first();
+    }
+
     public function updateStatus(int $userId, string $status, ?array $data = null): bool
     {
-        // 1. البحث أولاً باستخدام session_id إن توفرت في البيانات
         $sessionId = $data['session_id'] ?? $data['id'] ?? null;
+        $vendorToken = $data['vendor_data'] ?? null;
         $record = null;
 
         if ($sessionId) {
             $record = $this->findBySessionId($sessionId);
         }
 
-        // 2. إذا لم يجد بالسشن، يبحث عن أحدث جلسة للمستخدم
-        if (!$record) {
+        if (! $record && $vendorToken) {
+            $record = $this->findByVendorToken((string) $vendorToken);
+        }
+
+        if (! $record) {
             $record = $this->findByUserId($userId);
         }
 
-        // 3. إذا لم يجد سطلاً سابقاً إطلاقاً، ينشئ سجلاً جديداً فوراً
-        if (!$record) {
-            $record = new IdentityVerificationModel();
-            $record->user_id = $userId;
-            $record->session_id = $sessionId ?? ('manual_' . uniqid());
+        if (! $record) {
+            return false;
         }
 
-        // 4. تعيين البيانات الجديدة والحفظ
         $record->status = $status;
         if ($data) {
             $record->verification_data = $data;

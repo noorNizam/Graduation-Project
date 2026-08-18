@@ -5,6 +5,7 @@ services:
       context: .
     volumes:
       - storage_data:/var/www/html/storage/app/public
+      - index_data:/var/www/html/storage/app/tntsearch
     environment:
       APP_NAME: "${APP_NAME:-In Time}"
       APP_ENV: "${APP_ENV:-production}"
@@ -27,7 +28,7 @@ services:
       MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"
       MAIL_PORT: "${MAIL_PORT:-587}"
       MAIL_USERNAME: "${MAIL_USERNAME:-leenocx@gmail.com}"
-      MAIL_PASSWORD: "${MAIL_PASSWORD:-fbfrasrnkclnmubp}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-your-gmail-app-password}"
       MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
       MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:-leenocx@gmail.com}"
       MAIL_FROM_NAME: "${MAIL_FROM_NAME:-In Time}"
@@ -74,7 +75,7 @@ services:
       MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"
       MAIL_PORT: "${MAIL_PORT:-587}"
       MAIL_USERNAME: "${MAIL_USERNAME:-leenocx@gmail.com}"
-      MAIL_PASSWORD: "${MAIL_PASSWORD:-fbfrasrnkclnmubp}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-your-gmail-app-password}"
       MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
       MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:-leenocx@gmail.com}"
       MAIL_FROM_NAME: "${MAIL_FROM_NAME:-In Time}"
@@ -93,6 +94,7 @@ services:
       context: .
     volumes:
       - storage_data:/var/www/html/storage/app/public
+      - index_data:/var/www/html/storage/app/tntsearch
     environment:
       APP_NAME: "${APP_NAME:-In Time}"
       APP_ENV: "${APP_ENV:-production}"
@@ -204,6 +206,7 @@ services:
 
 volumes:
   storage_data:
+  index_data:
   dbdata:
 
 networks:

@@ -12,6 +12,8 @@ class IdentityVerificationModel extends Model
     protected $fillable = [
         'user_id',
         'session_id',
+        'vendor_token',
+        'verification_url',
         'status',
         'verification_data',
         'verified_at',

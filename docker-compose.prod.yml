@@ -4,6 +4,7 @@ services:
     image: ghcr.io/noornizam/in-time-app:latest
     volumes:
       - storage_data:/var/www/html/storage/app/public
+      - index_data:/var/www/html/storage/app/tntsearch
     environment:
       APP_NAME: "${APP_NAME:-In Time}"
       APP_ENV: production
@@ -26,7 +27,7 @@ services:
       MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"
       MAIL_PORT: "${MAIL_PORT:-587}"
       MAIL_USERNAME: "${MAIL_USERNAME:-leenocx@gmail.com}"
-      MAIL_PASSWORD: "${MAIL_PASSWORD:-fbfrasrnkclnmubp}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD}"
       MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
       MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:-leenocx@gmail.com}"
       MAIL_FROM_NAME: "${MAIL_FROM_NAME:-In Time}"
@@ -40,6 +41,7 @@ services:
       REVERB_HOST: "${REVERB_HOST:-localhost}"
       REVERB_PORT: "${REVERB_PORT:-8080}"
       REVERB_SCHEME: "${REVERB_SCHEME:-http}"
+      CHAT_ENCRYPTION_KEY: "${CHAT_ENCRYPTION_KEY}"
     depends_on:
       db:
         condition: service_healthy
@@ -71,7 +73,7 @@ services:
       MAIL_HOST: "${MAIL_HOST:-smtp.gmail.com}"
       MAIL_PORT: "${MAIL_PORT:-587}"
       MAIL_USERNAME: "${MAIL_USERNAME:-leenocx@gmail.com}"
-      MAIL_PASSWORD: "${MAIL_PASSWORD:-fbfrasrnkclnmubp}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD}"
       MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
       MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:-leenocx@gmail.com}"
       MAIL_FROM_NAME: "${MAIL_FROM_NAME:-In Time}"
@@ -85,6 +87,7 @@ services:
       REVERB_HOST: "${REVERB_HOST:-localhost}"
       REVERB_PORT: "${REVERB_PORT:-8080}"
       REVERB_SCHEME: "${REVERB_SCHEME:-http}"
+      CHAT_ENCRYPTION_KEY: "${CHAT_ENCRYPTION_KEY}"
     command: php artisan queue:listen --tries=3 --timeout=90
     depends_on:
       db:
@@ -95,6 +98,7 @@ services:
     image: ghcr.io/noornizam/in-time-app:latest
     volumes:
       - storage_data:/var/www/html/storage/app/public
+      - index_data:/var/www/html/storage/app/tntsearch
     environment:
       APP_NAME: "${APP_NAME:-In Time}"
       APP_ENV: production
@@ -121,6 +125,7 @@ services:
       REVERB_HOST: "${REVERB_HOST:-localhost}"
       REVERB_PORT: "${REVERB_PORT:-8080}"
       REVERB_SCHEME: "${REVERB_SCHEME:-http}"
+      CHAT_ENCRYPTION_KEY: "${CHAT_ENCRYPTION_KEY}"
     command: php artisan schedule:work
     depends_on:
       db:
@@ -152,6 +157,7 @@ services:
       REVERB_HOST: "${REVERB_HOST:-0.0.0.0}"
       REVERB_PORT: "${REVERB_PORT:-8080}"
       REVERB_SCHEME: "${REVERB_SCHEME:-http}"
+      CHAT_ENCRYPTION_KEY: "${CHAT_ENCRYPTION_KEY}"
     command: php artisan reverb:start --port=8080 --host=0.0.0.0
     depends_on:
       db:
@@ -187,4 +193,5 @@ services:
 
 volumes:
   storage_data:
+  index_data:
   dbdata:

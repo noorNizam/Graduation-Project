@@ -237,7 +237,7 @@ class ServingRequestService implements ServingRequestServiceInterface
 
         $requests = $this->requestRepository->findByServingId($servingId, $status);
 
-        $requests->load(['serving', 'requester']);
+        $requests->load(['serving.unit', 'serving.servingType', 'requester']);
 
         $data = $requests->map(function ($r) use ($userId) {
             $flags = ServingRequest::computeActionFlags($r, $userId);
@@ -255,7 +255,7 @@ class ServingRequestService implements ServingRequestServiceInterface
     {
         $requests = $this->requestRepository->findByRequesterId($requesterId, $status);
 
-        $requests->load(['serving' => fn ($q) => $q->select(['id', 'title', 'user_id'])]);
+        $requests->load(['serving' => fn ($q) => $q->select(['id', 'title', 'user_id', 'serving_type_id', 'unit_id'])->with(['unit', 'servingType'])]);
 
         $data = $requests->map(function ($r) use ($requesterId) {
             $r->removable = $r->isPending();
@@ -487,7 +487,7 @@ class ServingRequestService implements ServingRequestServiceInterface
     {
         $requests = $this->requestRepository->findByRequesterId($userId, ServingRequest::STATUS_COMPLETION_REQUESTED);
 
-        $requests->load(['serving' => fn ($q) => $q->select(['id', 'title', 'user_id'])]);
+        $requests->load(['serving' => fn ($q) => $q->select(['id', 'title', 'user_id', 'serving_type_id', 'unit_id'])->with(['unit', 'servingType'])]);
 
         $data = $requests->map(function ($r) use ($userId) {
             $flags = ServingRequest::computeActionFlags($r, $userId);

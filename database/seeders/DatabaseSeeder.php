@@ -37,23 +37,28 @@ class DatabaseSeeder extends Seeder
             ServingCategory::firstOrCreate(['name' => $category['name']], $category);
         }
 
-        // 4. Create Admin User (skip if email exists)
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@system.com'],
-            [
-                'full_name' => 'Admin',
+        // 4. Create Admin Users (skip if email exists)
+        for ($i = 1; $i <= 3; $i++) {
+            $suffix = $i === 1 ? '' : $i;
+            $adminData = [
+                'full_name' => "systemAdmin{$suffix}",
+                'email' => "admin{$suffix}@system.com",
                 'role' => 'admin',
                 'is_active' => true,
                 'phone_number' => null,
                 'password' => bcrypt('P@ssw0rd'),
-            ]
-        );
+            ];
 
-        // Create or retrieve Wallet for Admin
-        WalletModel::firstOrCreate(
-            ['user_id' => $admin->id],
-            ['title' => 'Admin Wallet', 'balance' => 0.00, 'unit_id' => $hourUnit->id]
-        );
+            $admin = User::firstOrCreate(
+                ['email' => $adminData['email']],
+                $adminData
+            );
+
+            WalletModel::firstOrCreate(
+                ['user_id' => $admin->id],
+                ['title' => $adminData['full_name']."'s Wallet", 'balance' => 0.00, 'unit_id' => $hourUnit->id]
+            );
+        }
 
         // 5. Create Regular Users (skip if email exists)
         for ($i = 1; $i <= 30; $i++) {

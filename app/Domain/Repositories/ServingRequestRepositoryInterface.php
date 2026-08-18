@@ -28,4 +28,9 @@ interface ServingRequestRepositoryInterface
     public function findExpiredRevisionRequests(): Collection;
 
     public function delete(int $id): bool;
+
+    /**
+     * @param  array<int, int>  $servingIds
+     */
+    public function findCompletedByServingIds(array $servingIds, string $from, string $to): Collection;
 }

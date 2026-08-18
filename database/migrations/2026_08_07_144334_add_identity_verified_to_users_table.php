@@ -17,7 +17,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['``````````is_identity_verified``````````', 'identity_verified_at']);
+            $table->dropColumn(['is_identity_verified', 'identity_verified_at']);
         });
     }
 };

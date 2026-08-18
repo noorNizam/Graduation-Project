@@ -80,6 +80,68 @@
 							"path": ["test-error"]
 						}
 					}
+				},
+				{
+					"name": "Test Index",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-index",
+							"host": ["{{base_url}}"],
+							"path": ["test-index"]
+						}
+					}
+				},
+				{
+					"name": "Test Didit",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/test-didit",
+							"host": ["{{base_url}}"],
+							"path": ["test-didit"]
+						}
+					}
+				},
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					}
+				},
+				{
+					"name": "Scheduler Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/scheduler-logs?skip=0&take=20",
+							"host": ["{{base_url}}"],
+							"path": ["scheduler-logs"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "take",
+									"value": "20"
+								},
+								{
+									"key": "job_name",
+									"value": ""
+								}
+							]
+						}
+					}
 				}
 			]
 		},
@@ -245,6 +307,27 @@
 							"path": ["auth", "refresh"]
 						}
 					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout"]
+						}
+					}
 				}
 			]
 		},
@@ -265,6 +348,33 @@
 							"raw": "{{base_url}}/servings/{{serving_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["servings", "{{serving_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Proposed Servings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/proposed?skip=0&take=10",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "proposed"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "take",
+									"value": "10"
+								}
+							]
 						}
 					}
 				},
@@ -615,6 +725,27 @@
 					}
 				},
 				{
+					"name": "Activate Serving",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/servings/{{serving_id}}/activate",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "{{serving_id}}", "activate"]
+						}
+					}
+				},
+				{
 					"name": "My Deactivated Servings",
 					"request": {
 						"method": "GET",
@@ -630,6 +761,63 @@
 							"path": ["servings", "my-deactivated"]
 						}
 					}
+				}
+			]
+		},
+		{
+			"name": "Honor Board",
+			"item": [
+				{
+					"name": "Top Performers",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"serving_type_id\": 1,\n    \"month\": \"2026-07\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/servings/top-performers",
+							"host": ["{{base_url}}"],
+							"path": ["servings", "top-performers"]
+						}
+					},
+					"response": [
+						{
+							"name": "Success - Returns top performers for the month",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"serving_type_id\": 1,\n    \"month\": \"2026-07\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/servings/top-performers",
+									"host": ["{{base_url}}"],
+									"path": ["servings", "top-performers"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"rank\": 1,\n            \"user_id\": 2,\n            \"full_name\": \"user@system.com\",\n            \"profile_picture\": null,\n            \"serving_type_id\": 1,\n            \"date\": \"2026-07-31T23:00:00.000000Z\"\n        }\n    ]\n}"
+						}
+					]
 				}
 			]
 		},
@@ -1582,6 +1770,82 @@
 							"raw": "{{base_url}}/update-fcm-token",
 							"host": ["{{base_url}}"],
 							"path": ["update-fcm-token"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Identity Verification",
+			"item": [
+				{
+					"name": "Start Identity Verification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/identity/verify",
+							"host": ["{{base_url}}"],
+							"path": ["identity", "verify"]
+						}
+					}
+				},
+				{
+					"name": "Get Identity Verification Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/identity/status",
+							"host": ["{{base_url}}"],
+							"path": ["identity", "status"]
+						}
+					}
+				},
+				{
+					"name": "Identity Verification Callback",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/identity/callback",
+							"host": ["{{base_url}}"],
+							"path": ["identity", "callback"]
+						}
+					}
+				},
+				{
+					"name": "Identity Verification Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"didit\": \"webhook_payload\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/identity/webhook",
+							"host": ["{{base_url}}"],
+							"path": ["identity", "webhook"]
 						}
 					}
 				}

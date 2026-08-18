@@ -16,11 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ['middleware' => ['api', 'auth:sanctum'], 'prefix' => 'api'],
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // استثناء مسار الـ Webhook من حماية CSRF لكي يستطيع سيرفر Didit إرسال البيانات
-        $middleware->validateCsrfTokens(except: [
-            'api/identity/webhook',
-        ]);
-
         // as AOP implementation we register the request monitoring middleware
         // for all incoming requests
         $middleware->web(append: [
@@ -29,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->api(append: [
             \App\Presentation\Middleware\RequestMonitor::class,
+            'throttle:api',
         ]);
 
         $middleware->alias([
@@ -61,6 +57,14 @@ return Application::configure(basePath: dirname(__DIR__))
                         'success' => false,
                         'message' => 'Unauthenticated',
                     ], 401);
+                }
+
+                // Handle throttled requests with the standard envelope
+                if ($e instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Too many attempts. Please try again later.',
+                    ], 429);
                 }
             }
         });
