@@ -2252,6 +2252,130 @@
 							}
 						}
 					]
+				},
+				{
+					"name": "Reports",
+					"item": [
+						{
+							"name": "User Statistics",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/reports/users",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "reports", "users"]
+								}
+							}
+						},
+						{
+							"name": "Serving Statistics",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/reports/servings",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "reports", "servings"]
+								}
+							}
+						},
+						{
+							"name": "Complaint Statistics",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/reports/complaints",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "reports", "complaints"]
+								}
+							}
+						},
+						{
+							"name": "Weekly Complaints",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/reports/complaints/weekly",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "reports", "complaints", "weekly"]
+								}
+							}
+						},
+						{
+							"name": "Monthly Complaints",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/reports/complaints/monthly",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "reports", "complaints", "monthly"]
+								}
+							}
+						},
+						{
+							"name": "Dashboard Statistics",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/reports/dashboard",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "reports", "dashboard"]
+								}
+							}
+						},
+						{
+							"name": "Export Excel Report",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/admin/reports/export-excel",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "reports", "export-excel"]
+								}
+							}
+						}
+					]
 				}
 			]
 		},
