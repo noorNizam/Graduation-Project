@@ -1,5 +1,6 @@
 <?php
 
+use App\Presentation\Controllers\Admin\ReportController;
 use App\Presentation\Controllers\AdminComplaintController;
 use App\Presentation\Controllers\AuthController;
 use App\Presentation\Controllers\ChatController;
@@ -192,6 +193,15 @@ Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(func
     Route::get('/rewards/users/{userId}', [\App\Presentation\Controllers\Admin\AdminRewardController::class, 'getUserRewards']);
     Route::get('/rewards/statistics', [\App\Presentation\Controllers\Admin\AdminRewardController::class, 'statistics']);
     Route::delete('/rewards/{id}', [\App\Presentation\Controllers\Admin\AdminRewardController::class, 'destroy']);
+
+    // ===================== Reports =====================
+    Route::get('/reports/users', [ReportController::class, 'userStatistics']);
+    Route::get('/reports/servings', [ReportController::class, 'servingStatistics']);
+    Route::get('/reports/complaints', [ReportController::class, 'complaintStatistics']);
+    Route::get('/reports/complaints/weekly', [ReportController::class, 'weeklyComplaints']);
+    Route::get('/reports/complaints/monthly', [ReportController::class, 'monthlyComplaints']);
+    Route::get('/reports/dashboard', [ReportController::class, 'dashboard']);
+    Route::get('/reports/export-excel', [ReportController::class, 'exportExcel']);
 });
 
 // WorkGalleryItemController
