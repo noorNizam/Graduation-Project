@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Infrastructure\Models\Chat;
+use App\Infrastructure\Models\ComplaintDocument;
 use App\Infrastructure\Models\ComplaintModel;
 use App\Infrastructure\Models\IdentityVerificationModel;
 use App\Infrastructure\Models\Message;
@@ -157,6 +158,20 @@ class DemoDataSeederTest extends TestCase
         $this->assertSame(2, ComplaintModel::where('accused_user_id', $accused)->where('status', 'resolved')->count());
         $this->assertSame(2, PenaltyModel::where('user_id', $accused)->where('type', 'deduct_hours')->count());
         $this->assertSame(1, PenaltyModel::where('user_id', $accused)->where('type', 'warning')->count());
+
+        $this->assertSame(5, ComplaintDocument::count());
+
+        $damageComplaint = ComplaintModel::where('complainant_id', $this->cast['user10@system.com'])
+            ->where('status', 'awaiting_documents')
+            ->where('documents_due_at', '<', Carbon::now())
+            ->first();
+        $this->assertNotNull($damageComplaint);
+        $this->assertSame(2, ComplaintDocument::where('complaint_id', $damageComplaint->id)->where('uploader_role', 'complainant')->count());
+        $this->assertTrue(Storage::disk('public')->exists($damageComplaint->documents()->first()->stored_path));
+
+        $underReview = ComplaintModel::where('status', 'under_review')->first();
+        $this->assertSame(1, ComplaintDocument::where('complaint_id', $underReview->id)->where('uploader_role', 'complainant')->count());
+        $this->assertSame(1, ComplaintDocument::where('complaint_id', $underReview->id)->where('uploader_role', 'accused')->count());
     }
 
     public function test_seeder_covers_reward_thresholds_and_counters(): void
@@ -229,12 +244,16 @@ class DemoDataSeederTest extends TestCase
 
     public function test_cleanup_command_removes_all_demo_data(): void
     {
+        $documentPath = ComplaintDocument::first()->stored_path;
+        $documentComplaintId = ComplaintDocument::first()->complaint_id;
+
         $this->artisan('demo:cleanup')->assertSuccessful();
 
         $this->assertDatabaseMissing('users', ['email' => 'demo.cast@system.com']);
         $this->assertSame(0, Serving::count());
         $this->assertSame(0, ServingRequest::count());
         $this->assertSame(0, ComplaintModel::count());
+        $this->assertSame(0, ComplaintDocument::count());
         $this->assertSame(0, PenaltyModel::count());
         $this->assertSame(0, RewardModel::count());
         $this->assertSame(0, UserSearchHistory::count());
@@ -253,6 +272,8 @@ class DemoDataSeederTest extends TestCase
         $this->assertFalse(Storage::disk('local')->exists('demo-seed-manifest.json'));
         $this->assertFalse(Storage::disk('public')->exists('servings/demo'));
         $this->assertFalse(Storage::disk('public')->exists('work_gallery/demo'));
+        $this->assertFalse(Storage::disk('public')->exists($documentPath));
+        $this->assertFalse(Storage::disk('public')->exists('complaints/documents/'.$documentComplaintId));
     }
 
     public function test_cleanup_command_fails_without_manifest_to_protect_real_data(): void

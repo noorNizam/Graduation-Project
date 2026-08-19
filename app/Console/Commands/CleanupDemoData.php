@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Infrastructure\Models\Chat;
+use App\Infrastructure\Models\ComplaintDocument;
 use App\Infrastructure\Models\ComplaintModel;
 use App\Infrastructure\Models\IdentityVerificationModel;
 use App\Infrastructure\Models\Message;
@@ -58,8 +59,13 @@ class CleanupDemoData extends Command
         IdentityVerificationModel::whereIn('id', $manifest['identity_verifications'] ?? [])->delete();
 
         $complaintIds = $manifest['complaints'] ?? [];
+        ComplaintDocument::whereIn('id', $manifest['complaint_documents'] ?? [])->delete();
         PenaltyModel::whereIn('complaint_id', $complaintIds)->delete();
         ComplaintModel::whereIn('id', $complaintIds)->delete();
+
+        foreach ($complaintIds as $complaintId) {
+            Storage::disk('public')->deleteDirectory('complaints/documents/'.$complaintId);
+        }
 
         ServingRequest::whereIn('id', $manifest['serving_requests'] ?? [])->delete();
         Serving::whereIn('id', $manifest['servings'] ?? [])->delete();

@@ -16,12 +16,12 @@ class ComplaintRepository implements ComplaintRepositoryInterface
 
     public function findById(int $id): ?ComplaintModel
     {
-        return ComplaintModel::with(['complainant', 'accusedUser'])->find($id);
+        return ComplaintModel::with(['complainant', 'accusedUser', 'documents'])->find($id);
     }
 
     public function findAll(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = ComplaintModel::with(['complainant', 'accusedUser']);
+        $query = ComplaintModel::with(['complainant', 'accusedUser', 'documents']);
 
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -44,7 +44,7 @@ class ComplaintRepository implements ComplaintRepositoryInterface
 
     public function findByComplainant(int $complainantId, int $perPage = 15): LengthAwarePaginator
     {
-        return ComplaintModel::with(['complainant', 'accusedUser'])
+        return ComplaintModel::with(['complainant', 'accusedUser', 'documents'])
             ->where('complainant_id', $complainantId)
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
@@ -52,7 +52,7 @@ class ComplaintRepository implements ComplaintRepositoryInterface
 
     public function findByAccusedUser(int $accusedUserId, int $perPage = 15): LengthAwarePaginator
     {
-        return ComplaintModel::with(['complainant', 'accusedUser'])
+        return ComplaintModel::with(['complainant', 'accusedUser', 'documents'])
             ->where('accused_user_id', $accusedUserId)
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
