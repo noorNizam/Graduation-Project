@@ -3,14 +3,14 @@
 namespace App\Infrastructure\Repositories;
 
 use App\Domain\Repositories\ReportRepositoryInterface;
-use App\Infrastructure\Models\User;
-use App\Infrastructure\Models\Serving;
 use App\Infrastructure\Models\ComplaintModel;
-use Carbon\Carbon;
+use App\Infrastructure\Models\Serving;
+use App\Infrastructure\Models\User;
+use Carbon\CarbonInterface;
 
 class ReportRepository implements ReportRepositoryInterface
 {
-    // ===================== المستخدمين =====================
+    // ===================== Users =====================
     public function countAllUsers(): int
     {
         return User::count();
@@ -26,7 +26,7 @@ class ReportRepository implements ReportRepositoryInterface
         return User::where('is_active', false)->count();
     }
 
-    // ===================== الخدمات =====================
+    // ===================== Servings =====================
     public function countAllServings(): int
     {
         return Serving::count();
@@ -34,12 +34,16 @@ class ReportRepository implements ReportRepositoryInterface
 
     public function countVoluntaryServings(): int
     {
-        return Serving::where('type', 'voluntary')->count();
+        return Serving::whereHas('servingType', function ($q) {
+            $q->where('name', 'voluntary');
+        })->count();
     }
 
     public function countPaidServings(): int
     {
-        return Serving::where('type', 'paid')->count();
+        return Serving::whereHas('servingType', function ($q) {
+            $q->where('name', 'paid');
+        })->count();
     }
 
     public function countExchangeServings(): int
@@ -51,7 +55,7 @@ class ReportRepository implements ReportRepositoryInterface
         })->count();
     }
 
-    // ===================== الشكاوي =====================
+    // ===================== Complaints =====================
     public function countAllComplaints(): int
     {
         return ComplaintModel::count();
@@ -62,7 +66,7 @@ class ReportRepository implements ReportRepositoryInterface
         return ComplaintModel::where('status', $status)->count();
     }
 
-    public function getComplaintsByDateRange(string $startDate, string $endDate): array
+    public function getComplaintsByDateRange(CarbonInterface $startDate, CarbonInterface $endDate): array
     {
         return ComplaintModel::whereBetween('created_at', [$startDate, $endDate])
             ->get()

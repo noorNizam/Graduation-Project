@@ -4,10 +4,9 @@ namespace App\Application\Services;
 
 use App\Domain\Repositories\ReportRepositoryInterface;
 use App\Domain\Services\ReportServiceInterface;
+use App\Exports\ReportExport;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\ReportExport;
-use Illuminate\Support\Facades\Storage;
 
 class ReportService implements ReportServiceInterface
 {
@@ -15,7 +14,7 @@ class ReportService implements ReportServiceInterface
         private ReportRepositoryInterface $reportRepository
     ) {}
 
-    // ===================== المستخدمين =====================
+    // ===================== Users =====================
     public function getUserStatistics(): array
     {
         $total = $this->reportRepository->countAllUsers();
@@ -29,11 +28,11 @@ class ReportService implements ReportServiceInterface
                 'active_users' => $active,
                 'blocked_users' => $blocked,
                 'active_percentage' => $total > 0 ? round(($active / $total) * 100, 2) : 0,
-            ]
+            ],
         ];
     }
 
-    // ===================== الخدمات =====================
+    // ===================== Servings =====================
     public function getServingStatistics(): array
     {
         return [
@@ -43,11 +42,11 @@ class ReportService implements ReportServiceInterface
                 'voluntary_servings' => $this->reportRepository->countVoluntaryServings(),
                 'paid_servings' => $this->reportRepository->countPaidServings(),
                 'exchange_servings' => $this->reportRepository->countExchangeServings(),
-            ]
+            ],
         ];
     }
 
-    // ===================== الشكاوي =====================
+    // ===================== Complaints =====================
     public function getComplaintStatistics(): array
     {
         $statuses = ['pending', 'awaiting_documents', 'under_review', 'resolved', 'rejected'];
@@ -62,11 +61,11 @@ class ReportService implements ReportServiceInterface
             'data' => [
                 'total_complaints' => $this->reportRepository->countAllComplaints(),
                 ...$data,
-            ]
+            ],
         ];
     }
 
-    // ===================== الشكاوي الأسبوعية =====================
+    // ===================== Weekly complaints =====================
     public function getWeeklyComplaints(): array
     {
         $start = Carbon::now()->startOfWeek();
@@ -77,14 +76,14 @@ class ReportService implements ReportServiceInterface
         return [
             'success' => true,
             'data' => [
-                'period' => $start->format('Y-m-d') . ' to ' . $end->format('Y-m-d'),
+                'period' => $start->format('Y-m-d').' to '.$end->format('Y-m-d'),
                 'total' => count($complaints),
                 'complaints' => $complaints,
-            ]
+            ],
         ];
     }
 
-    // ===================== الشكاوي الشهرية =====================
+    // ===================== Monthly complaints =====================
     public function getMonthlyComplaints(): array
     {
         $start = Carbon::now()->startOfMonth();
@@ -95,14 +94,14 @@ class ReportService implements ReportServiceInterface
         return [
             'success' => true,
             'data' => [
-                'period' => $start->format('Y-m-d') . ' إلى ' . $end->format('Y-m-d'),
+                'period' => $start->format('Y-m-d').' to '.$end->format('Y-m-d'),
                 'total' => count($complaints),
                 'complaints' => $complaints,
-            ]
+            ],
         ];
     }
 
-    // ===================== لوحة تحكم شاملة =====================
+    // ===================== Full dashboard =====================
     public function getDashboardStatistics(): array
     {
         return [
@@ -114,18 +113,22 @@ class ReportService implements ReportServiceInterface
                 'weekly_complaints' => $this->getWeeklyComplaints()['data'],
                 'monthly_complaints' => $this->getMonthlyComplaints()['data'],
                 'generated_at' => Carbon::now()->toISOString(),
-            ]
+            ],
         ];
     }
 
-    // ===================== تصدير Excel =====================
+    // ===================== Excel export =====================
     public function exportExcelReport(): string
-{
-    $data = $this->getDashboardStatistics()['data'];
-    $fileName = 'report_' . Carbon::now()->format('Y-m-d_H-i-s') . '.xlsx';
+    {
+        $data = $this->getDashboardStatistics()['data'];
+        $fileName = 'report_'.Carbon::now()->format('Y-m-d_H-i-s').'.xlsx';
 
-    Excel::store(new ReportExport($data), $fileName, 'public');
+        $stored = Excel::store(new ReportExport($data), $fileName, 'public');
 
-    return $fileName;
-}
+        if (! $stored) {
+            throw new \RuntimeException('Failed to store the report export');
+        }
+
+        return $fileName;
+    }
 }
