@@ -81,6 +81,10 @@ use App\Infrastructure\Repositories\WorkGalleryItemRepository;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use App\Domain\Repositories\ReportRepositoryInterface;
+use App\Infrastructure\Repositories\ReportRepository;
+use App\Domain\Services\ReportServiceInterface;
+use App\Application\Services\ReportService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -287,6 +291,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             RewardRepositoryInterface::class,
             RewardRepository::class
+        );
+        $this->app->bind(
+            ReportRepositoryInterface::class,
+            ReportRepository::class
+        );
+        $this->app->bind(
+            ReportServiceInterface::class,
+            ReportService::class
         );
 
     }
