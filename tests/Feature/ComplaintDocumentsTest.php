@@ -11,6 +11,7 @@ use App\Infrastructure\Models\WalletModel;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -251,5 +252,121 @@ class ComplaintDocumentsTest extends TestCase
         $this->assertSame('awaiting_documents', $notExpired->fresh()->status);
         $this->assertSame('awaiting_documents', $noUploads->fresh()->status);
         $this->assertSame('awaiting_documents', $noDeadline->fresh()->status);
+    }
+
+    public function test_upload_persists_document_rows_with_metadata()
+    {
+        $complaint = $this->makeComplaint('awaiting_documents');
+        $complaint->documents_due_at = Carbon::now()->addDays(3);
+        $complaint->save();
+
+        $this->uploadAs($this->complainant, $complaint->id)->assertOk();
+
+        $this->assertDatabaseHas('complaint_documents', [
+            'complaint_id' => $complaint->id,
+            'uploader_id' => $this->complainant->id,
+            'uploader_role' => 'complainant',
+            'original_name' => 'doc.pdf',
+            'mime_type' => 'application/pdf',
+            'size' => 10240,
+        ]);
+
+        $storedPath = DB::table('complaint_documents')->where('complaint_id', $complaint->id)->value('stored_path');
+        $this->assertStringStartsWith('complaints/documents/'.$complaint->id.'/', $storedPath);
+    }
+
+    public function test_accused_upload_records_accused_role()
+    {
+        $complaint = $this->makeComplaint('awaiting_documents');
+        $complaint->documents_due_at = Carbon::now()->addDays(3);
+        $complaint->save();
+
+        $this->uploadAs($this->accused, $complaint->id)->assertOk();
+
+        $this->assertDatabaseHas('complaint_documents', [
+            'complaint_id' => $complaint->id,
+            'uploader_id' => $this->accused->id,
+            'uploader_role' => 'accused',
+            'original_name' => 'doc.pdf',
+        ]);
+    }
+
+    public function test_multiple_files_create_one_row_per_file()
+    {
+        $complaint = $this->makeComplaint('awaiting_documents');
+        $complaint->documents_due_at = Carbon::now()->addDays(3);
+        $complaint->save();
+
+        $this->actingAs($this->complainant, 'sanctum')->postJson("/api/complaints/{$complaint->id}/upload-documents", [
+            'documents' => [
+                UploadedFile::fake()->create('first.pdf', 10, 'application/pdf'),
+                UploadedFile::fake()->create('second.png', 20, 'image/png'),
+            ],
+        ])->assertOk();
+
+        $this->assertDatabaseCount('complaint_documents', 2);
+        $this->assertDatabaseHas('complaint_documents', ['complaint_id' => $complaint->id, 'original_name' => 'first.pdf']);
+        $this->assertDatabaseHas('complaint_documents', ['complaint_id' => $complaint->id, 'original_name' => 'second.png']);
+    }
+
+    public function test_admin_show_returns_uploaded_documents()
+    {
+        $complaint = $this->makeComplaint('awaiting_documents');
+        $complaint->documents_due_at = Carbon::now()->addDays(3);
+        $complaint->save();
+
+        $this->uploadAs($this->complainant, $complaint->id)->assertOk();
+
+        $this->actingAs($this->admin, 'sanctum')->getJson("/api/admin/complaints/{$complaint->id}")
+            ->assertOk()
+            ->assertJsonPath('data.documents.0.original_name', 'doc.pdf')
+            ->assertJsonPath('data.documents.0.uploader_role', 'complainant')
+            ->assertJsonPath('data.documents.0.uploader_id', $this->complainant->id)
+            ->assertJsonPath('data.documents.0.mime_type', 'application/pdf')
+            ->assertJsonPath('data.documents.0.url', fn ($url) => str_contains($url, '/storage/complaints/documents/'.$complaint->id.'/'));
+    }
+
+    public function test_admin_index_includes_documents_per_complaint()
+    {
+        $withDocs = $this->makeComplaint('awaiting_documents');
+        $withDocs->documents_due_at = Carbon::now()->addDays(3);
+        $withDocs->save();
+        $this->uploadAs($this->complainant, $withDocs->id)->assertOk();
+
+        $withoutDocs = $this->makeComplaint('awaiting_documents');
+        $withoutDocs->documents_due_at = Carbon::now()->addDays(3);
+        $withoutDocs->save();
+
+        DB::enableQueryLog();
+
+        $response = $this->actingAs($this->admin, 'sanctum')->getJson('/api/admin/complaints')
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
+
+        $documentQueries = collect(DB::getQueryLog())
+            ->filter(fn ($log) => str_contains($log['query'], 'complaint_documents'))
+            ->count();
+        $this->assertSame(1, $documentQueries, 'documents must be eager-loaded in a single query');
+
+        $withoutDocsItem = collect($response->json('data'))->firstWhere('id', $withoutDocs->id);
+        $this->assertSame([], $withoutDocsItem['documents']);
+
+        $withDocsItem = collect($response->json('data'))->firstWhere('id', $withDocs->id);
+        $this->assertCount(1, $withDocsItem['documents']);
+        $this->assertSame('doc.pdf', $withDocsItem['documents'][0]['original_name']);
+    }
+
+    public function test_user_show_includes_uploaded_documents()
+    {
+        $complaint = $this->makeComplaint('awaiting_documents');
+        $complaint->documents_due_at = Carbon::now()->addDays(3);
+        $complaint->save();
+
+        $this->uploadAs($this->complainant, $complaint->id)->assertOk();
+
+        $this->actingAs($this->complainant, 'sanctum')->getJson("/api/complaints/{$complaint->id}")
+            ->assertOk()
+            ->assertJsonPath('data.documents.0.original_name', 'doc.pdf')
+            ->assertJsonPath('data.documents.0.uploader_role', 'complainant');
     }
 }

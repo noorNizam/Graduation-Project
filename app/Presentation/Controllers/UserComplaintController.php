@@ -4,9 +4,12 @@ namespace App\Presentation\Controllers;
 
 use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\PenaltyServiceInterface;
+use App\Infrastructure\Models\ComplaintDocument;
 use App\Infrastructure\Models\ComplaintModel;
 use App\Presentation\Requests\StoreComplaintRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class UserComplaintController
 {
@@ -78,28 +81,50 @@ class UserComplaintController
 
         // حفظ الوثائق
         $paths = [];
-        foreach ($request->file('documents') as $file) {
-            $path = $file->store('complaints/documents/'.$complaint->id, 'public');
-            $paths[] = $path;
-        }
+        $decision = [];
+        $uploaderRole = auth()->id() === $complaint->complainant_id ? 'complainant' : 'accused';
+        try {
+            DB::transaction(function () use ($request, $complaint, $uploaderRole, &$paths, &$decision) {
+                foreach ($request->file('documents') as $file) {
+                    $path = $file->store('complaints/documents/'.$complaint->id, 'public');
+                    $paths[] = $path;
 
-        // تحديث حالة رفع الوثائق حسب المستخدم
-        if (auth()->id() === $complaint->complainant_id) {
-            $complaint->complainant_documents_uploaded = true;
-        } elseif (auth()->id() === $complaint->accused_user_id) {
-            $complaint->accused_documents_uploaded = true;
-        }
-        $complaint->save();
+                    ComplaintDocument::create([
+                        'complaint_id' => $complaint->id,
+                        'uploader_id' => auth()->id(),
+                        'uploader_role' => $uploaderRole,
+                        'original_name' => $file->getClientOriginalName(),
+                        'stored_path' => $path,
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                    ]);
+                }
 
-        // التحقق من الوضع بعد رفع الوثائق
-        $result = $this->complaintService->checkDocumentStatusAndApplyDecision($complaint);
+                // تحديث حالة رفع الوثائق حسب المستخدم
+                if (auth()->id() === $complaint->complainant_id) {
+                    $complaint->complainant_documents_uploaded = true;
+                } elseif (auth()->id() === $complaint->accused_user_id) {
+                    $complaint->accused_documents_uploaded = true;
+                }
+                $complaint->save();
+
+                // التحقق من الوضع بعد رفع الوثائق
+                $decision = $this->complaintService->checkDocumentStatusAndApplyDecision($complaint);
+            });
+        } catch (\Throwable $e) {
+            foreach ($paths as $path) {
+                Storage::disk('public')->delete($path);
+            }
+
+            throw $e;
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Documents uploaded successfully',
             'data' => [
                 'paths' => $paths,
-                'decision' => $result,
+                'decision' => $decision,
             ],
         ]);
     }

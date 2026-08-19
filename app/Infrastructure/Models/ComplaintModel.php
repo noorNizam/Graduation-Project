@@ -4,6 +4,7 @@ namespace App\Infrastructure\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ComplaintModel extends Model
 {
@@ -46,7 +47,7 @@ class ComplaintModel extends Model
         'accused_documents_uploaded' => 'boolean',
     ];
 
-    protected $appends = ['attachment_url'];
+    protected $appends = ['attachment_url', 'documents'];
 
     public function complainant(): BelongsTo
     {
@@ -56,6 +57,11 @@ class ComplaintModel extends Model
     public function accusedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'accused_user_id');
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ComplaintDocument::class, 'complaint_id');
     }
 
     // Status helpers
@@ -118,5 +124,10 @@ class ComplaintModel extends Model
         }
 
         return null;
+    }
+
+    public function getDocumentsAttribute()
+    {
+        return $this->getRelationValue('documents');
     }
 }
