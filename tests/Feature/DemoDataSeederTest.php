@@ -269,7 +269,7 @@ class DemoDataSeederTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'user2@system.com', 'full_name' => 'systemUser2']);
 
         $this->assertSame(0.0, (float) WalletModel::where('user_id', $this->cast['user10@system.com'])->value('balance'));
-        $this->assertFalse(Storage::disk('local')->exists('demo-seed-manifest.json'));
+        $this->assertFalse(Storage::disk('local')->exists('manifests/demo-seed-manifest.json'));
         $this->assertFalse(Storage::disk('public')->exists('servings/demo'));
         $this->assertFalse(Storage::disk('public')->exists('work_gallery/demo'));
         $this->assertFalse(Storage::disk('public')->exists($documentPath));
@@ -278,11 +278,37 @@ class DemoDataSeederTest extends TestCase
 
     public function test_cleanup_command_fails_without_manifest_to_protect_real_data(): void
     {
-        Storage::disk('local')->delete('demo-seed-manifest.json');
+        Storage::disk('local')->delete('manifests/demo-seed-manifest.json');
 
         $this->artisan('demo:cleanup')->assertExitCode(1);
 
         $this->assertDatabaseHas('users', ['email' => 'demo.cast@system.com']);
         $this->assertSame(15, Serving::count());
+    }
+
+    public function test_cleanup_force_recovers_scope_without_manifest(): void
+    {
+        Storage::disk('local')->delete('manifests/demo-seed-manifest.json');
+
+        $this->artisan('demo:cleanup --force')->assertSuccessful();
+
+        $this->assertDatabaseMissing('users', ['email' => 'demo.cast@system.com']);
+        $this->assertSame(0, Serving::count());
+        $this->assertSame(0, ServingRequest::count());
+        $this->assertSame(0, ComplaintModel::count());
+        $this->assertSame(0, ComplaintDocument::count());
+        $this->assertSame(0, PenaltyModel::count());
+        $this->assertSame(0, RewardModel::count());
+        $this->assertSame(0, UserSearchHistory::count());
+        $this->assertSame(0, WorkGalleryItem::count());
+        $this->assertSame(0, WorkGalleryItemFile::count());
+        $this->assertSame(0, Chat::count());
+        $this->assertSame(0, Message::count());
+        $this->assertSame(0, MessageRecipient::count());
+        $this->assertSame(0, IdentityVerificationModel::count());
+        $this->assertSame(0, TopPerformer::count());
+
+        $this->assertDatabaseHas('users', ['email' => 'user2@system.com', 'full_name' => 'systemUser2']);
+        $this->assertSame(0.0, (float) WalletModel::where('user_id', $this->cast['user10@system.com'])->value('balance'));
     }
 }

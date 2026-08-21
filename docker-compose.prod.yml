@@ -5,6 +5,7 @@ services:
     volumes:
       - storage_data:/var/www/html/storage/app/public
       - index_data:/var/www/html/storage/app/tntsearch
+      - manifest_data:/var/www/html/storage/app/manifests
     environment:
       APP_NAME: "${APP_NAME:-In Time}"
       APP_ENV: production
@@ -51,6 +52,7 @@ services:
     image: ghcr.io/noornizam/in-time-app:latest
     volumes:
       - storage_data:/var/www/html/storage/app/public
+      - manifest_data:/var/www/html/storage/app/manifests
     environment:
       APP_NAME: "${APP_NAME:-In Time}"
       APP_ENV: production
@@ -99,6 +101,7 @@ services:
     volumes:
       - storage_data:/var/www/html/storage/app/public
       - index_data:/var/www/html/storage/app/tntsearch
+      - manifest_data:/var/www/html/storage/app/manifests
     environment:
       APP_NAME: "${APP_NAME:-In Time}"
       APP_ENV: production
@@ -193,5 +196,6 @@ services:
 
 volumes:
   storage_data:
+  manifest_data:
   index_data:
   dbdata:
