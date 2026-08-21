@@ -34,7 +34,7 @@ class DemoDataSeeder extends Seeder
 
     private const DEMO_PASSWORD = 'P@ssw0rd';
 
-    private const MANIFEST_PATH = 'demo-seed-manifest.json';
+    private const MANIFEST_PATH = 'manifests/demo-seed-manifest.json';
 
     private User $marker;
 
@@ -80,7 +80,7 @@ class DemoDataSeeder extends Seeder
 
         Storage::disk('local')->put(self::MANIFEST_PATH, json_encode($this->manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
-        $this->command?->info('Demo data seeded successfully. Manifest written to storage/app/demo-seed-manifest.json');
+        $this->command?->info('Demo data seeded successfully. Manifest written to storage/app/manifests/demo-seed-manifest.json');
     }
 
     private function setupReferenceData(): void
