@@ -41,6 +41,10 @@ class NotificationType
     public const DOCUMENTS_REQUESTED = 'documents_requested';
 
     public const DOCUMENTS_UPLOADED = 'documents_uploaded';
+    public const REWARD_EARNED = 'reward_earned';
+  // ===================== Comments =====================
+  public const NEW_COMMENT = 'new_comment';        // 
+  public const COMMENT_REPLY = 'comment_reply';    // 
 
     // ===================== General =====================
     public const GENERAL = 'general';
