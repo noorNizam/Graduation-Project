@@ -3,14 +3,20 @@
 namespace App\Application\Services;
 
 use App\Domain\Services\RewardServiceInterface;
+use App\Domain\Services\NotificationServiceInterface;
 use App\Infrastructure\Models\RewardModel;
 use App\Infrastructure\Models\User;
 use App\Infrastructure\Models\WalletModel;
+use App\Domain\Enums\NotificationType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class RewardService implements RewardServiceInterface
 {
+    public function __construct(
+        private NotificationServiceInterface $notificationService  // 🔥 أضيفي
+    ) {}
+
     private function getLifetimeLevels(): array
     {
         return [
@@ -166,13 +172,27 @@ class RewardService implements RewardServiceInterface
         $wallet->balance += $hours;
         $wallet->save();
 
-        RewardModel::create([
+        $reward = RewardModel::create([
             'user_id' => $userId,
             'hours_added' => $hours,
             'type' => $type,
             'threshold' => $threshold,
             'reason' => $this->getReason($type, $threshold, $hours),
         ]);
+
+        // 🔥 إشعار المكافأة
+        $this->notificationService->send(
+            $userId,
+            NotificationType::REWARD_EARNED,
+            '🎁 مكافأة جديدة!',
+            "حصلت على {$hours} ساعة إضافية" . ($type !== 'lifetime' ? " ({$type})" : ""),
+            [
+                'reward_id' => $reward->id,
+                'hours_added' => $hours,
+                'type' => $type,
+                'threshold' => $threshold,
+            ]
+        );
     }
 
     private function getReason(string $type, int $threshold, int $hours): string

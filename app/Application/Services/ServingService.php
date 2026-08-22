@@ -306,6 +306,38 @@ class ServingService implements ServingServiceInterface
 
         $comment = $transactionResult['data']->load('user');
 
+        // 🔥 إشعار لمقدم الخدمة (إذا التعليق مو منو)
+        if ($serving->user_id !== $userId) {
+            $this->notificationService->send(
+                $serving->user_id,
+                'new_comment',
+                '💬 تعليق جديد على خدمتك',
+                "قام المستخدم {$comment->user->full_name} بالتعليق على خدمتك: {$serving->title}",
+                [
+                    'serving_id' => $servingId,
+                    'comment_id' => $comment->id,
+                ]
+            );
+        }
+
+        // 🔥 إشعار رد على تعليق (إذا في parent_id)
+        if ($parentId !== null) {
+            $parentComment = \App\Infrastructure\Models\Comment::find($parentId);
+            if ($parentComment && $parentComment->user_id !== $userId) {
+                $this->notificationService->send(
+                    $parentComment->user_id,
+                    'comment_reply',
+                    '💬 رد على تعليقك',
+                    "قام المستخدم {$comment->user->full_name} بالرد على تعليقك",
+                    [
+                        'serving_id' => $servingId,
+                        'comment_id' => $comment->id,
+                        'parent_id' => $parentId,
+                    ]
+                );
+            }
+        }
+
         return [
             'success' => true,
             'data' => $this->formatComment($comment),
