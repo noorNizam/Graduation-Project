@@ -142,7 +142,10 @@ class UserManagementService implements UserManagementServiceInterface
         }
 
         $transactionResult = $this->executeWithTransaction(function () use ($user) {
-            $user->update(['is_active' => false]);
+            $user->update([
+                'is_active' => false,
+                'block_source' => User::BLOCK_SOURCE_ADMIN,
+            ]);
 
             return $user->fresh();
         });
@@ -184,7 +187,10 @@ class UserManagementService implements UserManagementServiceInterface
         }
 
         $transactionResult = $this->executeWithTransaction(function () use ($user) {
-            $user->update(['is_active' => true]);
+            $user->update([
+                'is_active' => true,
+                'block_source' => null,
+            ]);
 
             return $user->fresh();
         });

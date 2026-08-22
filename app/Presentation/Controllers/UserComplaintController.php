@@ -35,6 +35,13 @@ class UserComplaintController
         return response()->json($result, $result['success'] ? 200 : 500);
     }
 
+    public function againstMe()
+    {
+        $result = $this->complaintService->getComplaintsAgainstUser(auth()->id(), 15);
+
+        return response()->json($result, $result['success'] ? 200 : 500);
+    }
+
     public function show(int $id)
     {
         $result = $this->complaintService->getComplaint($id);
@@ -108,8 +115,9 @@ class UserComplaintController
                 }
                 $complaint->save();
 
-                // التحقق من الوضع بعد رفع الوثائق
-                $decision = $this->complaintService->checkDocumentStatusAndApplyDecision($complaint);
+                // Progress the complaint after the upload (under review when
+                // both parties have responded; never auto-resolves).
+                $decision = $this->complaintService->progressAfterDocumentUpload($complaint);
             });
         } catch (\Throwable $e) {
             foreach ($paths as $path) {

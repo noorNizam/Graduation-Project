@@ -122,7 +122,7 @@ class ComplaintDocumentsTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.decision.message', 'Waiting for the other party to upload documents before the deadline');
+            ->assertJsonPath('data.decision.message', 'Waiting for the other party to upload documents');
 
         $complaint->refresh();
         $this->assertSame('awaiting_documents', $complaint->status);
@@ -130,63 +130,59 @@ class ComplaintDocumentsTest extends TestCase
         $this->assertFalse((bool) $complaint->accused_documents_uploaded);
     }
 
-    public function test_both_uploads_before_deadline_moves_to_under_review()
+    public function test_both_uploads_move_to_under_review_regardless_of_deadline()
     {
+        // Even with the deadline long past, uploads are pure bookkeeping:
+        // both parties responding moves the case to review, nothing more.
         $complaint = $this->makeComplaint('awaiting_documents');
-        $complaint->documents_due_at = Carbon::now()->addDays(3);
+        $complaint->documents_due_at = Carbon::now()->subDay();
         $complaint->save();
 
-        $this->uploadAs($this->complainant, $complaint->id)->assertOk();
-        $this->uploadAs($this->accused, $complaint->id)->assertOk();
+        $this->uploadAs($this->complainant, $complaint->id)
+            ->assertOk()
+            ->assertJsonPath('data.decision.message', 'Waiting for the other party to upload documents');
+
+        $this->uploadAs($this->accused, $complaint->id)
+            ->assertOk()
+            ->assertJsonPath('data.decision.message', 'Both parties uploaded documents, moving to under review');
 
         $complaint->refresh();
         $this->assertSame('under_review', $complaint->status);
+        $this->assertNull($complaint->outcome);
     }
 
-    public function test_complainant_only_upload_after_deadline_applies_penalty_and_resolves()
+    public function test_late_single_upload_never_penalizes_or_closes_the_complaint()
     {
-        $complaint = $this->makeComplaint('awaiting_documents');
-        $complaint->documents_due_at = Carbon::now()->subDay();
-        $complaint->save();
+        // Deadlines are advisory: a party responding after it lapses just
+        // records their documents. Resolution stays an admin decision.
+        $complainantLate = $this->makeComplaint('awaiting_documents');
+        $complainantLate->documents_due_at = Carbon::now()->subDay();
+        $complainantLate->save();
 
-        $response = $this->uploadAs($this->complainant, $complaint->id);
+        $this->uploadAs($this->complainant, $complainantLate->id)->assertOk();
 
-        $response->assertOk()->assertJsonPath('data.decision.message', 'Penalty applied and complaint resolved');
+        $complainantLate->refresh();
+        $this->assertSame('awaiting_documents', $complainantLate->status);
+        $this->assertNull($complainantLate->outcome);
+        $this->assertNull($complainantLate->resolved_at);
 
-        $complaint->refresh();
-        $this->assertSame('resolved', $complaint->status);
+        $accusedLate = $this->makeComplaint('awaiting_documents');
+        $accusedLate->documents_due_at = Carbon::now()->subDay();
+        $accusedLate->save();
 
-        $this->assertDatabaseHas('penalties', [
-            'user_id' => $this->accused->id,
-            'complaint_id' => $complaint->id,
-            'type' => 'deduct_hours',
-            'hours_deducted' => 1,
-        ]);
-        $this->assertSame(4.0, (float) $this->accused->wallets()->first()->refresh()->balance);
+        $this->uploadAs($this->accused, $accusedLate->id)->assertOk();
+
+        $accusedLate->refresh();
+        $this->assertSame('awaiting_documents', $accusedLate->status);
+        $this->assertNull($accusedLate->outcome);
+        $this->assertSame(0, \App\Infrastructure\Models\PenaltyModel::count());
     }
 
-    public function test_accused_only_upload_after_deadline_rejects_complaint()
-    {
-        $complaint = $this->makeComplaint('awaiting_documents');
-        $complaint->documents_due_at = Carbon::now()->subDay();
-        $complaint->save();
-
-        $response = $this->uploadAs($this->accused, $complaint->id);
-
-        $response->assertOk()->assertJsonPath('data.decision.message', 'Complaint rejected');
-
-        $complaint->refresh();
-        $this->assertSame('rejected', $complaint->status);
-    }
-
-    public function test_upload_without_deadline_never_auto_decides()
+    public function test_upload_without_deadline_still_records_documents()
     {
         $complaint = $this->makeComplaint('awaiting_documents');
         $complaint->documents_due_at = null;
         $complaint->save();
-
-        // Updated 30 days ago, but no deadline was set -> stays open
-        ComplaintModel::whereKey($complaint->id)->update(['updated_at' => Carbon::now()->subDays(30)]);
 
         $this->uploadAs($this->complainant, $complaint->id)
             ->assertOk()
@@ -194,6 +190,7 @@ class ComplaintDocumentsTest extends TestCase
 
         $complaint->refresh();
         $this->assertSame('awaiting_documents', $complaint->status);
+        $this->assertTrue((bool) $complaint->complainant_documents_uploaded);
     }
 
     public function test_document_request_without_due_date_keeps_deadline_null()
@@ -224,34 +221,11 @@ class ComplaintDocumentsTest extends TestCase
         $this->assertNotNull($complaint->documents_due_at);
     }
 
-    public function test_expired_complaint_sweep_command_resolves_and_skips_unexpired()
+    public function test_expired_complaint_sweep_command_no_longer_exists()
     {
-        $expired = $this->makeComplaint('awaiting_documents');
-        $expired->documents_due_at = Carbon::now()->subDay()->toDateString();
-        $expired->complainant_documents_uploaded = true;
-        $expired->save();
-
-        $notExpired = $this->makeComplaint('awaiting_documents');
-        $notExpired->documents_due_at = Carbon::now()->addDays(3)->toDateString();
-        $notExpired->complainant_documents_uploaded = true;
-        $notExpired->save();
-
-        $noUploads = $this->makeComplaint('awaiting_documents');
-        $noUploads->documents_due_at = Carbon::now()->subDay()->toDateString();
-        $noUploads->save();
-
-        $noDeadline = $this->makeComplaint('awaiting_documents');
-        $noDeadline->documents_due_at = null;
-        $noDeadline->complainant_documents_uploaded = true;
-        ComplaintModel::whereKey($noDeadline->id)->update(['updated_at' => Carbon::now()->subDays(30)]);
-        $noDeadline->refresh();
-
-        $this->artisan('complaints:resolve-expired')->assertSuccessful();
-
-        $this->assertSame('resolved', $expired->fresh()->status);
-        $this->assertSame('awaiting_documents', $notExpired->fresh()->status);
-        $this->assertSame('awaiting_documents', $noUploads->fresh()->status);
-        $this->assertSame('awaiting_documents', $noDeadline->fresh()->status);
+        // Complaint resolution is manual-only: the scheduled sweep that used
+        // to auto-decide expired-deadline complaints was removed entirely.
+        $this->assertArrayNotHasKey('complaints:resolve-expired', \Illuminate\Support\Facades\Artisan::all());
     }
 
     public function test_upload_persists_document_rows_with_metadata()
@@ -368,5 +342,66 @@ class ComplaintDocumentsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.documents.0.original_name', 'doc.pdf')
             ->assertJsonPath('data.documents.0.uploader_role', 'complainant');
+    }
+
+    public function test_against_me_lists_only_complaints_where_user_is_accused()
+    {
+        $complaintAgainstAccused = $this->makeComplaint();
+        ComplaintModel::create([
+            'serving_id' => $this->servingId,
+            'complainant_id' => $this->accused->id,
+            'accused_user_id' => $this->complainant->id,
+            'reason' => 'Reverse complaint',
+            'description' => 'Filed by the accused user',
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($this->accused, 'sanctum')->getJson('/api/complaints/against-me');
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $complaintAgainstAccused->id)
+            ->assertJsonPath('meta.total', 1);
+
+        $complainantView = $this->actingAs($this->complainant, 'sanctum')->getJson('/api/complaints/against-me');
+
+        $complainantView->assertOk()->assertJsonCount(1, 'data');
+    }
+
+    public function test_admin_complaints_statistics_endpoint_is_not_shadowed_by_id_route()
+    {
+        $this->makeComplaint();
+
+        $response = $this->actingAs($this->admin, 'sanctum')->getJson('/api/admin/complaints/statistics');
+
+        $response->assertOk()->assertJsonPath('success', true);
+    }
+
+    public function test_admin_filter_accepts_awaiting_documents_status()
+    {
+        $this->makeComplaint('awaiting_documents');
+        $this->makeComplaint('pending');
+
+        $this->actingAs($this->admin, 'sanctum')->getJson('/api/admin/complaints?status=awaiting_documents')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_admin_cannot_set_rejected_or_expired_statuses()
+    {
+        // Rejected is gone from the vocabulary and expired is system-assigned
+        // only — neither may be chosen manually.
+        $complaint = $this->makeComplaint();
+
+        foreach (['rejected', 'expired'] as $status) {
+            $this->actingAs($this->admin, 'sanctum')
+                ->putJson("/api/admin/complaints/{$complaint->id}/status", ['status' => $status])
+                ->assertStatus(422);
+        }
+
+        $complaint->refresh();
+        $this->assertSame('pending', $complaint->status);
     }
 }

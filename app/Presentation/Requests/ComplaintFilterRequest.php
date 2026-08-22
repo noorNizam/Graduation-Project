@@ -14,7 +14,7 @@ class ComplaintFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'nullable|in:pending,under_review,resolved,rejected',
+            'status' => 'nullable|in:pending,awaiting_documents,under_review,resolved',
             'complainant_id' => 'nullable|integer|exists:users,id',
             'accused_user_id' => 'nullable|integer|exists:users,id',
             'serving_request_id' => 'nullable|integer|exists:serving_requests,id',

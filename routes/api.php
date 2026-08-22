@@ -145,6 +145,8 @@ Route::middleware(['auth:sanctum', 'ensure.admin'])->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/complaints', [UserComplaintController::class, 'store']);
     Route::get('/my-complaints', [UserComplaintController::class, 'index']);
+    // MUST stay above /complaints/{id} or 'against-me' binds to the {id} route
+    Route::get('/complaints/against-me', [UserComplaintController::class, 'againstMe']);
     Route::get('/complaints/{id}', [UserComplaintController::class, 'show']);
     Route::get('/my-wallet', [UserComplaintController::class, 'getWalletBalance']);
     Route::get('/my-penalties', [UserComplaintController::class, 'myPenalties']);
@@ -175,10 +177,11 @@ Route::post('/identity/webhook', [IdentityVerificationController::class, 'webhoo
 // Admin complaint & penalty routes
 Route::middleware(['auth:sanctum', 'ensure.admin'])->prefix('admin')->group(function () {
     Route::get('/complaints', [AdminComplaintController::class, 'index']);
+    // MUST stay above /complaints/{id} or 'statistics' binds to the {id} route
+    Route::get('/complaints/statistics', [AdminComplaintController::class, 'statistics']);
     Route::get('/complaints/{id}', [AdminComplaintController::class, 'show']);
     Route::put('/complaints/{id}/status', [AdminComplaintController::class, 'updateStatus']);
     Route::delete('/complaints/{id}', [AdminComplaintController::class, 'destroy']);
-    Route::get('/complaints/statistics', [AdminComplaintController::class, 'statistics']);
 
     Route::get('/penalties', [PenaltyController::class, 'index']);
     Route::get('/penalties/{id}', [PenaltyController::class, 'show']);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Infrastructure\Models\NotificationModel;
 use App\Infrastructure\Models\PaymentUnit;
 use App\Infrastructure\Models\Serving;
 use App\Infrastructure\Models\ServingRequest;
@@ -117,6 +118,36 @@ class ServingRequestEscrowTest extends TestCase
 
         $this->assertEquals(50, $this->requesterWallet->fresh()->balance);
         $this->assertEquals(50, $this->ownerWallet->fresh()->balance);
+    }
+
+    public function test_owner_completion_request_notifies_the_requester(): void
+    {
+        $response = $this->actingAs($this->requester, 'sanctum')
+            ->postJson('/api/servings/requests', [
+                'serving_id' => $this->serving->id,
+                'message' => 'I need your service',
+                'automatically_cancel_after' => 14,
+            ]);
+
+        $requestId = $response->json('data.id');
+
+        $this->actingAs($this->owner, 'sanctum')
+            ->putJson("/api/servings/requests/{$requestId}/accept")
+            ->assertStatus(200);
+
+        $response = $this->actingAs($this->owner, 'sanctum')
+            ->putJson("/api/servings/requests/{$requestId}/request-completion");
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+
+        $notification = NotificationModel::where('user_id', $this->requester->id)
+            ->where('type', 'completion_requested')
+            ->first();
+
+        $this->assertNotNull($notification);
+        $this->assertSame($this->serving->id, $notification->data['serving_id']);
+        $this->assertSame((int) $requestId, $notification->data['request_id']);
     }
 
     public function test_auto_cancel_stale_accepted_request(): void

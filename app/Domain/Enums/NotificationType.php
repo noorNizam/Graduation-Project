@@ -9,8 +9,6 @@ class NotificationType
 
     public const COMPLAINT_RESOLVED = 'complaint_resolved';
 
-    public const COMPLAINT_REJECTED = 'complaint_rejected';
-
     public const COMPLAINT_STATUS_CHANGED = 'complaint_status_changed';
 
     public const NEW_COMPLAINT = 'new_complaint';
@@ -28,6 +26,8 @@ class NotificationType
     public const REQUEST_DELETED = 'request_deleted';
 
     public const COMPLETION_CONFIRMED = 'completion_confirmed';
+
+    public const COMPLETION_REQUESTED = 'completion_requested';
 
     public const REVISION_REQUESTED = 'revision_requested';
 

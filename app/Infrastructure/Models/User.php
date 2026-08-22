@@ -25,6 +25,14 @@ class User extends Authenticatable
 
     public const ROLE_ADMIN = 'admin';
 
+    // Block sources: who/what deactivated the account. The scheduler may
+    // only lift blocks it owns ('suspension'); admin blocks are untouchable.
+    public const BLOCK_SOURCE_ADMIN = 'admin';
+
+    public const BLOCK_SOURCE_SUSPENSION = 'suspension';
+
+    public const BLOCK_SOURCE_BAN = 'ban';
+
     /**
      * Available roles for validation
      */
@@ -48,6 +56,7 @@ class User extends Authenticatable
         'profile_picture',
         'role',
         'is_active',
+        'block_source',
         'fcm_token',
         'is_identity_verified',
         'identity_verified_at',

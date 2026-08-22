@@ -9,6 +9,7 @@ use App\Domain\Services\ComplaintServiceInterface;
 use App\Domain\Services\NotificationServiceInterface;
 use App\Domain\Services\RewardServiceInterface;
 use App\Domain\Services\ServingRequestServiceInterface;
+use App\Infrastructure\Models\ComplaintModel;
 use App\Infrastructure\Models\ServingRequest;
 use App\Infrastructure\Models\User;
 use App\Traits\HandlesDatabaseTransactions;
@@ -409,6 +410,17 @@ class ServingRequestService implements ServingRequestServiceInterface
             return $transactionResult;
         }
 
+        $this->notificationService->send(
+            $servingRequest->requester_id,
+            'completion_requested',
+            'تم إرسال طلب إتمام الخدمة',
+            "قام مقدم الخدمة بطلب إتمام خدمة {$serving->title}، بانتظار تأكيدك",
+            [
+                'serving_id' => $serving->id,
+                'request_id' => $servingRequest->id,
+            ]
+        );
+
         return [
             'success' => true,
             'data' => $transactionResult['data'],
@@ -717,6 +729,14 @@ class ServingRequestService implements ServingRequestServiceInterface
             return $transactionResult;
         }
 
+        // Record who the resolution favored: refunding the requester means
+        // the complaint against the owner was justified; releasing to the
+        // owner means it was not. The penalty listener keys off this.
+        $outcome = $escrowAction === 'refund_to_requester'
+            ? ComplaintModel::OUTCOME_JUSTIFIED
+            : ComplaintModel::OUTCOME_UNJUSTIFIED;
+        $this->complaintService->setOutcome($complaintId, $outcome);
+
         $notificationType = 'dispute_resolved';
         $ownerTitle = 'تم حل النزاع';
         $ownerBody = 'تم حل النزاع لصالحك وتم تحويل الساعات لمحفظتك';
@@ -762,5 +782,12 @@ class ServingRequestService implements ServingRequestServiceInterface
             'data' => $transactionResult['data'],
             'message' => 'Dispute resolved successfully',
         ];
+    }
+
+    public function isRequestDisputed(int $requestId): bool
+    {
+        $servingRequest = $this->requestRepository->findById($requestId);
+
+        return $servingRequest !== null && $servingRequest->isDisputed();
     }
 }

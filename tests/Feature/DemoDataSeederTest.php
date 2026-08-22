@@ -134,8 +134,14 @@ class DemoDataSeederTest extends TestCase
         $this->assertSame(1, $statusCounts['pending'] ?? 0);
         $this->assertSame(4, $statusCounts['awaiting_documents'] ?? 0);
         $this->assertSame(1, $statusCounts['under_review'] ?? 0);
-        $this->assertSame(2, $statusCounts['resolved'] ?? 0);
-        $this->assertSame(1, $statusCounts['rejected'] ?? 0);
+        $this->assertSame(3, $statusCounts['resolved'] ?? 0);
+        // 'rejected' left the complaint vocabulary entirely.
+        $this->assertArrayNotHasKey('rejected', $statusCounts);
+
+        $unjustified = ComplaintModel::where('reason', 'شكوى غير مبررة')->first();
+        $this->assertNotNull($unjustified);
+        $this->assertSame('resolved', $unjustified->status);
+        $this->assertSame('unjustified', $unjustified->outcome);
 
         $noDeadline = ComplaintModel::where('status', 'awaiting_documents')->whereNull('documents_due_at')->first();
         $this->assertNotNull($noDeadline);
