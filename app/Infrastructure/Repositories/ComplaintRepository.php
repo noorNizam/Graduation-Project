@@ -58,7 +58,7 @@ class ComplaintRepository implements ComplaintRepositoryInterface
             ->paginate($perPage);
     }
 
-    public function updateStatus(int $id, string $status, ?string $adminNote = null, ?string $documentsRequestedFrom = null, ?string $documentsDueAt = null): ComplaintModel
+    public function updateStatus(int $id, string $status, ?string $adminNote = null, ?string $documentsRequestedFrom = null, ?string $documentsDueAt = null, ?string $outcome = null, ?int $resolvedBy = null): ComplaintModel
     {
         $complaint = ComplaintModel::findOrFail($id);
 
@@ -77,23 +77,30 @@ class ComplaintRepository implements ComplaintRepositoryInterface
             $data['documents_due_at'] = $documentsDueAt;
         }
 
+        if ($outcome !== null) {
+            $data['outcome'] = $outcome;
+        }
+
+        // Audit stamps: who closed the complaint and when. The auto-decision
+        // path passes no resolver id (system decision).
+        if ($status === 'resolved') {
+            $data['resolved_at'] = Carbon::now();
+            if ($resolvedBy !== null) {
+                $data['resolved_by'] = $resolvedBy;
+            }
+        }
+
         $complaint->update($data);
 
         return $complaint->fresh();
     }
 
-    public function findExpiredAwaitingDocuments(): array
+    public function setOutcome(int $id, string $outcome): ComplaintModel
     {
-        return ComplaintModel::where('status', 'awaiting_documents')
-            ->whereNotNull('documents_due_at')
-            ->where('documents_due_at', '<=', Carbon::now())
-            ->where(function ($query) {
-                $query->where('complainant_documents_uploaded', true)
-                    ->orWhere('accused_documents_uploaded', true);
-            })
-            ->orderBy('updated_at', 'asc')
-            ->get()
-            ->all();
+        $complaint = ComplaintModel::findOrFail($id);
+        $complaint->update(['outcome' => $outcome]);
+
+        return $complaint->fresh();
     }
 
     public function delete(int $id): bool

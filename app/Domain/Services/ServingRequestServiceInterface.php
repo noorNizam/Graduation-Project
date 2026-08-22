@@ -29,4 +29,6 @@ interface ServingRequestServiceInterface
     public function disputeRequest(int $requestId, int $requesterId): array;
 
     public function resolveDispute(int $requestId, string $escrowAction, int $complaintId): array;
+
+    public function isRequestDisputed(int $requestId): bool;
 }

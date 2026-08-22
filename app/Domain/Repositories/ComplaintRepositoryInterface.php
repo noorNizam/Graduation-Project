@@ -17,15 +17,12 @@ interface ComplaintRepositoryInterface
 
     public function findByAccusedUser(int $accusedUserId, int $perPage = 15): LengthAwarePaginator;
 
-    public function updateStatus(int $id, string $status, ?string $adminNote = null, ?string $documentsRequestedFrom = null, ?string $documentsDueAt = null): ComplaintModel;
+    public function updateStatus(int $id, string $status, ?string $adminNote = null, ?string $documentsRequestedFrom = null, ?string $documentsDueAt = null, ?string $outcome = null, ?int $resolvedBy = null): ComplaintModel;
 
     /**
-     * Awaiting-documents complaints whose explicit deadline (documents_due_at)
-     * has passed and where at least one party has uploaded their documents.
-     *
-     * @return ComplaintModel[]
+     * Record who the resolution favored ('justified' | 'unjustified').
      */
-    public function findExpiredAwaitingDocuments(): array;
+    public function setOutcome(int $id, string $outcome): ComplaintModel;
 
     public function delete(int $id): bool;
 

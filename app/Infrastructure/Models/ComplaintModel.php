@@ -17,7 +17,10 @@ class ComplaintModel extends Model
 
     public const STATUS_RESOLVED = 'resolved';
 
-    public const STATUS_REJECTED = 'rejected';
+    // Outcome constants (who the resolution favored)
+    public const OUTCOME_JUSTIFIED = 'justified';
+
+    public const OUTCOME_UNJUSTIFIED = 'unjustified';
 
     protected $table = 'complaints';
 
@@ -29,6 +32,9 @@ class ComplaintModel extends Model
         'reason',
         'description',
         'status',
+        'outcome',
+        'resolved_by',
+        'resolved_at',
         'admin_note',
         'attachment_path',
         'attachment_name',
@@ -43,6 +49,7 @@ class ComplaintModel extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'documents_due_at' => 'datetime',
+        'resolved_at' => 'datetime',
         'complainant_documents_uploaded' => 'boolean',
         'accused_documents_uploaded' => 'boolean',
     ];
@@ -85,11 +92,6 @@ class ComplaintModel extends Model
         return $this->status === self::STATUS_RESOLVED;
     }
 
-    public function isRejected(): bool
-    {
-        return $this->status === self::STATUS_REJECTED;
-    }
-
     public function isValidStatus(string $status): bool
     {
         return in_array($status, [
@@ -97,7 +99,6 @@ class ComplaintModel extends Model
             self::STATUS_AWAITING_DOCUMENTS,
             self::STATUS_UNDER_REVIEW,
             self::STATUS_RESOLVED,
-            self::STATUS_REJECTED,
         ]);
     }
 

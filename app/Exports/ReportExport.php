@@ -46,7 +46,6 @@ class ReportExport implements FromArray, ShouldAutoSize, WithHeadings
         $rows[] = ['بانتظار الوثائق', $this->data['complaints']['awaiting_documents'] ?? 0];
         $rows[] = ['قيد المراجعة', $this->data['complaints']['under_review'] ?? 0];
         $rows[] = ['تم الحل', $this->data['complaints']['resolved'] ?? 0];
-        $rows[] = ['مرفوضة', $this->data['complaints']['rejected'] ?? 0];
         $rows[] = [];
 
         // ===================== Weekly complaints =====================

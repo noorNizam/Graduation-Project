@@ -1613,6 +1613,23 @@
 					}
 				},
 				{
+					"name": "Get Complaints Against Me",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/complaints/against-me",
+							"host": ["{{base_url}}"],
+							"path": ["complaints", "against-me"]
+						}
+					}
+				},
+				{
 					"name": "Get Complaint Details",
 					"request": {
 						"method": "GET",
@@ -1928,7 +1945,7 @@
 								"host": ["{{base_url}}"],
 								"path": ["admin", "complaints"],
 								"query": [
-									{ "key": "status", "value": "", "description": "Filter: pending, under_review, resolved, rejected" },
+									{ "key": "status", "value": "", "description": "Filter: pending, awaiting_documents, under_review, resolved" },
 									{ "key": "complainant_id", "value": "", "description": "Filter by complainant user ID" },
 									{ "key": "accused_user_id", "value": "", "description": "Filter by accused user ID" },
 									{ "key": "serving_request_id", "value": "", "description": "Filter by serving request ID (e.g., dispute)" },
@@ -1976,7 +1993,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"status\": \"under_review\",\n    \"admin_note\": \"We are looking into this matter.\"\n}"
+									"raw": "{\n    \"status\": \"resolved\",\n    \"outcome\": \"justified\",\n    \"admin_note\": \"Evidence confirms the complaint.\"\n}\n\nStatuses: pending, awaiting_documents, under_review, resolved.\nOutcome is REQUIRED when status is resolved: 'justified' refunds escrow to the requester and penalizes the accused; 'unjustified' releases escrow to the owner with no penalty."
 								},
 								"url": {
 									"raw": "{{base_url}}/admin/complaints/:id/status",

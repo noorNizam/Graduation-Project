@@ -49,7 +49,7 @@ class ReportService implements ReportServiceInterface
     // ===================== Complaints =====================
     public function getComplaintStatistics(): array
     {
-        $statuses = ['pending', 'awaiting_documents', 'under_review', 'resolved', 'rejected'];
+        $statuses = ['pending', 'awaiting_documents', 'under_review', 'resolved'];
         $data = [];
 
         foreach ($statuses as $status) {

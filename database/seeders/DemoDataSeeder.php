@@ -282,18 +282,18 @@ class DemoDataSeeder extends Seeder
     private function seedComplaints(): void
     {
         $specs = [
-            ['pending', 8, 'user6@system.com', 'user7@system.com', 'تأخر في التوصيل', 'طلب التوصيل تأخر أكثر من ساعتين عن الموعد المتفق عليه.', null, null, false, false, null, 0, 0],
-            ['awaiting_documents', 11, 'user8@system.com', 'user9@system.com', 'عمل غير مكتمل', 'لم يكتمل تركيب المكيف بشكل صحيح ويوجد تسريب هواء.', 'both', 3, false, false, 'يرجى تقديم المستندات المطلوبة خلال ثلاثة أيام.', 0, 0],
-            ['awaiting_documents', 4, 'user4@system.com', 'user3@system.com', 'تأخر في التنفيذ', 'التمديدات الكهربائية لم تنجز في الموعد المتفق عليه.', 'complainant', null, false, false, null, 0, 0],
-            ['awaiting_documents', 2, 'user5@system.com', 'user2@system.com', 'جودة الدروس', 'الدروس لا تطابق المستوى المتفق عليه في البداية.', 'both', 2, true, false, null, 1, 0],
-            ['awaiting_documents', 4, 'user10@system.com', 'user3@system.com', 'ضرر في التمديدات', 'أدى العمل إلى مشكلة في الشبكة الكهربائية بالمنزل.', 'both', -1, true, false, null, 2, 0],
-            ['under_review', 0, 'user7@system.com', 'user@system.com', 'جودة السباكة', 'يوجد تسريب في أحد التوصيلات بعد أسبوع من التنفيذ.', 'both', 1, true, true, null, 1, 1],
-            ['resolved', 11, 'user6@system.com', 'user9@system.com', 'فقدان قطع', 'لم يتم إرجاع القطع القديمة بعد انتهاء الصيانة.', null, null, false, false, 'تم خصم ساعة من رصيد المشكو منه.', 0, 0],
-            ['resolved', 11, 'user5@system.com', 'user9@system.com', 'تأخير كبير', 'استغرق العمل ثلاثة أيام بدلاً من يوم واحد.', null, null, false, false, 'تم خصم ساعتين وإصدار إنذار للمشكو منه.', 0, 0],
-            ['rejected', 1, 'user7@system.com', 'user@system.com', 'شكوى غير مبررة', 'لا توجد أدلة كافية تثبت وجود المشكلة.', null, null, false, false, 'الأدلة غير كافية لاتخاذ إجراء.', 0, 0],
+            ['pending', 8, 'user6@system.com', 'user7@system.com', 'تأخر في التوصيل', 'طلب التوصيل تأخر أكثر من ساعتين عن الموعد المتفق عليه.', null, null, false, false, null, 0, 0, null],
+            ['awaiting_documents', 11, 'user8@system.com', 'user9@system.com', 'عمل غير مكتمل', 'لم يكتمل تركيب المكيف بشكل صحيح ويوجد تسريب هواء.', 'both', 3, false, false, 'يرجى تقديم المستندات المطلوبة خلال ثلاثة أيام.', 0, 0, null],
+            ['awaiting_documents', 4, 'user4@system.com', 'user3@system.com', 'تأخر في التنفيذ', 'التمديدات الكهربائية لم تنجز في الموعد المتفق عليه.', 'complainant', null, false, false, null, 0, 0, null],
+            ['awaiting_documents', 2, 'user5@system.com', 'user2@system.com', 'جودة الدروس', 'الدروس لا تطابق المستوى المتفق عليه في البداية.', 'both', 2, true, false, null, 1, 0, null],
+            ['awaiting_documents', 4, 'user10@system.com', 'user3@system.com', 'ضرر في التمديدات', 'أدى العمل إلى مشكلة في الشبكة الكهربائية بالمنزل.', 'both', -1, true, false, null, 2, 0, null],
+            ['under_review', 0, 'user7@system.com', 'user@system.com', 'جودة السباكة', 'يوجد تسريب في أحد التوصيلات بعد أسبوع من التنفيذ.', 'both', 1, true, true, null, 1, 1, null],
+            ['resolved', 11, 'user6@system.com', 'user9@system.com', 'فقدان قطع', 'لم يتم إرجاع القطع القديمة بعد انتهاء الصيانة.', null, null, false, false, 'تم خصم ساعة من رصيد المشكو منه.', 0, 0, 'justified'],
+            ['resolved', 11, 'user5@system.com', 'user9@system.com', 'تأخير كبير', 'استغرق العمل ثلاثة أيام بدلاً من يوم واحد.', null, null, false, false, 'تم خصم ساعتين وإصدار إنذار للمشكو منه.', 0, 0, 'justified'],
+            ['resolved', 1, 'user7@system.com', 'user@system.com', 'شكوى غير مبررة', 'لا توجد أدلة كافية تثبت وجود المشكلة.', null, null, false, false, 'الأدلة غير كافية لاتخاذ إجراء.', 0, 0, 'unjustified'],
         ];
 
-        foreach ($specs as [$status, $servingIndex, $complainantEmail, $accusedEmail, $reason, $description, $requestedFrom, $dueDays, $complainantUploaded, $accusedUploaded, $adminNote, $complainantFiles, $accusedFiles]) {
+        foreach ($specs as [$status, $servingIndex, $complainantEmail, $accusedEmail, $reason, $description, $requestedFrom, $dueDays, $complainantUploaded, $accusedUploaded, $adminNote, $complainantFiles, $accusedFiles, $outcome]) {
             $complaint = ComplaintModel::create([
                 'serving_id' => $this->servings[$servingIndex]->id,
                 'complainant_id' => $this->cast[$complainantEmail]->id,
@@ -306,6 +306,7 @@ class DemoDataSeeder extends Seeder
                 'documents_due_at' => $dueDays !== null ? Carbon::now()->addDays($dueDays) : null,
                 'complainant_documents_uploaded' => $complainantUploaded,
                 'accused_documents_uploaded' => $accusedUploaded,
+                'outcome' => $outcome,
                 'created_at' => Carbon::now()->subDays(rand(3, 15)),
                 'updated_at' => Carbon::now()->subDays(rand(0, 3)),
             ]);

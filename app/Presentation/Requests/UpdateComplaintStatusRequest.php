@@ -14,9 +14,14 @@ class UpdateComplaintStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => 'required|in:pending,awaiting_documents,under_review,resolved,rejected',
+            // Admin-settable statuses only: the four-state vocabulary below
+            // is final — statuses outside it were removed entirely.
+            'status' => 'required|in:pending,awaiting_documents,under_review,resolved',
             'admin_note' => 'nullable|string|max:500',
-            'escrow_action' => 'nullable|string|in:release_to_owner,refund_to_requester',
+            // Who the resolution favored. Required context for the penalty
+            // listener (penalties fire only on 'justified') and for escrow:
+            // justified refunds the requester, unjustified releases the owner.
+            'outcome' => 'nullable|string|in:justified,unjustified',
             'documents_requested_from' => 'nullable|string|in:complainant,accused,both',
             'documents_due_at' => 'nullable|date|after:today',
         ];
@@ -28,7 +33,20 @@ class UpdateComplaintStatusRequest extends FormRequest
             'status.required' => 'Status is required',
             'status.in' => 'Status is invalid',
             'admin_note.max' => 'Admin note must not exceed 500 characters',
-            'escrow_action.in' => 'Escrow action is invalid',
+            'outcome.in' => 'Outcome is invalid',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($this->input('status') === 'resolved'
+                && ! $this->filled('outcome')) {
+                $validator->errors()->add(
+                    'outcome',
+                    'Outcome (justified or unjustified) is required when resolving a complaint.'
+                );
+            }
+        });
     }
 }

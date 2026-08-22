@@ -5,6 +5,7 @@ namespace App\Application\Services;
 use App\Domain\Repositories\PenaltyRepositoryInterface;
 use App\Domain\Services\PenaltyServiceInterface;
 use App\Domain\Services\UserManagementServiceInterface;
+use App\Infrastructure\Models\PenaltyModel;
 use App\Infrastructure\Models\User;
 use App\Infrastructure\Models\WalletModel;
 use App\Traits\HandlesDatabaseTransactions;
@@ -43,18 +44,28 @@ class PenaltyService implements PenaltyServiceInterface
                     break;
 
                 case 'suspend':
+                    $penaltyData['expires_at'] = now()->addDays(7);
                     $user = User::find($userId);
                     if ($user) {
-                        $user->is_active = false;
-                        $user->save();
+                        // A penalty must hold the account closed either way,
+                        // but it never steals ownership of an admin block:
+                        // the scheduler may only lift what it owns.
+                        $updates = ['is_active' => false];
+                        if ($user->block_source !== User::BLOCK_SOURCE_ADMIN) {
+                            $updates['block_source'] = User::BLOCK_SOURCE_SUSPENSION;
+                        }
+                        $user->update($updates);
                     }
                     break;
 
                 case 'ban':
                     $user = User::find($userId);
                     if ($user) {
-                        $user->is_active = false;
-                        $user->save();
+                        $updates = ['is_active' => false];
+                        if ($user->block_source !== User::BLOCK_SOURCE_ADMIN) {
+                            $updates['block_source'] = User::BLOCK_SOURCE_BAN;
+                        }
+                        $user->update($updates);
                     }
                     break;
 
@@ -83,15 +94,12 @@ class PenaltyService implements PenaltyServiceInterface
             return ['success' => false, 'message' => 'User wallet not found'];
         }
 
-        if ($wallet->balance < $hours) {
-            return [
-                'success' => false,
-                'message' => "Insufficient balance. Current balance: {$wallet->balance} hours",
-            ];
-        }
+        // The wallet cannot go below zero: deduct what is available and
+        // record the full requested amount as the penalty's severity.
+        $actualDeducted = (int) min($hours, max(0, $wallet->balance));
 
         $result = $this->executeWithTransaction(function () use ($userId, $hours, $complaintId, $reason, $wallet) {
-            $wallet->balance -= $hours;
+            $wallet->balance = max(0, $wallet->balance - $hours);
             $wallet->save();
 
             return $this->penaltyRepository->create([
@@ -112,9 +120,10 @@ class PenaltyService implements PenaltyServiceInterface
             'success' => true,
             'data' => [
                 'penalty' => $result['data'],
+                'deducted_hours' => $actualDeducted,
                 'new_balance' => $wallet->balance,
             ],
-            'message' => "Deducted {$hours} hours from wallet. Remaining balance: {$wallet->balance} hours",
+            'message' => "Deducted {$actualDeducted} of {$hours} hours from wallet. Remaining balance: {$wallet->balance} hours",
         ];
     }
 
@@ -217,6 +226,7 @@ class PenaltyService implements PenaltyServiceInterface
     public function deactivatePenalty(int $penaltyId): array
     {
         $penalty = $this->penaltyRepository->findById($penaltyId);
+
         if (! $penalty) {
             return ['success' => false, 'message' => 'Penalty not found'];
         }
@@ -224,10 +234,22 @@ class PenaltyService implements PenaltyServiceInterface
         $penalty = $this->penaltyRepository->update($penaltyId, ['is_active' => false]);
 
         if ($penalty->type === 'suspend' || $penalty->type === 'ban') {
+            // Lift the block only when this was the last active suspend/ban
+            // AND the account is not separately blocked by an admin.
+            $otherActiveBlock = PenaltyModel::where('user_id', $penalty->user_id)
+                ->where('id', '!=', $penaltyId)
+                ->where('is_active', true)
+                ->whereIn('type', ['suspend', 'ban'])
+                ->exists();
+
             $user = User::find($penalty->user_id);
-            if ($user) {
-                $user->is_active = true;
-                $user->save();
+            if ($user
+                && ! $otherActiveBlock
+                && $user->block_source !== User::BLOCK_SOURCE_ADMIN) {
+                $user->update([
+                    'is_active' => true,
+                    'block_source' => null,
+                ]);
             }
         }
 
