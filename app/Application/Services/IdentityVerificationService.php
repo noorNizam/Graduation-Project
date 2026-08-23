@@ -4,6 +4,7 @@ namespace App\Application\Services;
 
 use App\Domain\Repositories\IdentityVerificationRepositoryInterface;
 use App\Domain\Services\IdentityVerificationServiceInterface;
+use App\Infrastructure\Models\IdentityVerificationModel;
 use App\Infrastructure\Models\User;
 use App\Traits\HandlesDatabaseTransactions;
 use AwaisJameel\DiditLaravelClient\Exceptions\DiditException;
@@ -31,8 +32,16 @@ class IdentityVerificationService implements IdentityVerificationServiceInterfac
         }
 
         $existing = $this->repository->findByUserId($userId);
-        if ($existing && $existing->status === 'pending' && $existing->verification_url) {
-            return ['success' => true, 'verification_url' => $existing->verification_url];
+
+        if ($existing && $existing->status === 'pending') {
+            if ($this->isReusablePendingSession($existing)) {
+                return ['success' => true, 'verification_url' => $existing->verification_url];
+            }
+
+            // The pending session outlived its usefulness (stale link, missing
+            // URL, or abandoned flow): retire it so a fresh Didit session is
+            // created below.
+            $this->repository->updateStatus($userId, 'expired');
         }
 
         $vendorToken = Str::random(32);
@@ -118,7 +127,10 @@ class IdentityVerificationService implements IdentityVerificationServiceInterfac
 
         $result = $this->executeWithTransaction(function () use ($targetUserId, $finalStatus, $payload) {
             $updated = $this->repository->updateStatus($targetUserId, $finalStatus, $payload);
-            $this->updateUserVerificationStatus($targetUserId, $finalStatus === 'approved');
+            $this->updateUserVerificationStatus(
+                $targetUserId,
+                $this->shouldMarkUserVerified($targetUserId, $finalStatus)
+            );
 
             return $updated;
         });
@@ -165,17 +177,51 @@ class IdentityVerificationService implements IdentityVerificationServiceInterfac
             'approved' => 'approved',
             'declined' => 'declined',
             'resubmitted' => 'resubmission_requested',
+            'abandoned', 'canceled', 'cancelled', 'expired' => 'expired',
             default => null,
         };
+    }
+
+    private function isReusablePendingSession(IdentityVerificationModel $record): bool
+    {
+        if (! $record->verification_url || ! $record->created_at) {
+            return false;
+        }
+
+        $ttlHours = max(1, (int) config('didit-laravel-client.pending_session_ttl_hours', 24));
+
+        return $record->created_at->gt(now()->subHours($ttlHours));
+    }
+
+    private function shouldMarkUserVerified(int $userId, string $finalStatus): bool
+    {
+        if ($finalStatus === 'approved') {
+            return true;
+        }
+
+        // A late decision for an old session must never strip a badge earned
+        // through another completed session.
+        return IdentityVerificationModel::query()
+            ->where('user_id', $userId)
+            ->where('status', 'approved')
+            ->exists();
     }
 
     private function updateUserVerificationStatus(int $userId, bool $isVerified): void
     {
         $user = User::find($userId);
-        if ($user) {
-            $user->is_identity_verified = $isVerified;
-            $user->identity_verified_at = $isVerified ? now() : null;
-            $user->save();
+        if (! $user) {
+            return;
         }
+
+        // Keep the original approval timestamp instead of refreshing it when a
+        // late webhook for another session re-affirms an already-verified user.
+        if ($isVerified && $user->is_identity_verified) {
+            return;
+        }
+
+        $user->is_identity_verified = $isVerified;
+        $user->identity_verified_at = $isVerified ? now() : null;
+        $user->save();
     }
 }

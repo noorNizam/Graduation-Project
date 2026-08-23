@@ -365,4 +365,132 @@ class IdentityVerificationTest extends TestCase
         ]);
         $this->assertFalse($this->user->fresh()->is_identity_verified);
     }
+
+    public function test_start_reuses_pending_session_within_ttl(): void
+    {
+        $record = $this->createRecord([
+            'session_id' => 'sess-almost-old',
+            'verification_url' => 'https://verify.didit.me/session/sess-almost-old',
+        ]);
+        $record->created_at = now()->subHours(23);
+        $record->save();
+
+        DiditLaravelClient::shouldReceive('createSession')->never();
+
+        $this->actingAs($this->user, 'sanctum')
+            ->postJson('/api/identity/verify')
+            ->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('verification_url', 'https://verify.didit.me/session/sess-almost-old');
+
+        $this->assertDatabaseHas('identity_verifications', [
+            'id' => $record->id,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_start_expires_stale_pending_session_and_creates_fresh_one(): void
+    {
+        $stale = $this->createRecord([
+            'session_id' => 'sess-stale',
+            'verification_url' => 'https://verify.didit.me/session/sess-stale',
+        ]);
+        $stale->created_at = now()->subHours(30);
+        $stale->save();
+
+        DiditLaravelClient::shouldReceive('createSession')
+            ->once()
+            ->andReturn(['session_id' => 'sess-fresh', 'url' => 'https://verify.didit.me/session/sess-fresh']);
+
+        $response = $this->actingAs($this->user, 'sanctum')
+            ->postJson('/api/identity/verify');
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('verification_url', 'https://verify.didit.me/session/sess-fresh');
+
+        $this->assertDatabaseHas('identity_verifications', [
+            'id' => $stale->id,
+            'status' => 'expired',
+        ]);
+        $this->assertDatabaseHas('identity_verifications', [
+            'session_id' => 'sess-fresh',
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_start_expires_pending_session_without_url(): void
+    {
+        $broken = $this->createRecord([
+            'session_id' => 'sess-broken',
+            'verification_url' => null,
+        ]);
+
+        DiditLaravelClient::shouldReceive('createSession')
+            ->once()
+            ->andReturn(['session_id' => 'sess-replacement', 'url' => 'https://verify.didit.me/session/sess-replacement']);
+
+        $this->actingAs($this->user, 'sanctum')
+            ->postJson('/api/identity/verify')
+            ->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('identity_verifications', [
+            'id' => $broken->id,
+            'status' => 'expired',
+        ]);
+    }
+
+    public function test_webhook_marks_record_expired_on_terminal_lifecycle_statuses(): void
+    {
+        foreach (['Expired', 'Abandoned', 'Canceled', 'Cancelled'] as $vendorStatus) {
+            $record = $this->createRecord();
+
+            DiditLaravelClient::shouldReceive('processWebhook')
+                ->once()
+                ->andReturn([
+                    'session_id' => $record->session_id,
+                    'status' => $vendorStatus,
+                    'vendor_data' => $record->vendor_token,
+                ]);
+
+            $this->postJson('/api/identity/webhook', ['dummy' => 'body'])
+                ->assertStatus(200)
+                ->assertJsonPath('success', true);
+
+            $this->assertDatabaseHas('identity_verifications', [
+                'id' => $record->id,
+                'status' => 'expired',
+            ]);
+            $this->assertFalse($this->user->fresh()->is_identity_verified);
+        }
+    }
+
+    public function test_late_declined_webhook_does_not_unverify_user_with_approved_session(): void
+    {
+        $oldRecord = $this->createRecord(['session_id' => 'sess-old']);
+        $this->createRecord(['session_id' => 'sess-approved', 'status' => 'approved']);
+
+        $this->user->is_identity_verified = true;
+        $this->user->identity_verified_at = now();
+        $this->user->save();
+
+        DiditLaravelClient::shouldReceive('processWebhook')
+            ->once()
+            ->andReturn([
+                'session_id' => $oldRecord->session_id,
+                'status' => 'Declined',
+                'vendor_data' => $oldRecord->vendor_token,
+            ]);
+
+        $this->postJson('/api/identity/webhook', ['dummy' => 'body'])
+            ->assertStatus(200);
+
+        $this->assertDatabaseHas('identity_verifications', [
+            'id' => $oldRecord->id,
+            'status' => 'declined',
+        ]);
+        $this->assertTrue($this->user->fresh()->is_identity_verified);
+        $this->assertNotNull($this->user->fresh()->identity_verified_at);
+    }
 }
