@@ -18,6 +18,11 @@ return [
 
     'webhook_secret' => env('DIDIT_WEBHOOK_SECRET', null),
 
+    // How long (in hours) a pending verification session may be handed out
+    // again by startVerification before it is marked "expired" and replaced
+    // with a freshly created Didit session.
+    'pending_session_ttl_hours' => env('DIDIT_PENDING_SESSION_TTL_HOURS', 24),
+
     'timeout' => env('DIDIT_TIMEOUT', 10), // seconds
     'token_expiry_buffer' => env('DIDIT_TOKEN_EXPIRY_BUFFER', 300), // seconds
 
